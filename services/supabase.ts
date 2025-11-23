@@ -10,14 +10,13 @@ import { createClient } from '@supabase/supabase-js';
 //    (DO NOT USE the service_role/secret key!)
 // ====================================================================================
 
-// REPLACE THE VALUES INSIDE THE QUOTES BELOW
-const SUPABASE_URL: string = 'https://jhlizehwrpfxlcrjoeqb.supabase.co';
-const SUPABASE_ANON_KEY: string = 'sb_publishable_rh-XCh-Mo2McXBdkqwpc6Q_5DHHLLWM';
+// Read from environment variables
+const SUPABASE_URL: string = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// This helper checks if you have replaced the placeholders
+// This helper checks if environment variables are set
 export const isConfigured =
-  SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' &&
-  !SUPABASE_URL.includes('YOUR_PROJECT_ID') &&
-  SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY';
+  SUPABASE_URL !== '' &&
+  SUPABASE_ANON_KEY !== '';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

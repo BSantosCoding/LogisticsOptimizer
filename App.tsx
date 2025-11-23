@@ -1,12 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Package,
   Container,
   Settings,
+  Building2,
+  Users,
+  Search,
+  Clock,
+  RefreshCw,
+  LogOut
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Header from './components/Header';
+import Button from './components/Button';
 import ProductPanel from './components/panels/ProductPanel';
 import DealPanel from './components/panels/DealPanel';
 import ConfigPanel from './components/panels/ConfigPanel';
@@ -19,13 +26,13 @@ import { Product, Deal, OptimizationPriority, OptimizationResult } from './types
 
 // Default options
 const DEFAULT_RESTRICTIONS = [
-  "Flammable", 
-  "Temp < 20C", 
-  "Frozen", 
-  "Hazmat", 
-  "Fragile", 
-  "Corrosive", 
-  "Liquid", 
+  "Flammable",
+  "Temp < 20C",
+  "Frozen",
+  "Hazmat",
+  "Fragile",
+  "Corrosive",
+  "Liquid",
   "Explosive"
 ];
 
@@ -35,6 +42,15 @@ const App: React.FC = () => {
   const [loadingSession, setLoadingSession] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('');
+  const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
+
+  // --- Onboarding State ---
+  const [isSetupRequired, setIsSetupRequired] = useState(false);
+  const [setupMode, setSetupMode] = useState<'create' | 'join'>('create');
+  const [setupCompanyName, setSetupCompanyName] = useState('');
+  const [availableCompanies, setAvailableCompanies] = useState<{ id: string, name: string }[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [isSettingUp, setIsSettingUp] = useState(false);
 
   // --- App State ---
   const [inputMode, setInputMode] = useState<'products' | 'deals' | 'config'>('products');
@@ -48,7 +64,7 @@ const App: React.FC = () => {
   // Forms
   const [newTag, setNewTag] = useState('');
   const [newTemplate, setNewTemplate] = useState<Partial<Product>>({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], hazardClass: '', unNumber: '' });
-  
+
   const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
     name: '',
     weightKg: 0,
@@ -108,40 +124,72 @@ const App: React.FC = () => {
     }
   }, [session]);
 
+  // Fetch companies when switching to join mode
+  useEffect(() => {
+    if (isSetupRequired && setupMode === 'join') {
+      fetchCompanies();
+    }
+  }, [isSetupRequired, setupMode]);
+
+  const fetchCompanies = async () => {
+    const { data } = await supabase.from('companies').select('id, name').order('name');
+    if (data) setAvailableCompanies(data);
+  };
+
   const loadUserData = async () => {
     setIsDataLoading(true);
     try {
       // 1. Get Profile & Company
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_id')
+        .select('company_id, status')
         .eq('id', session.user.id)
-        .single();
-      
-      if (profile) {
-        setCompanyId(profile.company_id);
+        .maybeSingle();
 
-        const { data: company } = await supabase
-          .from('companies')
-          .select('name')
-          .eq('id', profile.company_id)
-          .single();
-        if (company) setCompanyName(company.name);
-
-        // 2. Load Data from Supabase
-        const { data: productsData } = await supabase.from('products').select('*').eq('company_id', profile.company_id);
-        const { data: dealsData } = await supabase.from('deals').select('*').eq('company_id', profile.company_id);
-        const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', profile.company_id);
-        const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', profile.company_id);
-
-        if (productsData) setProducts(productsData.map((r: any) => ({ ...r.data, id: r.id })));
-        if (dealsData) setDeals(dealsData.map((r: any) => ({ ...r.data, id: r.id })));
-        if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
-        
-        // Merge DB tags with default tags
-        const dbTags = tagsData?.map((t: any) => t.name) || [];
-        setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
+      if (!profile) {
+        setIsSetupRequired(true);
+        setIsDataLoading(false);
+        return;
       }
+
+      // Check Approval Status
+      // Note: If 'status' column doesn't exist in DB yet, this might return undefined. 
+      // We treat undefined as 'active' for backward compatibility unless logic dictates otherwise.
+      const status = profile.status || 'active';
+      setApprovalStatus(status as 'active' | 'pending');
+
+      const { data: company } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', profile.company_id)
+        .single();
+
+      if (company) setCompanyName(company.name);
+
+      if (status === 'pending') {
+        setIsSetupRequired(false);
+        setIsDataLoading(false);
+        return; // Stop loading data if pending
+      }
+
+      // Valid active profile exists, load data
+      setCompanyId(profile.company_id);
+      setIsSetupRequired(false);
+
+      // 2. Load Data from Supabase
+      const { data: productsData } = await supabase.from('products').select('*').eq('company_id', profile.company_id);
+      const { data: dealsData } = await supabase.from('deals').select('*').eq('company_id', profile.company_id);
+      const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', profile.company_id);
+      const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', profile.company_id);
+
+      if (productsData) setProducts(productsData.map((r: any) => ({ ...r.data, id: r.id })));
+      if (dealsData) setDeals(dealsData.map((r: any) => ({ ...r.data, id: r.id })));
+      if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
+
+      // Merge DB tags with default tags
+      const dbTags = tagsData?.map((t: any) => t.name) || [];
+      setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
+
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -149,11 +197,65 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCompleteSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSettingUp(true);
+
+    try {
+      let targetCompanyId = selectedCompanyId;
+      let initialStatus = 'active';
+
+      if (setupMode === 'create') {
+        if (!setupCompanyName) return;
+        // Create Company
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .insert([{ name: setupCompanyName }])
+          .select()
+          .single();
+
+        if (companyError) throw companyError;
+        targetCompanyId = companyData.id;
+        initialStatus = 'active'; // Creator is always active
+      } else {
+        if (!selectedCompanyId) return;
+        initialStatus = 'pending'; // Joiners must be approved
+      }
+
+      // Create Profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: session.user.id,
+          email: session.user.email,
+          company_id: targetCompanyId,
+          status: initialStatus
+        }]);
+
+      if (profileError) throw profileError;
+
+      // Reload
+      await loadUserData();
+
+    } catch (err: any) {
+      console.error("Setup failed:", err);
+      alert("Failed to setup workspace: " + err.message);
+    } finally {
+      setIsSettingUp(false);
+    }
+  };
+
+  const handleCheckStatus = async () => {
+    await loadUserData();
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setProducts([]);
     setDeals([]);
     setResult(null);
+    setIsSetupRequired(false);
+    setApprovalStatus(null);
   };
 
 
@@ -161,10 +263,10 @@ const App: React.FC = () => {
 
   const handleSaveProduct = async () => {
     if (!newProduct.name || newProduct.weightKg <= 0 || !companyId) return;
-    
+
     let updatedProducts = [...products];
     const productData = { ...newProduct };
-    
+
     if (editingProductId) {
       // Update
       updatedProducts = products.map(p => p.id === editingProductId ? { ...productData, id: editingProductId } : p);
@@ -175,10 +277,10 @@ const App: React.FC = () => {
       const newId = `P-${Date.now()}`;
       const newProdWithId = { ...productData, id: newId };
       updatedProducts = [...products, newProdWithId];
-      await supabase.from('products').insert([{ 
-        id: newId, 
+      await supabase.from('products').insert([{
+        id: newId,
         company_id: companyId,
-        data: productData 
+        data: productData
       }]);
     }
 
@@ -188,15 +290,15 @@ const App: React.FC = () => {
 
   const handleEditProduct = (p: Product) => {
     setNewProduct({
-        name: p.name,
-        weightKg: p.weightKg,
-        volumeM3: p.volumeM3,
-        restrictions: p.restrictions,
-        readyDate: p.readyDate || '',
-        shipDeadline: p.shipDeadline || '',
-        arrivalDeadline: p.arrivalDeadline || '',
-        unNumber: p.unNumber || '',
-        hazardClass: p.hazardClass || ''
+      name: p.name,
+      weightKg: p.weightKg,
+      volumeM3: p.volumeM3,
+      restrictions: p.restrictions,
+      readyDate: p.readyDate || '',
+      shipDeadline: p.shipDeadline || '',
+      arrivalDeadline: p.arrivalDeadline || '',
+      unNumber: p.unNumber || '',
+      hazardClass: p.hazardClass || ''
     });
     setEditingProductId(p.id);
     setInputMode('products');
@@ -208,13 +310,13 @@ const App: React.FC = () => {
   };
 
   const handleCancelProductEdit = () => {
-      setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', unNumber: '', hazardClass: '' });
-      setEditingProductId(null);
+    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', unNumber: '', hazardClass: '' });
+    setEditingProductId(null);
   };
 
   const handleSaveDeal = async () => {
     if (!newDeal.carrierName || !newDeal.cost || !companyId) return;
-    
+
     let updatedDeals = [...deals];
     const dealData = { ...newDeal };
 
@@ -226,10 +328,10 @@ const App: React.FC = () => {
       const newId = `D-${Date.now()}`;
       const newDealWithId = { ...dealData, id: newId };
       updatedDeals = [...deals, newDealWithId];
-      await supabase.from('deals').insert([{ 
-        id: newId, 
+      await supabase.from('deals').insert([{
+        id: newId,
         company_id: companyId,
-        data: dealData 
+        data: dealData
       }]);
     }
 
@@ -239,15 +341,15 @@ const App: React.FC = () => {
 
   const handleEditDeal = (d: Deal) => {
     setNewDeal({
-        carrierName: d.carrierName,
-        containerType: d.containerType,
-        maxWeightKg: d.maxWeightKg,
-        maxVolumeM3: d.maxVolumeM3,
-        cost: d.cost,
-        transitTimeDays: d.transitTimeDays,
-        availableFrom: d.availableFrom,
-        destination: d.destination,
-        restrictions: d.restrictions
+      carrierName: d.carrierName,
+      containerType: d.containerType,
+      maxWeightKg: d.maxWeightKg,
+      maxVolumeM3: d.maxVolumeM3,
+      cost: d.cost,
+      transitTimeDays: d.transitTimeDays,
+      availableFrom: d.availableFrom,
+      destination: d.destination,
+      restrictions: d.restrictions
     });
     setEditingDealId(d.id);
     setInputMode('deals');
@@ -258,18 +360,18 @@ const App: React.FC = () => {
     await supabase.from('deals').delete().eq('id', id);
   };
 
-   const handleCancelDealEdit = () => {
-      setNewDeal({ carrierName: '', containerType: '', maxWeightKg: 0, maxVolumeM3: 0, cost: 0, transitTimeDays: 0, availableFrom: new Date().toISOString().split('T')[0], destination: '', restrictions: [] });
-      setEditingDealId(null);
+  const handleCancelDealEdit = () => {
+    setNewDeal({ carrierName: '', containerType: '', maxWeightKg: 0, maxVolumeM3: 0, cost: 0, transitTimeDays: 0, availableFrom: new Date().toISOString().split('T')[0], destination: '', restrictions: [] });
+    setEditingDealId(null);
   };
 
   const handleOptimization = async () => {
     setIsOptimizing(true);
     // Add small delay to allow UI to update to loading state
     setTimeout(async () => {
-        const res = await optimizeLogistics(products, deals, optimizationPriority, marginPercentage, ignoreWeight, ignoreVolume);
-        setResult(res);
-        setIsOptimizing(false);
+      const res = await optimizeLogistics(products, deals, optimizationPriority, marginPercentage, ignoreWeight, ignoreVolume);
+      setResult(res);
+      setIsOptimizing(false);
     }, 100);
   };
 
@@ -290,8 +392,8 @@ const App: React.FC = () => {
 
   const handleAddTemplate = async () => {
     if (newTemplate.name && companyId) {
-      const templateData = { 
-        ...newTemplate, 
+      const templateData = {
+        ...newTemplate,
         restrictions: newTemplate.restrictions || [],
         weightKg: Number(newTemplate.weightKg) || 0,
         volumeM3: Number(newTemplate.volumeM3) || 0
@@ -299,12 +401,12 @@ const App: React.FC = () => {
 
       const newId = `T-${Date.now()}`;
       setTemplates([...templates, { ...templateData, id: newId }]);
-      await supabase.from('templates').insert([{ 
-        id: newId, 
+      await supabase.from('templates').insert([{
+        id: newId,
         company_id: companyId,
-        data: templateData 
+        data: templateData
       }]);
-      
+
       setNewTemplate({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], hazardClass: '', unNumber: '' });
     }
   };
@@ -340,65 +442,65 @@ const App: React.FC = () => {
     if (!result) return;
     const productId = e.dataTransfer.getData("productId");
     const sourceId = e.dataTransfer.getData("sourceId");
-    
+
     if (sourceId === targetId) return;
 
     // Deep copy result to mutate
     const newAssignments = result.assignments.map(a => ({
-        ...a,
-        assignedProducts: [...a.assignedProducts]
+      ...a,
+      assignedProducts: [...a.assignedProducts]
     }));
     let newUnassigned = [...result.unassignedProducts];
 
     // Find Product
     let product: Product | undefined;
-    
+
     // Remove from Source
     if (sourceId === 'unassigned') {
-        product = newUnassigned.find(p => p.id === productId);
-        newUnassigned = newUnassigned.filter(p => p.id !== productId);
+      product = newUnassigned.find(p => p.id === productId);
+      newUnassigned = newUnassigned.filter(p => p.id !== productId);
     } else {
-        const sourceDeal = newAssignments.find(a => a.deal.id === sourceId);
-        if (sourceDeal) {
-            product = sourceDeal.assignedProducts.find(p => p.id === productId);
-            sourceDeal.assignedProducts = sourceDeal.assignedProducts.filter(p => p.id !== productId);
-            // Re-validate source
-            const revalidatedSource = validateLoadedDeal(sourceDeal.deal, sourceDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
-            Object.assign(sourceDeal, revalidatedSource);
-        }
+      const sourceDeal = newAssignments.find(a => a.deal.id === sourceId);
+      if (sourceDeal) {
+        product = sourceDeal.assignedProducts.find(p => p.id === productId);
+        sourceDeal.assignedProducts = sourceDeal.assignedProducts.filter(p => p.id !== productId);
+        // Re-validate source
+        const revalidatedSource = validateLoadedDeal(sourceDeal.deal, sourceDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
+        Object.assign(sourceDeal, revalidatedSource);
+      }
     }
 
     if (!product) return;
 
     // Add to Target
     if (targetId === 'unassigned') {
-        newUnassigned.push(product);
+      newUnassigned.push(product);
     } else {
-        const targetDeal = newAssignments.find(a => a.deal.id === targetId);
-        
-        // If target is a new deal not currently in assignments (from unused list)
-        if (!targetDeal) {
-            const freshDeal = deals.find(d => d.id === targetId);
-            if (freshDeal) {
-                const newLoadedDeal = validateLoadedDeal(freshDeal, [product], marginPercentage, ignoreWeight, ignoreVolume);
-                newAssignments.push(newLoadedDeal);
-            }
-        } else {
-            targetDeal.assignedProducts.push(product);
-            // Re-validate target
-            const revalidatedTarget = validateLoadedDeal(targetDeal.deal, targetDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
-            Object.assign(targetDeal, revalidatedTarget);
+      const targetDeal = newAssignments.find(a => a.deal.id === targetId);
+
+      // If target is a new deal not currently in assignments (from unused list)
+      if (!targetDeal) {
+        const freshDeal = deals.find(d => d.id === targetId);
+        if (freshDeal) {
+          const newLoadedDeal = validateLoadedDeal(freshDeal, [product], marginPercentage, ignoreWeight, ignoreVolume);
+          newAssignments.push(newLoadedDeal);
         }
+      } else {
+        targetDeal.assignedProducts.push(product);
+        // Re-validate target
+        const revalidatedTarget = validateLoadedDeal(targetDeal.deal, targetDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
+        Object.assign(targetDeal, revalidatedTarget);
+      }
     }
 
     // Recalculate Totals
     const totalCost = newAssignments.reduce((sum, a) => sum + a.deal.cost, 0);
 
     setResult({
-        ...result,
-        assignments: newAssignments,
-        unassignedProducts: newUnassigned,
-        totalCost
+      ...result,
+      assignments: newAssignments,
+      unassignedProducts: newUnassigned,
+      totalCost
     });
   };
 
@@ -410,6 +512,118 @@ const App: React.FC = () => {
     return <Auth />;
   }
 
+  // --- VIEW: PENDING APPROVAL ---
+  if (approvalStatus === 'pending') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md text-center">
+          <div className="flex justify-center mb-6">
+            <div className="bg-orange-500/10 p-4 rounded-full border border-orange-500/20">
+              <Clock className="text-orange-400" size={48} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Access Pending</h2>
+          <p className="text-slate-400 mb-6">
+            Your request to join <strong>{companyName}</strong> has been sent. <br />
+            An administrator must approve your account.
+          </p>
+          <div className="space-y-3">
+            <Button onClick={handleCheckStatus} isLoading={isDataLoading} className="w-full">
+              <RefreshCw size={16} className="mr-2" /> Check Status
+            </Button>
+            <button onClick={handleLogout} className="text-slate-500 text-sm hover:text-white flex items-center justify-center gap-2 w-full mt-4">
+              <LogOut size={14} /> Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- VIEW: SETUP / ONBOARDING ---
+  if (isSetupRequired) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <div className="bg-purple-600 p-3 rounded-xl shadow-lg shadow-purple-900/30">
+              <Building2 className="text-white" size={32} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Aboard</h2>
+          <p className="text-slate-400 text-center mb-6 text-sm">
+            Setup your workspace to get started.
+          </p>
+
+          <div className="flex bg-slate-900 p-1 rounded-lg mb-6">
+            <button
+              onClick={() => setSetupMode('create')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${setupMode === 'create' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Create Workspace
+            </button>
+            <button
+              onClick={() => setSetupMode('join')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${setupMode === 'join' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
+            >
+              Join Existing
+            </button>
+          </div>
+
+          <form onSubmit={handleCompleteSetup}>
+            {setupMode === 'create' ? (
+              <div className="mb-4 animate-in fade-in slide-in-from-right-4">
+                <label className="block text-xs text-slate-500 uppercase font-bold mb-2">Company Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Acme Chemical Logistics"
+                  value={setupCompanyName}
+                  onChange={(e) => setSetupCompanyName(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-purple-500 outline-none transition-colors"
+                  required
+                />
+              </div>
+            ) : (
+              <div className="mb-4 animate-in fade-in slide-in-from-left-4">
+                <label className="block text-xs text-slate-500 uppercase font-bold mb-2">Select Company</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3.5 text-slate-500" size={16} />
+                  <select
+                    value={selectedCompanyId}
+                    onChange={(e) => setSelectedCompanyId(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-10 pr-4 text-slate-200 focus:border-purple-500 outline-none transition-colors appearance-none"
+                    required
+                  >
+                    <option value="" disabled>Choose a company...</option>
+                    {availableCompanies.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  * Your request will need to be approved by an administrator.
+                </p>
+              </div>
+            )}
+
+            <Button type="submit" isLoading={isSettingUp} className="w-full py-3 mt-2">
+              {setupMode === 'create' ? 'Create & Start' : 'Request to Join'}
+            </Button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full mt-4 text-sm text-slate-500 hover:text-slate-300"
+            >
+              Sign Out
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // --- VIEW: MAIN DASHBOARD ---
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col text-slate-200 font-sans selection:bg-blue-500/30">
       <Header companyName={companyName} isDataLoading={isDataLoading} onLogout={handleLogout} />
@@ -418,19 +632,19 @@ const App: React.FC = () => {
         {/* Left Sidebar: Inputs */}
         <div className="w-80 md:w-96 bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-10">
           <div className="flex border-b border-slate-700">
-            <button 
+            <button
               onClick={() => setInputMode('products')}
               className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
               <Package size={16} /> Products
             </button>
-            <button 
+            <button
               onClick={() => setInputMode('deals')}
               className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'deals' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
               <Container size={16} /> Deals
             </button>
-            <button 
+            <button
               onClick={() => setInputMode('config')}
               className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'config' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
@@ -439,7 +653,7 @@ const App: React.FC = () => {
           </div>
 
           {inputMode === 'products' && (
-            <ProductPanel 
+            <ProductPanel
               products={products}
               newProduct={newProduct}
               setNewProduct={setNewProduct}
@@ -453,21 +667,21 @@ const App: React.FC = () => {
           )}
 
           {inputMode === 'deals' && (
-            <DealPanel 
-               deals={deals}
-               newDeal={newDeal}
-               setNewDeal={setNewDeal}
-               editingDealId={editingDealId}
-               handleSaveDeal={handleSaveDeal}
-               handleEditDeal={handleEditDeal}
-               handleRemoveDeal={handleRemoveDeal}
-               handleCancelDealEdit={handleCancelDealEdit}
-               restrictionTags={restrictionTags}
+            <DealPanel
+              deals={deals}
+              newDeal={newDeal}
+              setNewDeal={setNewDeal}
+              editingDealId={editingDealId}
+              handleSaveDeal={handleSaveDeal}
+              handleEditDeal={handleEditDeal}
+              handleRemoveDeal={handleRemoveDeal}
+              handleCancelDealEdit={handleCancelDealEdit}
+              restrictionTags={restrictionTags}
             />
           )}
 
           {inputMode === 'config' && (
-            <ConfigPanel 
+            <ConfigPanel
               templates={templates}
               newTemplate={newTemplate}
               setNewTemplate={setNewTemplate}
@@ -485,33 +699,33 @@ const App: React.FC = () => {
 
         {/* Right Content: Optimization & Results */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 relative">
-          
+
           <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-             <div className="flex flex-col md:flex-row gap-6 items-start">
-                <OptimizationControls 
-                   marginPercentage={marginPercentage}
-                   setMarginPercentage={setMarginPercentage}
-                   optimizationPriority={optimizationPriority}
-                   setOptimizationPriority={setOptimizationPriority}
-                   ignoreWeight={ignoreWeight}
-                   setIgnoreWeight={setIgnoreWeight}
-                   ignoreVolume={ignoreVolume}
-                   setIgnoreVolume={setIgnoreVolume}
-                   handleOptimization={handleOptimization}
-                   isOptimizing={isOptimizing}
-                   disabled={products.length === 0 || deals.length === 0}
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <OptimizationControls
+                marginPercentage={marginPercentage}
+                setMarginPercentage={setMarginPercentage}
+                optimizationPriority={optimizationPriority}
+                setOptimizationPriority={setOptimizationPriority}
+                ignoreWeight={ignoreWeight}
+                setIgnoreWeight={setIgnoreWeight}
+                ignoreVolume={ignoreVolume}
+                setIgnoreVolume={setIgnoreVolume}
+                handleOptimization={handleOptimization}
+                isOptimizing={isOptimizing}
+                disabled={products.length === 0 || deals.length === 0}
+              />
+
+              <div className="flex-1 w-full space-y-4">
+                <ResultsPanel
+                  result={result}
+                  deals={deals}
+                  handleDragStart={handleDragStart}
+                  handleDragOver={handleDragOver}
+                  handleDrop={handleDrop}
                 />
-                
-                <div className="flex-1 w-full space-y-4">
-                   <ResultsPanel 
-                      result={result}
-                      deals={deals}
-                      handleDragStart={handleDragStart}
-                      handleDragOver={handleDragOver}
-                      handleDrop={handleDrop}
-                   />
-                </div>
-             </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>

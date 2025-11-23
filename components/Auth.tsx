@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import { Box, Lock, Mail, Building2, ArrowRight } from 'lucide-react';
+import { Box, Lock, Mail, ArrowRight } from 'lucide-react';
 import Button from './Button';
 
 const Auth: React.FC = () => {
@@ -9,13 +9,14 @@ const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     try {
       if (isLogin) {
@@ -27,35 +28,19 @@ const Auth: React.FC = () => {
         if (error) throw error;
       } else {
         // SIGN UP FLOW
-        if (!companyName) throw new Error("Company name is required for signup");
-
-        // 1. Sign up user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
         });
+
         if (authError) throw authError;
         if (!authData.user) throw new Error("No user created");
 
-        // 2. Create Company
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .insert([{ name: companyName }])
-          .select()
-          .single();
-
-        if (companyError) throw companyError;
-
-        // 3. Create Profile linking User to Company
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: authData.user.id,
-            email: email,
-            company_id: companyData.id
-          }]);
-
-        if (profileError) throw profileError;
+        // If session is null, email confirmation is required
+        if (!authData.session) {
+          setMessage("Account created! Please check your email to confirm your account before logging in.");
+          setIsLogin(true); // Switch to login view
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -72,17 +57,23 @@ const Auth: React.FC = () => {
             <Box className="text-white" size={32} />
           </div>
         </div>
-        
+
         <h2 className="text-2xl font-bold text-white text-center mb-2">
-          {isLogin ? 'Welcome Back' : 'Create Company Account'}
+          {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
         <p className="text-slate-400 text-center mb-8 text-sm">
-          {isLogin ? 'Sign in to access your logistics dashboard' : 'Start optimizing your logistics today'}
+          {isLogin ? 'Sign in to access your logistics dashboard' : 'Sign up to start optimizing logistics'}
         </p>
 
         {error && (
           <div className="bg-red-900/30 border border-red-500/50 text-red-200 p-3 rounded-lg mb-6 text-sm text-center">
             {error}
+          </div>
+        )}
+
+        {message && (
+          <div className="bg-green-900/30 border border-green-500/50 text-green-200 p-3 rounded-lg mb-6 text-sm text-center">
+            {message}
           </div>
         )}
 
@@ -111,23 +102,9 @@ const Auth: React.FC = () => {
             />
           </div>
 
-          {!isLogin && (
-            <div className="relative animate-in fade-in slide-in-from-top-4">
-              <Building2 className="absolute left-3 top-3 text-slate-500" size={18} />
-              <input
-                type="text"
-                placeholder="Company Name"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2.5 pl-10 text-slate-200 focus:border-blue-500 outline-none transition-colors"
-                required
-              />
-            </div>
-          )}
-
-          <Button 
-            type="submit" 
-            isLoading={loading} 
+          <Button
+            type="submit"
+            isLoading={loading}
             className="w-full py-3 mt-2 text-base"
           >
             {isLogin ? 'Sign In' : 'Create Account'}
@@ -136,7 +113,7 @@ const Auth: React.FC = () => {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => { setIsLogin(!isLogin); setError(null); setMessage(null); }}
             className="text-sm text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}

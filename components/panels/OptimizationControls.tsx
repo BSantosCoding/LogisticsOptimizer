@@ -34,8 +34,8 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
   selectedCount = 0
 }) => {
   return (
-    <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-lg shrink-0">
-      <label className="text-xs text-slate-400 uppercase font-bold mb-2 block flex justify-between">
+    <div className="bg-slate-800 border-t border-slate-700 p-4 shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] z-20">
+      <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block flex justify-between">
         <span>Safety Margin</span>
         <span className="text-blue-400">{marginPercentage}%</span>
       </label>
@@ -43,57 +43,59 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
         type="range" min="0" max="50" step="1"
         value={marginPercentage}
         onChange={(e) => setMarginPercentage(Number(e.target.value))}
-        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-6 accent-blue-500"
+        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-4 accent-blue-500 block"
       />
 
-      <label className="text-xs text-slate-400 uppercase font-bold mb-2 block">Priority</label>
-      <div className="flex gap-2 mb-4">
-        {[OptimizationPriority.COST, OptimizationPriority.BALANCE, OptimizationPriority.TIME].map(p => (
-          <button
-            key={p}
-            onClick={() => setOptimizationPriority(p)}
-            className={`flex-1 py-2 text-xs rounded font-medium border ${optimizationPriority === p
-                ? 'bg-blue-600/20 border-blue-500 text-blue-300'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
-              }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-
-      <label className="text-xs text-slate-400 uppercase font-bold mb-2 block flex items-center gap-2">
-        <EyeOff size={12} /> Ignore Constraints
-      </label>
-      <div className="grid grid-cols-2 gap-2 mb-5">
-        <button
-          onClick={() => setIgnoreWeight(!ignoreWeight)}
-          className={`px-2 py-2 text-xs rounded border flex items-center justify-center gap-2 transition-colors ${ignoreWeight ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
-        >
-          <div className={`w-3 h-3 rounded-sm border ${ignoreWeight ? 'bg-red-500 border-red-500' : 'border-slate-600'}`}>
-            {ignoreWeight && <Check size={10} className="text-white" />}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block">Priority</label>
+          <div className="flex gap-1">
+            {[OptimizationPriority.COST, OptimizationPriority.BALANCE, OptimizationPriority.TIME].map(p => (
+              <button
+                key={p}
+                onClick={() => setOptimizationPriority(p)}
+                title={p}
+                className={`flex-1 py-1.5 text-[10px] rounded font-medium border text-center ${optimizationPriority === p
+                    ? 'bg-blue-600/20 border-blue-500 text-blue-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                  }`}
+              >
+                {p === OptimizationPriority.BALANCE ? 'Bal' : p}
+              </button>
+            ))}
           </div>
-          Weight Limit
-        </button>
-        <button
-          onClick={() => setIgnoreVolume(!ignoreVolume)}
-          className={`px-2 py-2 text-xs rounded border flex items-center justify-center gap-2 transition-colors ${ignoreVolume ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
-        >
-          <div className={`w-3 h-3 rounded-sm border ${ignoreVolume ? 'bg-red-500 border-red-500' : 'border-slate-600'}`}>
-            {ignoreVolume && <Check size={10} className="text-white" />}
+        </div>
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block flex items-center gap-1">
+            <EyeOff size={10} /> Ignore
+          </label>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setIgnoreWeight(!ignoreWeight)}
+              title="Ignore Weight Limit"
+              className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreWeight ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
+            >
+              Weight
+            </button>
+            <button
+              onClick={() => setIgnoreVolume(!ignoreVolume)}
+              title="Ignore Volume Limit"
+              className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreVolume ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
+            >
+              Vol
+            </button>
           </div>
-          Volume Limit
-        </button>
+        </div>
       </div>
 
       <Button
         onClick={handleOptimization}
         isLoading={isOptimizing}
         disabled={disabled}
-        className="w-full flex items-center justify-center gap-2"
+        className="w-full flex items-center justify-center gap-2 py-2.5 text-sm"
       >
-        <Zap size={18} />
-        {selectedCount > 0 ? `Plan (${selectedCount} Selected)` : 'Calculate Plan (All)'}
+        <Zap size={16} />
+        {selectedCount > 0 ? `Plan (${selectedCount})` : 'Calculate Plan'}
       </Button>
     </div>
   );

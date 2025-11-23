@@ -21,7 +21,7 @@ import DealPanel from './components/panels/DealPanel';
 import ConfigPanel from './components/panels/ConfigPanel';
 import OptimizationControls from './components/panels/OptimizationControls';
 import ResultsPanel from './components/panels/ResultsPanel';
-import ManagementPanel from './components/panels/ManagementPanel'; // New
+import ManagementPanel from './components/panels/ManagementPanel';
 import { supabase } from './services/supabase';
 import { optimizeLogistics } from './services/geminiService';
 import { validateLoadedDeal } from './services/logisticsEngine';
@@ -441,6 +441,8 @@ const App: React.FC = () => {
       else next.add(id);
       return next;
     });
+    // Invalidate results when selection changes if you want real-time staging update
+    setResult(null);
   };
 
   const toggleDealSelection = (id: string) => {
@@ -450,6 +452,8 @@ const App: React.FC = () => {
       else next.add(id);
       return next;
     });
+    // Invalidate results when selection changes
+    setResult(null);
   };
 
   // --- Configuration Handlers ---
@@ -725,7 +729,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full">
         {/* Left Sidebar: Inputs */}
         <div className="w-80 md:w-96 bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-10">
-          <div className="flex border-b border-slate-700 overflow-x-auto">
+          <div className="flex border-b border-slate-700 overflow-x-auto shrink-0">
             <button
               onClick={() => setInputMode('products')}
               className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
@@ -756,91 +760,94 @@ const App: React.FC = () => {
             )}
           </div>
 
-          {inputMode === 'products' && (
-            <ProductPanel
-              products={products}
-              newProduct={newProduct}
-              setNewProduct={setNewProduct}
-              editingProductId={editingProductId}
-              handleSaveProduct={handleSaveProduct}
-              handleEditProduct={handleEditProduct}
-              handleRemoveProduct={handleRemoveProduct}
-              handleCancelProductEdit={handleCancelProductEdit}
-              restrictionTags={restrictionTags}
-              selectedProductIds={selectedProductIds}
-              toggleProductSelection={toggleProductSelection}
-            />
-          )}
+          <div className="flex-1 flex flex-col min-h-0">
+            {inputMode === 'products' && (
+              <ProductPanel
+                products={products}
+                newProduct={newProduct}
+                setNewProduct={setNewProduct}
+                editingProductId={editingProductId}
+                handleSaveProduct={handleSaveProduct}
+                handleEditProduct={handleEditProduct}
+                handleRemoveProduct={handleRemoveProduct}
+                handleCancelProductEdit={handleCancelProductEdit}
+                restrictionTags={restrictionTags}
+                selectedProductIds={selectedProductIds}
+                toggleProductSelection={toggleProductSelection}
+              />
+            )}
 
-          {inputMode === 'deals' && (
-            <DealPanel
-              deals={deals}
-              newDeal={newDeal}
-              setNewDeal={setNewDeal}
-              editingDealId={editingDealId}
-              handleSaveDeal={handleSaveDeal}
-              handleEditDeal={handleEditDeal}
-              handleRemoveDeal={handleRemoveDeal}
-              handleCancelDealEdit={handleCancelDealEdit}
-              restrictionTags={restrictionTags}
-              selectedDealIds={selectedDealIds}
-              toggleDealSelection={toggleDealSelection}
-            />
-          )}
+            {inputMode === 'deals' && (
+              <DealPanel
+                deals={deals}
+                newDeal={newDeal}
+                setNewDeal={setNewDeal}
+                editingDealId={editingDealId}
+                handleSaveDeal={handleSaveDeal}
+                handleEditDeal={handleEditDeal}
+                handleRemoveDeal={handleRemoveDeal}
+                handleCancelDealEdit={handleCancelDealEdit}
+                restrictionTags={restrictionTags}
+                selectedDealIds={selectedDealIds}
+                toggleDealSelection={toggleDealSelection}
+              />
+            )}
 
-          {inputMode === 'config' && (
-            <ConfigPanel
-              templates={templates}
-              newTemplate={newTemplate}
-              setNewTemplate={setNewTemplate}
-              handleAddTemplate={handleAddTemplate}
-              handleRemoveTemplate={handleRemoveTemplate}
-              applyTemplate={applyTemplate}
-              restrictionTags={restrictionTags}
-              newTag={newTag}
-              setNewTag={setNewTag}
-              handleAddTag={handleAddTag}
-              handleRemoveTag={handleRemoveTag}
-              DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
-              userRole={userRole}
-            />
-          )}
+            {inputMode === 'config' && (
+              <ConfigPanel
+                templates={templates}
+                newTemplate={newTemplate}
+                setNewTemplate={setNewTemplate}
+                handleAddTemplate={handleAddTemplate}
+                handleRemoveTemplate={handleRemoveTemplate}
+                applyTemplate={applyTemplate}
+                restrictionTags={restrictionTags}
+                newTag={newTag}
+                setNewTag={setNewTag}
+                handleAddTag={handleAddTag}
+                handleRemoveTag={handleRemoveTag}
+                DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
+                userRole={userRole}
+              />
+            )}
 
-          {inputMode === 'team' && userRole === 'admin' && (
-            <ManagementPanel currentUserId={session.user.id} />
-          )}
+            {inputMode === 'team' && userRole === 'admin' && (
+              <ManagementPanel currentUserId={session.user.id} />
+            )}
+          </div>
+
+          {/* Optimization Controls Moved to Sidebar Footer */}
+          <OptimizationControls
+            marginPercentage={marginPercentage}
+            setMarginPercentage={setMarginPercentage}
+            optimizationPriority={optimizationPriority}
+            setOptimizationPriority={setOptimizationPriority}
+            ignoreWeight={ignoreWeight}
+            setIgnoreWeight={setIgnoreWeight}
+            ignoreVolume={ignoreVolume}
+            setIgnoreVolume={setIgnoreVolume}
+            handleOptimization={handleOptimization}
+            isOptimizing={isOptimizing}
+            disabled={products.length === 0 || deals.length === 0}
+            selectedCount={selectedProductIds.size + selectedDealIds.size}
+          />
         </div>
 
-        {/* Right Content: Optimization & Results */}
+        {/* Right Content: Results Only */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 relative">
-
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <OptimizationControls
-                marginPercentage={marginPercentage}
-                setMarginPercentage={setMarginPercentage}
-                optimizationPriority={optimizationPriority}
-                setOptimizationPriority={setOptimizationPriority}
-                ignoreWeight={ignoreWeight}
-                setIgnoreWeight={setIgnoreWeight}
-                ignoreVolume={ignoreVolume}
-                setIgnoreVolume={setIgnoreVolume}
-                handleOptimization={handleOptimization}
-                isOptimizing={isOptimizing}
-                disabled={products.length === 0 || deals.length === 0}
-                selectedCount={selectedProductIds.size + selectedDealIds.size}
-              />
-
-              <div className="flex-1 w-full space-y-4">
-                <ResultsPanel
-                  result={result}
-                  deals={deals}
-                  handleDragStart={handleDragStart}
-                  handleDragOver={handleDragOver}
-                  handleDrop={handleDrop}
-                />
-              </div>
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 md:p-8">
+            <ResultsPanel
+              result={result}
+              deals={deals}
+              products={products}
+              selectedProductIds={selectedProductIds}
+              selectedDealIds={selectedDealIds}
+              toggleProductSelection={toggleProductSelection}
+              toggleDealSelection={toggleDealSelection}
+              handleDragStart={handleDragStart}
+              handleDragOver={handleDragOver}
+              handleDrop={handleDrop}
+            />
           </div>
         </div>
       </main>

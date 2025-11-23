@@ -105,7 +105,7 @@ const App: React.FC = () => {
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
 
   // Settings
-  const [optimizationPriority, setOptimizationPriority] = useState<OptimizationPriority>(OptimizationPriority.BALANCE);
+
   const [marginPercentage, setMarginPercentage] = useState<number>(10);
   const [ignoreWeight, setIgnoreWeight] = useState<boolean>(false);
   const [ignoreVolume, setIgnoreVolume] = useState<boolean>(false);
@@ -470,7 +470,7 @@ const App: React.FC = () => {
       });
 
       setResults(newResults as Record<OptimizationPriority, OptimizationResult>);
-      setActivePriority(optimizationPriority);
+      setActivePriority(OptimizationPriority.BALANCE);
       setIsOptimizing(false);
     }, 100);
   };
@@ -693,21 +693,21 @@ const App: React.FC = () => {
           newAssignments.push(newLoadedDeal);
         }
       }
+    }
 
-      setDraggedProductId(null);
+    setDraggedProductId(null);
 
-      const totalCost = newAssignments.reduce((sum, a) => sum + a.deal.cost, 0);
+    const totalCost = newAssignments.reduce((sum, a) => sum + a.deal.cost, 0);
 
-      setResults({
-        ...results,
-        [activePriority]: {
-          ...currentResult,
-          assignments: newAssignments,
-          unassignedProducts: newUnassigned,
-          totalCost
-        }
-      });
-    };
+    setResults({
+      ...results,
+      [activePriority]: {
+        ...currentResult,
+        assignments: newAssignments,
+        unassignedProducts: newUnassigned,
+        totalCost
+      }
+    });
   };
 
   if (loadingSession) {
@@ -905,8 +905,6 @@ const App: React.FC = () => {
           <OptimizationControls
             marginPercentage={marginPercentage}
             setMarginPercentage={setMarginPercentage}
-            optimizationPriority={optimizationPriority}
-            setOptimizationPriority={setOptimizationPriority}
             ignoreWeight={ignoreWeight}
             setIgnoreWeight={setIgnoreWeight}
             ignoreVolume={ignoreVolume}

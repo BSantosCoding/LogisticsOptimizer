@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search, Filter, MapPin } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search, Filter, MapPin, ChevronDown } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
@@ -135,13 +135,6 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={handleSaveProduct}
-            className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingProductId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-          >
-            {editingProductId ? <><Save size={16} className="mr-2" /> Update Product</> : <><Plus size={16} className="mr-2" /> Add Product</>}
-          </button>
-
           <div>
             <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
             <RestrictionSelector
@@ -150,31 +143,39 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               onChange={r => setNewProduct({ ...newProduct, restrictions: r })}
             />
           </div>
+
+          <button
+            onClick={handleSaveProduct}
+            className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingProductId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+          >
+            {editingProductId ? <><Save size={16} className="mr-2" /> Update Product</> : <><Plus size={16} className="mr-2" /> Add Product</>}
+          </button>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 text-slate-500" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input
             type="text"
             placeholder="Search name or dest..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
           />
         </div>
-        <div className="relative w-1/3 min-w-[100px]">
-          <Filter className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+        <div className="relative w-[140px] shrink-0">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <select
             value={selectedTagFilter}
             onChange={e => setSelectedTagFilter(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 pr-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
           >
             <option value="">All Tags</option>
             {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
         </div>
       </div>
 

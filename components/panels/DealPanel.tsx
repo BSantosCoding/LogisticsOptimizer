@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Deal } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Scale, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Scale, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface DealPanelProps {
@@ -45,13 +45,14 @@ const DealPanel: React.FC<DealPanelProps> = ({
   return (
     <>
       <div className={`p-4 border-b border-slate-700 z-10 ${editingDealId ? 'bg-blue-900/10' : 'bg-slate-800'}`}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {editingDealId && (
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> Editing Deal</span>
               <button onClick={handleCancelDealEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> Cancel</button>
             </div>
           )}
+
           <div className="flex gap-2">
             <input
               placeholder="Carrier Name"
@@ -66,6 +67,7 @@ const DealPanel: React.FC<DealPanelProps> = ({
               className="w-1/3 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
             />
           </div>
+
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input type="number" placeholder="Max Kg" value={newDeal.maxWeightKg || ''} onChange={e => setNewDeal({ ...newDeal, maxWeightKg: Number(e.target.value) })} className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none pl-8 text-slate-200" />
@@ -76,6 +78,7 @@ const DealPanel: React.FC<DealPanelProps> = ({
               <Box size={12} className="absolute left-2.5 top-3 text-slate-500" />
             </div>
           </div>
+
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input type="number" placeholder="Cost" value={newDeal.cost || ''} onChange={e => setNewDeal({ ...newDeal, cost: Number(e.target.value) })} className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none pl-7 text-slate-200" />
@@ -86,17 +89,12 @@ const DealPanel: React.FC<DealPanelProps> = ({
               <Clock size={12} className="absolute left-2.5 top-3 text-slate-500" />
             </div>
           </div>
+
           <div className="flex gap-2">
             <input placeholder="Destination (Empty = Any)" value={newDeal.destination} onChange={e => setNewDeal({ ...newDeal, destination: e.target.value })} className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200" />
             <input type="date" value={newDeal.availableFrom} onChange={e => setNewDeal({ ...newDeal, availableFrom: e.target.value })} className="w-1/3 bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm focus:border-blue-500 outline-none text-slate-400" />
-            <button
-              onClick={handleSaveDeal}
-              className={`px-3 rounded flex items-center justify-center transition-colors ${editingDealId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-              title={editingDealId ? "Update Deal" : "Add Deal"}
-            >
-              {editingDealId ? <Save size={18} /> : <Plus size={18} />}
-            </button>
           </div>
+
           <div>
             <span className="text-xs text-slate-500 uppercase font-bold">Capabilities</span>
             <RestrictionSelector
@@ -105,31 +103,39 @@ const DealPanel: React.FC<DealPanelProps> = ({
               onChange={r => setNewDeal({ ...newDeal, restrictions: r })}
             />
           </div>
+
+          <button
+            onClick={handleSaveDeal}
+            className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingDealId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+          >
+            {editingDealId ? <><Save size={16} className="mr-2" /> Update Deal</> : <><Plus size={16} className="mr-2" /> Add Deal</>}
+          </button>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 text-slate-500" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <input
             type="text"
             placeholder="Search deals..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
           />
         </div>
-        <div className="relative w-1/3 min-w-[100px]">
-          <Filter className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+        <div className="relative w-[140px] shrink-0">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
           <select
             value={selectedTagFilter}
             onChange={e => setSelectedTagFilter(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 pr-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
           >
             <option value="">All Caps</option>
             {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
         </div>
       </div>
 

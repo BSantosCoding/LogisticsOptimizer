@@ -708,342 +708,342 @@ const App: React.FC = () => {
         }
       });
     };
+  };
 
-    if (loadingSession) {
-      return <div className="h-screen flex items-center justify-center bg-slate-900 text-slate-400">Loading...</div>;
-    }
+  if (loadingSession) {
+    return <div className="h-screen flex items-center justify-center bg-slate-900 text-slate-400">Loading...</div>;
+  }
 
-    if (!session) {
-      return <Auth />;
-    }
+  if (!session) {
+    return <Auth />;
+  }
 
-    // --- VIEW: PENDING APPROVAL ---
-    if (approvalStatus === 'pending') {
-      return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-          <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md text-center">
-            <div className="flex justify-center mb-6">
-              <div className="bg-orange-500/10 p-4 rounded-full border border-orange-500/20">
-                <Clock className="text-orange-400" size={48} />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Access Pending</h2>
-            <p className="text-slate-400 mb-6">
-              Your request to join <strong>{companyName}</strong> has been sent. <br />
-              An administrator must approve your account.
-            </p>
-            <div className="space-y-3">
-              <Button onClick={handleCheckStatus} isLoading={isDataLoading} className="w-full">
-                <RefreshCw size={16} className="mr-2" /> Check Status
-              </Button>
-              <div className="flex gap-2">
-                <button onClick={handleSwitchWorkspace} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
-                  <Repeat size={14} /> Change Workspace
-                </button>
-                <button onClick={handleLogout} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
-                  <LogOut size={14} /> Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // --- VIEW: SETUP / ONBOARDING ---
-    if (isSetupRequired) {
-      return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-          {/* ... (Existing setup code remains the same, keeping it brief for this block) ... */}
-          <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md">
-            <div className="flex justify-center mb-6">
-              <div className="bg-purple-600 p-3 rounded-xl shadow-lg shadow-purple-900/30">
-                <Building2 className="text-white" size={32} />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Aboard</h2>
-            {/* ... (Rest of setup UI) ... */}
-            <form onSubmit={handleCompleteSetup}>
-              {/* ... Inputs ... */}
-              <div className="mb-4">
-                {setupMode === 'create' ? (
-                  <input
-                    type="text"
-                    placeholder="Company Name"
-                    value={setupCompanyName}
-                    onChange={(e) => setSetupCompanyName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
-                    required
-                  />
-                ) : (
-                  <select
-                    value={selectedCompanyId}
-                    onChange={(e) => setSelectedCompanyId(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
-                    required
-                  >
-                    <option value="" disabled>Choose a company...</option>
-                    {availableCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                )}
-              </div>
-              <Button type="submit" isLoading={isSettingUp} className="w-full py-3 mt-2">
-                {setupMode === 'create' ? 'Create & Start' : 'Request to Join'}
-              </Button>
-              <button type="button" onClick={handleLogout} className="w-full mt-4 text-sm text-slate-500">Sign Out</button>
-            </form>
-          </div>
-        </div>
-      );
-    }
-
-    // --- VIEW: MAIN DASHBOARD ---
+  // --- VIEW: PENDING APPROVAL ---
+  if (approvalStatus === 'pending') {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col text-slate-200 font-sans selection:bg-blue-500/30">
-        <Header
-          companyName={companyName}
-          userRole={userRole}
-          isDataLoading={isDataLoading}
-          onLogout={handleLogout}
-          onSwitchWorkspace={handleSwitchWorkspace}
-        />
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md text-center">
+          <div className="flex justify-center mb-6">
+            <div className="bg-orange-500/10 p-4 rounded-full border border-orange-500/20">
+              <Clock className="text-orange-400" size={48} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Access Pending</h2>
+          <p className="text-slate-400 mb-6">
+            Your request to join <strong>{companyName}</strong> has been sent. <br />
+            An administrator must approve your account.
+          </p>
+          <div className="space-y-3">
+            <Button onClick={handleCheckStatus} isLoading={isDataLoading} className="w-full">
+              <RefreshCw size={16} className="mr-2" /> Check Status
+            </Button>
+            <div className="flex gap-2">
+              <button onClick={handleSwitchWorkspace} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
+                <Repeat size={14} /> Change Workspace
+              </button>
+              <button onClick={handleLogout} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-        <main className="flex-1 flex overflow-hidden max-w-[1920px] mx-auto w-full">
-          {/* Left Sidebar: Controls & Inputs */}
-          <div className="w-80 md:w-96 bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-20">
-            <div className="flex border-b border-slate-700 overflow-x-auto shrink-0 scrollbar-hide">
-              <button
-                onClick={() => handleTabChange('products')}
-                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
-              >
-                <Package size={16} /> Products
-              </button>
-              <button
-                onClick={() => handleTabChange('deals')}
-                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'deals' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
-              >
-                <Container size={16} /> Deals
-              </button>
-              <button
-                onClick={() => handleTabChange('config')}
-                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'config' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
-              >
-                <Settings size={16} /> Config
-              </button>
-
-              {userRole === 'admin' && (
-                <button
-                  onClick={() => handleTabChange('team')}
-                  className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'team' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+  // --- VIEW: SETUP / ONBOARDING ---
+  if (isSetupRequired) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        {/* ... (Existing setup code remains the same, keeping it brief for this block) ... */}
+        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md">
+          <div className="flex justify-center mb-6">
+            <div className="bg-purple-600 p-3 rounded-xl shadow-lg shadow-purple-900/30">
+              <Building2 className="text-white" size={32} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Aboard</h2>
+          {/* ... (Rest of setup UI) ... */}
+          <form onSubmit={handleCompleteSetup}>
+            {/* ... Inputs ... */}
+            <div className="mb-4">
+              {setupMode === 'create' ? (
+                <input
+                  type="text"
+                  placeholder="Company Name"
+                  value={setupCompanyName}
+                  onChange={(e) => setSetupCompanyName(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
+                  required
+                />
+              ) : (
+                <select
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
+                  required
                 >
-                  <Users size={16} /> Team
-                </button>
+                  <option value="" disabled>Choose a company...</option>
+                  {availableCompanies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
               )}
             </div>
+            <Button type="submit" isLoading={isSettingUp} className="w-full py-3 mt-2">
+              {setupMode === 'create' ? 'Create & Start' : 'Request to Join'}
+            </Button>
+            <button type="button" onClick={handleLogout} className="w-full mt-4 text-sm text-slate-500">Sign Out</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              {inputMode === 'products' && (
-                <ProductPanel
-                  viewMode="form"
-                  products={products}
-                  newProduct={newProduct}
-                  setNewProduct={setNewProduct}
-                  editingProductId={editingProductId}
-                  handleSaveProduct={handleSaveProduct}
-                  handleEditProduct={handleEditProduct}
-                  handleRemoveProduct={handleRemoveProduct}
-                  handleCancelProductEdit={handleCancelProductEdit}
-                  restrictionTags={restrictionTags}
-                  selectedProductIds={selectedProductIds}
-                  toggleProductSelection={toggleProductSelection}
-                />
-              )}
+  // --- VIEW: MAIN DASHBOARD ---
+  return (
+    <div className="min-h-screen bg-slate-900 flex flex-col text-slate-200 font-sans selection:bg-blue-500/30">
+      <Header
+        companyName={companyName}
+        userRole={userRole}
+        isDataLoading={isDataLoading}
+        onLogout={handleLogout}
+        onSwitchWorkspace={handleSwitchWorkspace}
+      />
 
-              {inputMode === 'deals' && (
-                <DealPanel
-                  viewMode="form"
-                  deals={deals}
-                  newDeal={newDeal}
-                  setNewDeal={setNewDeal}
-                  editingDealId={editingDealId}
-                  handleSaveDeal={handleSaveDeal}
-                  handleEditDeal={handleEditDeal}
-                  handleRemoveDeal={handleRemoveDeal}
-                  handleCancelDealEdit={handleCancelDealEdit}
-                  restrictionTags={restrictionTags}
-                  selectedDealIds={selectedDealIds}
-                  toggleDealSelection={toggleDealSelection}
-                />
-              )}
+      <main className="flex-1 flex overflow-hidden max-w-[1920px] mx-auto w-full">
+        {/* Left Sidebar: Controls & Inputs */}
+        <div className="w-80 md:w-96 bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-20">
+          <div className="flex border-b border-slate-700 overflow-x-auto shrink-0 scrollbar-hide">
+            <button
+              onClick={() => handleTabChange('products')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+            >
+              <Package size={16} /> Products
+            </button>
+            <button
+              onClick={() => handleTabChange('deals')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'deals' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+            >
+              <Container size={16} /> Deals
+            </button>
+            <button
+              onClick={() => handleTabChange('config')}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'config' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+            >
+              <Settings size={16} /> Config
+            </button>
 
-              {inputMode === 'config' && (
-                <ConfigPanel
-                  viewMode="form"
-                  templates={templates}
-                  newTemplate={newTemplate}
-                  setNewTemplate={setNewTemplate}
-                  handleAddTemplate={handleAddTemplate}
-                  handleRemoveTemplate={handleRemoveTemplate}
-                  applyTemplate={applyTemplate}
-                  restrictionTags={restrictionTags}
-                  newTag={newTag}
-                  setNewTag={setNewTag}
-                  handleAddTag={handleAddTag}
-                  handleRemoveTag={handleRemoveTag}
-                  DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
-                  userRole={userRole}
-                />
-              )}
-
-              {inputMode === 'team' && userRole === 'admin' && (
-                <ManagementPanel viewMode="summary" currentUserId={session.user.id} />
-              )}
-            </div>
-
-            {/* Optimization Controls Footer */}
-            <OptimizationControls
-              marginPercentage={marginPercentage}
-              setMarginPercentage={setMarginPercentage}
-              optimizationPriority={optimizationPriority}
-              setOptimizationPriority={setOptimizationPriority}
-              ignoreWeight={ignoreWeight}
-              setIgnoreWeight={setIgnoreWeight}
-              ignoreVolume={ignoreVolume}
-              setIgnoreVolume={setIgnoreVolume}
-              handleOptimization={handleOptimization}
-              isOptimizing={isOptimizing}
-              disabled={products.length === 0 || deals.length === 0}
-              selectedCount={selectedProductIds.size + selectedDealIds.size}
-            />
+            {userRole === 'admin' && (
+              <button
+                onClick={() => handleTabChange('team')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'team' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+              >
+                <Users size={16} /> Team
+              </button>
+            )}
           </div>
 
-          {/* Right Content: Lists or Results */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 relative">
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            {inputMode === 'products' && (
+              <ProductPanel
+                viewMode="form"
+                products={products}
+                newProduct={newProduct}
+                setNewProduct={setNewProduct}
+                editingProductId={editingProductId}
+                handleSaveProduct={handleSaveProduct}
+                handleEditProduct={handleEditProduct}
+                handleRemoveProduct={handleRemoveProduct}
+                handleCancelProductEdit={handleCancelProductEdit}
+                restrictionTags={restrictionTags}
+                selectedProductIds={selectedProductIds}
+                toggleProductSelection={toggleProductSelection}
+              />
+            )}
 
-            {/* Top Toolbar */}
-            <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold text-white">
-                  {viewMode === 'results' ? (results ? 'Optimization Plan' : 'Staging Area') :
-                    (inputMode === 'products' ? 'Products' :
-                      inputMode === 'deals' ? 'Deals' :
-                        inputMode === 'config' ? 'Configuration' : 'Team Management')}
-                </h2>
-              </div>
+            {inputMode === 'deals' && (
+              <DealPanel
+                viewMode="form"
+                deals={deals}
+                newDeal={newDeal}
+                setNewDeal={setNewDeal}
+                editingDealId={editingDealId}
+                handleSaveDeal={handleSaveDeal}
+                handleEditDeal={handleEditDeal}
+                handleRemoveDeal={handleRemoveDeal}
+                handleCancelDealEdit={handleCancelDealEdit}
+                restrictionTags={restrictionTags}
+                selectedDealIds={selectedDealIds}
+                toggleDealSelection={toggleDealSelection}
+              />
+            )}
 
-              <div className="flex items-center gap-2">
-                {(selectedProductIds.size > 0 || selectedDealIds.size > 0 || results) && (
-                  <div className="bg-slate-900 p-1 rounded-lg border border-slate-700 flex text-sm">
-                    <button
-                      onClick={() => setViewMode('data')}
-                      className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-2 ${viewMode === 'data' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                    >
-                      <Database size={14} /> Data
-                    </button>
-                    <button
-                      onClick={() => setViewMode('results')}
-                      className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-2 ${viewMode === 'results' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                    >
-                      {results ? <Zap size={14} /> : <Layers size={14} />}
-                      {results ? 'Plan' : 'Staging'}
-                      <span className="bg-black/20 px-1.5 rounded text-[10px]">
-                        {selectedProductIds.size + selectedDealIds.size}
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
+            {inputMode === 'config' && (
+              <ConfigPanel
+                viewMode="form"
+                templates={templates}
+                newTemplate={newTemplate}
+                setNewTemplate={setNewTemplate}
+                handleAddTemplate={handleAddTemplate}
+                handleRemoveTemplate={handleRemoveTemplate}
+                applyTemplate={applyTemplate}
+                restrictionTags={restrictionTags}
+                newTag={newTag}
+                setNewTag={setNewTag}
+                handleAddTag={handleAddTag}
+                handleRemoveTag={handleRemoveTag}
+                DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
+                userRole={userRole}
+              />
+            )}
+
+            {inputMode === 'team' && userRole === 'admin' && (
+              <ManagementPanel viewMode="summary" currentUserId={session.user.id} />
+            )}
+          </div>
+
+          {/* Optimization Controls Footer */}
+          <OptimizationControls
+            marginPercentage={marginPercentage}
+            setMarginPercentage={setMarginPercentage}
+            optimizationPriority={optimizationPriority}
+            setOptimizationPriority={setOptimizationPriority}
+            ignoreWeight={ignoreWeight}
+            setIgnoreWeight={setIgnoreWeight}
+            ignoreVolume={ignoreVolume}
+            setIgnoreVolume={setIgnoreVolume}
+            handleOptimization={handleOptimization}
+            isOptimizing={isOptimizing}
+            disabled={products.length === 0 || deals.length === 0}
+            selectedCount={selectedProductIds.size + selectedDealIds.size}
+          />
+        </div>
+
+        {/* Right Content: Lists or Results */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-900 relative">
+
+          {/* Top Toolbar */}
+          <div className="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-white">
+                {viewMode === 'results' ? (results ? 'Optimization Plan' : 'Staging Area') :
+                  (inputMode === 'products' ? 'Products' :
+                    inputMode === 'deals' ? 'Deals' :
+                      inputMode === 'config' ? 'Configuration' : 'Team Management')}
+              </h2>
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-              {viewMode === 'results' && (
-                <ResultsPanel
-                  results={results}
-                  activePriority={activePriority}
-                  setActivePriority={setActivePriority}
-                  deals={deals}
-                  products={products}
-                  selectedProductIds={selectedProductIds}
-                  selectedDealIds={selectedDealIds}
-                  toggleProductSelection={toggleProductSelection}
-                  toggleDealSelection={toggleDealSelection}
-                  handleDragStart={handleDragStart}
-                  handleDragOver={handleDragOver}
-                  handleDrop={handleDrop}
-                  draggedProductId={draggedProductId}
-                />
-              )}
-              {viewMode !== 'results' && (
-                <div className="animate-in fade-in zoom-in-95 duration-200">
-                  {inputMode === 'products' && (
-                    <ProductPanel
-                      viewMode="list"
-                      products={products}
-                      newProduct={newProduct}
-                      setNewProduct={setNewProduct}
-                      editingProductId={editingProductId}
-                      handleSaveProduct={handleSaveProduct}
-                      handleEditProduct={handleEditProduct}
-                      handleRemoveProduct={handleRemoveProduct}
-                      handleCancelProductEdit={handleCancelProductEdit}
-                      restrictionTags={restrictionTags}
-                      selectedProductIds={selectedProductIds}
-                      toggleProductSelection={toggleProductSelection}
-                      onImport={handleImportProducts}
-                      onClearAll={handleClearProducts}
-                    />
-                  )}
-
-                  {inputMode === 'deals' && (
-                    <DealPanel
-                      viewMode="list"
-                      deals={deals}
-                      newDeal={newDeal}
-                      setNewDeal={setNewDeal}
-                      editingDealId={editingDealId}
-                      handleSaveDeal={handleSaveDeal}
-                      handleEditDeal={handleEditDeal}
-                      handleRemoveDeal={handleRemoveDeal}
-                      handleCancelDealEdit={handleCancelDealEdit}
-                      restrictionTags={restrictionTags}
-                      selectedDealIds={selectedDealIds}
-                      toggleDealSelection={toggleDealSelection}
-                      onImport={handleImportDeals}
-                      onClearAll={handleClearDeals}
-                    />
-                  )}
-
-                  {inputMode === 'config' && (
-                    <ConfigPanel
-                      viewMode="list"
-                      templates={templates}
-                      newTemplate={newTemplate}
-                      setNewTemplate={setNewTemplate}
-                      handleAddTemplate={handleAddTemplate}
-                      handleRemoveTemplate={handleRemoveTemplate}
-                      applyTemplate={applyTemplate}
-                      restrictionTags={restrictionTags}
-                      newTag={newTag}
-                      setNewTag={setNewTag}
-                      handleAddTag={handleAddTag}
-                      handleRemoveTag={handleRemoveTag}
-                      DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
-                      userRole={userRole}
-                    />
-                  )}
-
-                  {inputMode === 'team' && userRole === 'admin' && (
-                    <ManagementPanel viewMode="list" currentUserId={session.user.id} />
-                  )}
+            <div className="flex items-center gap-2">
+              {(selectedProductIds.size > 0 || selectedDealIds.size > 0 || results) && (
+                <div className="bg-slate-900 p-1 rounded-lg border border-slate-700 flex text-sm">
+                  <button
+                    onClick={() => setViewMode('data')}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-2 ${viewMode === 'data' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    <Database size={14} /> Data
+                  </button>
+                  <button
+                    onClick={() => setViewMode('results')}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-2 ${viewMode === 'results' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                  >
+                    {results ? <Zap size={14} /> : <Layers size={14} />}
+                    {results ? 'Plan' : 'Staging'}
+                    <span className="bg-black/20 px-1.5 rounded text-[10px]">
+                      {selectedProductIds.size + selectedDealIds.size}
+                    </span>
+                  </button>
                 </div>
               )}
             </div>
           </div>
-        </main>
-      </div>
-    );
-  };
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            {viewMode === 'results' && (
+              <ResultsPanel
+                results={results}
+                activePriority={activePriority}
+                setActivePriority={setActivePriority}
+                deals={deals}
+                products={products}
+                selectedProductIds={selectedProductIds}
+                selectedDealIds={selectedDealIds}
+                toggleProductSelection={toggleProductSelection}
+                toggleDealSelection={toggleDealSelection}
+                handleDragStart={handleDragStart}
+                handleDragOver={handleDragOver}
+                handleDrop={handleDrop}
+                draggedProductId={draggedProductId}
+              />
+            )}
+            {viewMode !== 'results' && (
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                {inputMode === 'products' && (
+                  <ProductPanel
+                    viewMode="list"
+                    products={products}
+                    newProduct={newProduct}
+                    setNewProduct={setNewProduct}
+                    editingProductId={editingProductId}
+                    handleSaveProduct={handleSaveProduct}
+                    handleEditProduct={handleEditProduct}
+                    handleRemoveProduct={handleRemoveProduct}
+                    handleCancelProductEdit={handleCancelProductEdit}
+                    restrictionTags={restrictionTags}
+                    selectedProductIds={selectedProductIds}
+                    toggleProductSelection={toggleProductSelection}
+                    onImport={handleImportProducts}
+                    onClearAll={handleClearProducts}
+                  />
+                )}
+
+                {inputMode === 'deals' && (
+                  <DealPanel
+                    viewMode="list"
+                    deals={deals}
+                    newDeal={newDeal}
+                    setNewDeal={setNewDeal}
+                    editingDealId={editingDealId}
+                    handleSaveDeal={handleSaveDeal}
+                    handleEditDeal={handleEditDeal}
+                    handleRemoveDeal={handleRemoveDeal}
+                    handleCancelDealEdit={handleCancelDealEdit}
+                    restrictionTags={restrictionTags}
+                    selectedDealIds={selectedDealIds}
+                    toggleDealSelection={toggleDealSelection}
+                    onImport={handleImportDeals}
+                    onClearAll={handleClearDeals}
+                  />
+                )}
+
+                {inputMode === 'config' && (
+                  <ConfigPanel
+                    viewMode="list"
+                    templates={templates}
+                    newTemplate={newTemplate}
+                    setNewTemplate={setNewTemplate}
+                    handleAddTemplate={handleAddTemplate}
+                    handleRemoveTemplate={handleRemoveTemplate}
+                    applyTemplate={applyTemplate}
+                    restrictionTags={restrictionTags}
+                    newTag={newTag}
+                    setNewTag={setNewTag}
+                    handleAddTag={handleAddTag}
+                    handleRemoveTag={handleRemoveTag}
+                    DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
+                    userRole={userRole}
+                  />
+                )}
+
+                {inputMode === 'team' && userRole === 'admin' && (
+                  <ManagementPanel viewMode="list" currentUserId={session.user.id} />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
 export default App;

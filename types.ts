@@ -4,6 +4,7 @@ export interface Product {
   name: string;
   weightKg: number;
   volumeM3: number;
+  destination?: string; // Added
   restrictions: string[]; // e.g., "Temperature Controlled", "Hazmat Class 3"
   readyDate?: string; // YYYY-MM-DD (Product ready to ship)
   shipDeadline?: string; // YYYY-MM-DD

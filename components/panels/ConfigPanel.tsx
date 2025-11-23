@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { Copy, Plus, ShieldAlert, Trash2, Lock, Search } from 'lucide-react';
+import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ConfigPanelProps {
@@ -34,11 +34,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   userRole
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const canManageConfig = userRole === 'admin' || userRole === 'manager';
 
-  const filteredTemplates = templates.filter(t =>
-    t.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTemplates = templates.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTag = selectedTagFilter ? t.restrictions.includes(selectedTagFilter) : true;
+    return matchesSearch && matchesTag;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -56,15 +59,27 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 placeholder="Template Name"
                 value={newTemplate.name}
                 onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none text-slate-200 h-8"
+                className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-9"
               />
-              <input type="number" placeholder="kg" className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 h-8" value={newTemplate.weightKg || ''} onChange={e => setNewTemplate({ ...newTemplate, weightKg: Number(e.target.value) })} />
-              <input type="number" placeholder="m³" className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 h-8" value={newTemplate.volumeM3 || ''} onChange={e => setNewTemplate({ ...newTemplate, volumeM3: Number(e.target.value) })} />
+              <input
+                type="number"
+                placeholder="kg"
+                className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-slate-200 h-9"
+                value={newTemplate.weightKg || ''}
+                onChange={e => setNewTemplate({ ...newTemplate, weightKg: Number(e.target.value) })}
+              />
+              <input
+                type="number"
+                placeholder="m³"
+                className="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm text-slate-200 h-9"
+                value={newTemplate.volumeM3 || ''}
+                onChange={e => setNewTemplate({ ...newTemplate, volumeM3: Number(e.target.value) })}
+              />
               <button
                 onClick={handleAddTemplate}
-                className="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded flex items-center justify-center shrink-0 transition-colors"
+                className="bg-blue-600 hover:bg-blue-500 text-white w-9 h-9 rounded flex items-center justify-center shrink-0 transition-colors"
               >
-                <Plus size={16} />
+                <Plus size={18} />
               </button>
             </div>
             <RestrictionSelector availableOptions={restrictionTags} selected={newTemplate.restrictions || []} onChange={r => setNewTemplate({ ...newTemplate, restrictions: r })} />
@@ -75,16 +90,29 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           </div>
         )}
 
-        {/* Search Templates */}
-        <div className="relative mb-3">
-          <Search className="absolute left-2.5 top-2 text-slate-500" size={14} />
-          <input
-            type="text"
-            placeholder="Search templates..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 pl-8 text-xs text-slate-200 focus:border-slate-500 outline-none"
-          />
+        {/* Search & Filter Templates */}
+        <div className="flex gap-2 mb-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 pl-9 text-xs text-slate-200 focus:border-slate-500 outline-none h-9"
+            />
+          </div>
+          <div className="relative w-1/3 min-w-[120px]">
+            <Filter className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+            <select
+              value={selectedTagFilter}
+              onChange={e => setSelectedTagFilter(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 pl-8 text-xs text-slate-200 focus:border-slate-500 outline-none appearance-none h-9 cursor-pointer"
+            >
+              <option value="">All Tags</option>
+              {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* List Templates */}

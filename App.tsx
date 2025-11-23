@@ -66,6 +66,10 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
 
+  // Selection State
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());
+
   // Forms
   const [newTag, setNewTag] = useState('');
   const [newTemplate, setNewTemplate] = useState<Partial<Product>>({ name: '', weightKg: 0, volumeM3: 0, restrictions: [] });
@@ -74,6 +78,7 @@ const App: React.FC = () => {
     name: '',
     weightKg: 0,
     volumeM3: 0,
+    destination: '',
     restrictions: [],
     readyDate: '',
     shipDeadline: '',
@@ -277,6 +282,8 @@ const App: React.FC = () => {
     setApprovalStatus(null);
     setSetupError(null);
     setUserRole(null);
+    setSelectedProductIds(new Set());
+    setSelectedDealIds(new Set());
 
     // Trigger setup UI
     setSetupMode('join');
@@ -319,7 +326,7 @@ const App: React.FC = () => {
     }
 
     setProducts(updatedProducts);
-    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
+    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
   };
 
   const handleEditProduct = (p: Product) => {
@@ -327,6 +334,7 @@ const App: React.FC = () => {
       name: p.name,
       weightKg: p.weightKg,
       volumeM3: p.volumeM3,
+      destination: p.destination || '',
       restrictions: p.restrictions,
       readyDate: p.readyDate || '',
       shipDeadline: p.shipDeadline || '',
@@ -338,11 +346,16 @@ const App: React.FC = () => {
 
   const handleRemoveProduct = async (id: string) => {
     setProducts(products.filter(p => p.id !== id));
+    setSelectedProductIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     await supabase.from('products').delete().eq('id', id);
   };
 
   const handleCancelProductEdit = () => {
-    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
+    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
     setEditingProductId(null);
   };
 
@@ -389,6 +402,11 @@ const App: React.FC = () => {
 
   const handleRemoveDeal = async (id: string) => {
     setDeals(deals.filter(d => d.id !== id));
+    setSelectedDealIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     await supabase.from('deals').delete().eq('id', id);
   };
 
@@ -399,13 +417,40 @@ const App: React.FC = () => {
 
   const handleOptimization = async () => {
     setIsOptimizing(true);
+
+    // Use selected items or all items if selection is empty
+    const productsToUse = selectedProductIds.size > 0
+      ? products.filter(p => selectedProductIds.has(p.id))
+      : products;
+
+    const dealsToUse = selectedDealIds.size > 0
+      ? deals.filter(d => selectedDealIds.has(d.id))
+      : deals;
+
     setTimeout(async () => {
-      const res = await optimizeLogistics(products, deals, optimizationPriority, marginPercentage, ignoreWeight, ignoreVolume);
+      const res = await optimizeLogistics(productsToUse, dealsToUse, optimizationPriority, marginPercentage, ignoreWeight, ignoreVolume);
       setResult(res);
       setIsOptimizing(false);
     }, 100);
   };
 
+  const toggleProductSelection = (id: string) => {
+    setSelectedProductIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleDealSelection = (id: string) => {
+    setSelectedDealIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // --- Configuration Handlers ---
   const handleAddTag = async () => {
@@ -447,6 +492,7 @@ const App: React.FC = () => {
       name: t.name,
       weightKg: t.weightKg,
       volumeM3: t.volumeM3,
+      destination: '',
       restrictions: t.restrictions,
       readyDate: '',
       shipDeadline: '',
@@ -716,6 +762,8 @@ const App: React.FC = () => {
               handleRemoveProduct={handleRemoveProduct}
               handleCancelProductEdit={handleCancelProductEdit}
               restrictionTags={restrictionTags}
+              selectedProductIds={selectedProductIds}
+              toggleProductSelection={toggleProductSelection}
             />
           )}
 
@@ -730,6 +778,8 @@ const App: React.FC = () => {
               handleRemoveDeal={handleRemoveDeal}
               handleCancelDealEdit={handleCancelDealEdit}
               restrictionTags={restrictionTags}
+              selectedDealIds={selectedDealIds}
+              toggleDealSelection={toggleDealSelection}
             />
           )}
 
@@ -772,6 +822,7 @@ const App: React.FC = () => {
                 handleOptimization={handleOptimization}
                 isOptimizing={isOptimizing}
                 disabled={products.length === 0 || deals.length === 0}
+                selectedCount={selectedProductIds.size + selectedDealIds.size}
               />
 
               <div className="flex-1 w-full space-y-4">

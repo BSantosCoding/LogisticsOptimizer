@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search, Filter, MapPin } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
@@ -14,6 +14,8 @@ interface ProductPanelProps {
   handleRemoveProduct: (id: string) => void;
   handleCancelProductEdit: () => void;
   restrictionTags: string[];
+  selectedProductIds: Set<string>;
+  toggleProductSelection: (id: string) => void;
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({
@@ -25,13 +27,32 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   handleEditProduct,
   handleRemoveProduct,
   handleCancelProductEdit,
-  restrictionTags
+  restrictionTags,
+  selectedProductIds,
+  toggleProductSelection
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTag = selectedTagFilter ? p.restrictions.includes(selectedTagFilter) : true;
+    return matchesSearch && matchesTag;
+  });
+
+  const toggleSelectAll = () => {
+    if (filteredProducts.every(p => selectedProductIds.has(p.id))) {
+      // Deselect all visible
+      filteredProducts.forEach(p => toggleProductSelection(p.id));
+    } else {
+      // Select all visible
+      filteredProducts.forEach(p => {
+        if (!selectedProductIds.has(p.id)) toggleProductSelection(p.id);
+      });
+    }
+  };
 
   return (
     <>
@@ -52,7 +73,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
               className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
             />
-            <div className="relative w-24">
+            <div className="relative w-20">
               <input
                 type="number" placeholder="Kg"
                 value={newProduct.weightKg || ''}
@@ -61,7 +82,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               />
               <span className="absolute right-2 top-2 text-xs text-slate-500">kg</span>
             </div>
-            <div className="relative w-24">
+            <div className="relative w-20">
               <input
                 type="number" placeholder="m³"
                 value={newProduct.volumeM3 || ''}
@@ -70,6 +91,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               />
               <span className="absolute right-2 top-2 text-xs text-slate-500">m³</span>
             </div>
+          </div>
+
+          {/* Destination Input */}
+          <div className="relative">
+            <MapPin className="absolute left-3 top-2.5 text-slate-500" size={14} />
+            <input
+              placeholder="Destination (Optional - match with Deals)"
+              value={newProduct.destination || ''}
+              onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
+              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-sm focus:border-blue-500 outline-none text-slate-200"
+            />
           </div>
 
           {/* Row 2: Dates */}
@@ -121,17 +153,28 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700">
-        <div className="relative">
+      {/* Search & Filter Bar */}
+      <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 text-slate-500" size={14} />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search name or dest..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none"
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
           />
+        </div>
+        <div className="relative w-1/3 min-w-[100px]">
+          <Filter className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+          <select
+            value={selectedTagFilter}
+            onChange={e => setSelectedTagFilter(e.target.value)}
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
+          >
+            <option value="">All Tags</option>
+            {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+          </select>
         </div>
       </div>
 
@@ -139,41 +182,53 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         {products.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">No products added yet.</div>}
         {products.length > 0 && filteredProducts.length === 0 && <div className="text-center text-slate-500 mt-4 text-sm">No products match your search.</div>}
 
-        {filteredProducts.map(p => (
-          <div key={p.id} className={`p-3 rounded border flex justify-between items-start group transition-colors ${editingProductId === p.id ? 'bg-blue-900/20 border-blue-500' : 'bg-slate-900/50 border-slate-700 hover:border-blue-500/30'}`}>
-            <div className="flex-1">
-              <div className="flex justify-between items-start pr-2">
-                <div className="text-sm font-medium text-slate-200">{p.name}</div>
+        {filteredProducts.map(p => {
+          const isSelected = selectedProductIds.has(p.id);
+          return (
+            <div key={p.id} className={`p-3 rounded border flex gap-3 items-start group transition-colors ${editingProductId === p.id ? 'bg-blue-900/20 border-blue-500' : 'bg-slate-900/50 border-slate-700 hover:border-blue-500/30'}`}>
+              <div className="pt-1">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleProductSelection(p.id)}
+                  className="w-4 h-4 rounded border-slate-600 text-blue-600 bg-slate-800 focus:ring-blue-500 focus:ring-offset-slate-900"
+                />
               </div>
-              <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                <span className="flex items-center gap-1"><Scale size={10} /> {p.weightKg}kg</span>
-                <span className="flex items-center gap-1"><Box size={10} /> {p.volumeM3}m³</span>
+              <div className="flex-1">
+                <div className="flex justify-between items-start pr-2">
+                  <div className="text-sm font-medium text-slate-200">{p.name}</div>
+                </div>
+                <div className="text-xs text-slate-400 mt-1 flex items-center gap-3 flex-wrap">
+                  <span className="flex items-center gap-1"><Scale size={10} /> {p.weightKg}kg</span>
+                  <span className="flex items-center gap-1"><Box size={10} /> {p.volumeM3}m³</span>
+                  {p.destination && <span className="flex items-center gap-1 text-blue-400"><MapPin size={10} /> {p.destination}</span>}
+                </div>
+                {(p.shipDeadline || p.arrivalDeadline || p.readyDate) && (
+                  <div className="text-[10px] text-slate-500 mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-slate-800 pt-1 w-fit">
+                    {p.readyDate && <span className="text-blue-400 font-medium">Ready: {p.readyDate}</span>}
+                    {p.shipDeadline && <span>Ship &lt; {p.shipDeadline}</span>}
+                    {p.arrivalDeadline && <span>Arrive &lt; {p.arrivalDeadline}</span>}
+                  </div>
+                )}
+                {p.restrictions.length > 0 && (
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {p.restrictions.map((r, i) => (
+                      <span key={i} className="text-[10px] bg-red-900/20 text-red-400 px-1.5 py-0.5 rounded border border-red-900/30">{r}</span>
+                    ))}
+                  </div>
+                )}
               </div>
-              {(p.shipDeadline || p.arrivalDeadline || p.readyDate) && (
-                <div className="text-[10px] text-slate-500 mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-slate-800 pt-1 w-fit">
-                  {p.readyDate && <span className="text-blue-400 font-medium">Ready: {p.readyDate}</span>}
-                  {p.shipDeadline && <span>Ship &lt; {p.shipDeadline}</span>}
-                  {p.arrivalDeadline && <span>Arrive &lt; {p.arrivalDeadline}</span>}
-                </div>
-              )}
-              {p.restrictions.length > 0 && (
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  {p.restrictions.map((r, i) => (
-                    <span key={i} className="text-[10px] bg-red-900/20 text-red-400 px-1.5 py-0.5 rounded border border-red-900/30">{r}</span>
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-1">
+                <button onClick={() => handleEditProduct(p)} className="text-slate-600 hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-800">
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => handleRemoveProduct(p.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-slate-800">
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-1">
-              <button onClick={() => handleEditProduct(p)} className="text-slate-600 hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-800">
-                <Pencil size={14} />
-              </button>
-              <button onClick={() => handleRemoveProduct(p.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-slate-800">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

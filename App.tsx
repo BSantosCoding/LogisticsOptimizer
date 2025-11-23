@@ -10,7 +10,8 @@ import {
   Clock,
   RefreshCw,
   LogOut,
-  AlertTriangle
+  AlertTriangle,
+  Repeat
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Header from './components/Header';
@@ -20,6 +21,7 @@ import DealPanel from './components/panels/DealPanel';
 import ConfigPanel from './components/panels/ConfigPanel';
 import OptimizationControls from './components/panels/OptimizationControls';
 import ResultsPanel from './components/panels/ResultsPanel';
+import ManagementPanel from './components/panels/ManagementPanel'; // New
 import { supabase } from './services/supabase';
 import { optimizeLogistics } from './services/geminiService';
 import { validateLoadedDeal } from './services/logisticsEngine';
@@ -44,6 +46,7 @@ const App: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('');
   const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'standard' | null>(null);
 
   // --- Onboarding State ---
   const [isSetupRequired, setIsSetupRequired] = useState(false);
@@ -55,7 +58,7 @@ const App: React.FC = () => {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'deals' | 'config'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'deals' | 'config' | 'team'>('products');
 
   // Data
   const [restrictionTags, setRestrictionTags] = useState<string[]>([]);
@@ -142,7 +145,7 @@ const App: React.FC = () => {
       // 1. Get Profile & Company
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_id, status')
+        .select('company_id, status, role')
         .eq('id', session.user.id)
         .maybeSingle();
 
@@ -152,11 +155,11 @@ const App: React.FC = () => {
         return;
       }
 
-      // Check Approval Status
-      // Note: If 'status' column doesn't exist in DB yet, this might return undefined. 
-      // We treat undefined as 'active' for backward compatibility unless logic dictates otherwise.
       const status = profile.status || 'active';
+      const role = profile.role || 'standard';
+
       setApprovalStatus(status as 'active' | 'pending');
+      setUserRole(role as 'admin' | 'manager' | 'standard');
 
       const { data: company } = await supabase
         .from('companies')
@@ -177,12 +180,11 @@ const App: React.FC = () => {
       setIsSetupRequired(false);
 
       // 2. Load Data from Supabase
-      // FILTER PRODUCTS BY CREATED_BY
       const { data: productsData } = await supabase
         .from('products')
         .select('*')
         .eq('company_id', profile.company_id)
-        .eq('created_by', session.user.id); // Only show current user's products
+        .eq('created_by', session.user.id);
 
       const { data: dealsData } = await supabase.from('deals').select('*').eq('company_id', profile.company_id);
       const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', profile.company_id);
@@ -192,7 +194,6 @@ const App: React.FC = () => {
       if (dealsData) setDeals(dealsData.map((r: any) => ({ ...r.data, id: r.id })));
       if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
 
-      // Merge DB tags with default tags
       const dbTags = tagsData?.map((t: any) => t.name) || [];
       setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
 
@@ -211,6 +212,7 @@ const App: React.FC = () => {
     try {
       let targetCompanyId = selectedCompanyId;
       let initialStatus = 'active';
+      let initialRole = 'standard';
 
       if (setupMode === 'create') {
         if (!setupCompanyName) return;
@@ -224,19 +226,22 @@ const App: React.FC = () => {
         if (companyError) throw companyError;
         targetCompanyId = companyData.id;
         initialStatus = 'active'; // Creator is always active
+        initialRole = 'admin';    // Creator is Admin
       } else {
         if (!selectedCompanyId) return;
         initialStatus = 'pending'; // Joiners must be approved
+        initialRole = 'standard';
       }
 
-      // Create Profile
+      // Check if profile exists (upsert) or insert new
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([{
+        .upsert([{
           id: session.user.id,
           email: session.user.email,
           company_id: targetCompanyId,
-          status: initialStatus
+          status: initialStatus,
+          role: initialRole
         }]);
 
       if (profileError) throw profileError;
@@ -247,7 +252,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error("Setup failed:", err);
       if (err.message && err.message.includes("row-level security")) {
-        setSetupError("Database permissions denied. Please run the SQL policies provided in the chat.");
+        setSetupError("Database permissions denied. Please run the SQL policies.");
       } else {
         setSetupError("Failed to setup workspace: " + err.message);
       }
@@ -260,6 +265,19 @@ const App: React.FC = () => {
     await loadUserData();
   };
 
+  const handleSwitchWorkspace = () => {
+    // Reset local state
+    setCompanyId(null);
+    setProducts([]);
+    setDeals([]);
+    setTemplates([]);
+    setResult(null);
+
+    // Trigger setup UI
+    setSetupMode('join');
+    setIsSetupRequired(true);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setProducts([]);
@@ -268,11 +286,11 @@ const App: React.FC = () => {
     setIsSetupRequired(false);
     setApprovalStatus(null);
     setSetupError(null);
+    setUserRole(null);
   };
 
 
   // --- DB Handlers ---
-
   const handleSaveProduct = async () => {
     if (!newProduct.name || newProduct.weightKg <= 0 || !companyId) return;
 
@@ -280,19 +298,17 @@ const App: React.FC = () => {
     const productData = { ...newProduct };
 
     if (editingProductId) {
-      // Update
       updatedProducts = products.map(p => p.id === editingProductId ? { ...productData, id: editingProductId } : p);
       await supabase.from('products').update({ data: productData }).eq('id', editingProductId);
       setEditingProductId(null);
     } else {
-      // Create
       const newId = `P-${Date.now()}`;
       const newProdWithId = { ...productData, id: newId };
       updatedProducts = [...products, newProdWithId];
       await supabase.from('products').insert([{
         id: newId,
         company_id: companyId,
-        created_by: session.user.id, // Assign to current user
+        created_by: session.user.id,
         data: productData
       }]);
     }
@@ -378,7 +394,6 @@ const App: React.FC = () => {
 
   const handleOptimization = async () => {
     setIsOptimizing(true);
-    // Add small delay to allow UI to update to loading state
     setTimeout(async () => {
       const res = await optimizeLogistics(products, deals, optimizationPriority, marginPercentage, ignoreWeight, ignoreVolume);
       setResult(res);
@@ -436,7 +451,7 @@ const App: React.FC = () => {
   };
 
 
-  // --- Drag & Drop Handlers (Manual Override) ---
+  // --- Drag & Drop Handlers ---
   const handleDragStart = (e: React.DragEvent, productId: string, sourceId: string) => {
     e.dataTransfer.setData("productId", productId);
     e.dataTransfer.setData("sourceId", sourceId);
@@ -454,7 +469,6 @@ const App: React.FC = () => {
 
     if (sourceId === targetId) return;
 
-    // Deep copy result to mutate
     const newAssignments = result.assignments.map(a => ({
       ...a,
       assignedProducts: [...a.assignedProducts]
@@ -464,7 +478,6 @@ const App: React.FC = () => {
     // Find Product
     let product: Product | undefined;
 
-    // Remove from Source
     if (sourceId === 'unassigned') {
       product = newUnassigned.find(p => p.id === productId);
       newUnassigned = newUnassigned.filter(p => p.id !== productId);
@@ -473,7 +486,6 @@ const App: React.FC = () => {
       if (sourceDeal) {
         product = sourceDeal.assignedProducts.find(p => p.id === productId);
         sourceDeal.assignedProducts = sourceDeal.assignedProducts.filter(p => p.id !== productId);
-        // Re-validate source
         const revalidatedSource = validateLoadedDeal(sourceDeal.deal, sourceDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
         Object.assign(sourceDeal, revalidatedSource);
       }
@@ -481,13 +493,11 @@ const App: React.FC = () => {
 
     if (!product) return;
 
-    // Add to Target
     if (targetId === 'unassigned') {
       newUnassigned.push(product);
     } else {
       const targetDeal = newAssignments.find(a => a.deal.id === targetId);
 
-      // If target is a new deal not currently in assignments (from unused list)
       if (!targetDeal) {
         const freshDeal = deals.find(d => d.id === targetId);
         if (freshDeal) {
@@ -496,13 +506,11 @@ const App: React.FC = () => {
         }
       } else {
         targetDeal.assignedProducts.push(product);
-        // Re-validate target
         const revalidatedTarget = validateLoadedDeal(targetDeal.deal, targetDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
         Object.assign(targetDeal, revalidatedTarget);
       }
     }
 
-    // Recalculate Totals
     const totalCost = newAssignments.reduce((sum, a) => sum + a.deal.cost, 0);
 
     setResult({
@@ -540,9 +548,14 @@ const App: React.FC = () => {
             <Button onClick={handleCheckStatus} isLoading={isDataLoading} className="w-full">
               <RefreshCw size={16} className="mr-2" /> Check Status
             </Button>
-            <button onClick={handleLogout} className="text-slate-500 text-sm hover:text-white flex items-center justify-center gap-2 w-full mt-4">
-              <LogOut size={14} /> Sign Out
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleSwitchWorkspace} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
+                <Repeat size={14} /> Change Workspace
+              </button>
+              <button onClick={handleLogout} className="flex-1 py-2 text-slate-400 border border-slate-700 rounded hover:bg-slate-700 text-sm flex items-center justify-center gap-2">
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -598,6 +611,9 @@ const App: React.FC = () => {
                   className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-purple-500 outline-none transition-colors"
                   required
                 />
+                <p className="text-xs text-slate-500 mt-2">
+                  * You will be the Administrator of this workspace.
+                </p>
               </div>
             ) : (
               <div className="mb-4 animate-in fade-in slide-in-from-left-4">
@@ -642,30 +658,46 @@ const App: React.FC = () => {
   // --- VIEW: MAIN DASHBOARD ---
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col text-slate-200 font-sans selection:bg-blue-500/30">
-      <Header companyName={companyName} isDataLoading={isDataLoading} onLogout={handleLogout} />
+      <Header
+        companyName={companyName}
+        userRole={userRole}
+        isDataLoading={isDataLoading}
+        onLogout={handleLogout}
+        onSwitchWorkspace={handleSwitchWorkspace}
+      />
 
       <main className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full">
         {/* Left Sidebar: Inputs */}
         <div className="w-80 md:w-96 bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-10">
-          <div className="flex border-b border-slate-700">
+          <div className="flex border-b border-slate-700 overflow-x-auto">
             <button
               onClick={() => setInputMode('products')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'products' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
               <Package size={16} /> Products
             </button>
             <button
               onClick={() => setInputMode('deals')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'deals' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'deals' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
               <Container size={16} /> Deals
             </button>
             <button
               onClick={() => setInputMode('config')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${inputMode === 'config' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'config' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
             >
               <Settings size={16} /> Config
             </button>
+
+            {/* Admin Only Tab */}
+            {userRole === 'admin' && (
+              <button
+                onClick={() => setInputMode('team')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 min-w-[80px] ${inputMode === 'team' ? 'text-blue-400 border-b-2 border-blue-500 bg-slate-800' : 'text-slate-400 hover:text-slate-200 bg-slate-900/50'}`}
+              >
+                <Users size={16} /> Team
+              </button>
+            )}
           </div>
 
           {inputMode === 'products' && (
@@ -709,7 +741,12 @@ const App: React.FC = () => {
               handleAddTag={handleAddTag}
               handleRemoveTag={handleRemoveTag}
               DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
+              userRole={userRole}
             />
+          )}
+
+          {inputMode === 'team' && userRole === 'admin' && (
+            <ManagementPanel currentUserId={session.user.id} />
           )}
         </div>
 

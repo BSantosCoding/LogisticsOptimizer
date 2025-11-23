@@ -46,3 +46,11 @@ export enum OptimizationPriority {
   TIME = 'Time',
   BALANCE = 'Balance'
 }
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  company_id: string;
+  status: 'active' | 'pending';
+  role: 'admin' | 'manager' | 'standard';
+}

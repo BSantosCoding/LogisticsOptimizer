@@ -11,8 +11,8 @@ import { createClient } from '@supabase/supabase-js';
 // ====================================================================================
 
 // Read from environment variables
-const SUPABASE_URL: string = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL: string = import.meta.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY: string = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // This helper checks if environment variables are set
 export const isConfigured =

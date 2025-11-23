@@ -5,6 +5,7 @@ import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search, Filter, MapPin, Chev
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
+  viewMode: 'form' | 'list';
   products: Product[];
   newProduct: Omit<Product, 'id'>;
   setNewProduct: (p: Omit<Product, 'id'>) => void;
@@ -19,6 +20,7 @@ interface ProductPanelProps {
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({
+  viewMode,
   products,
   newProduct,
   setNewProduct,
@@ -42,20 +44,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
     return matchesSearch && matchesTag;
   });
 
-  const toggleSelectAll = () => {
-    if (filteredProducts.every(p => selectedProductIds.has(p.id))) {
-      // Deselect all visible
-      filteredProducts.forEach(p => toggleProductSelection(p.id));
-    } else {
-      // Select all visible
-      filteredProducts.forEach(p => {
-        if (!selectedProductIds.has(p.id)) toggleProductSelection(p.id);
-      });
-    }
-  };
-
-  return (
-    <>
+  if (viewMode === 'form') {
+    return (
       <div className={`p-4 border-b border-slate-700 z-10 ${editingProductId ? 'bg-blue-900/10' : 'bg-slate-800'}`}>
         <div className="space-y-3">
           {editingProductId && (
@@ -65,7 +55,6 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </div>
           )}
 
-          {/* Row 1: Basic Info */}
           <div className="flex gap-2">
             <input
               placeholder="Product Name"
@@ -93,18 +82,16 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </div>
           </div>
 
-          {/* Destination Input */}
           <div className="relative">
             <MapPin className="absolute left-3 top-2.5 text-slate-500" size={14} />
             <input
-              placeholder="Destination (Optional - match with Deals)"
+              placeholder="Destination (Optional)"
               value={newProduct.destination || ''}
               onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
               className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-sm focus:border-blue-500 outline-none text-slate-200"
             />
           </div>
 
-          {/* Row 2: Dates */}
           <div className="grid grid-cols-3 gap-2">
             <div className="relative">
               <span className="absolute left-2 top-2 text-[10px] text-blue-400 font-medium uppercase">Ready Date</span>
@@ -152,86 +139,115 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Search & Filter Bar */}
-      <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <input
-            type="text"
-            placeholder="Search name or dest..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
-          />
-        </div>
-        <div className="relative w-[140px] shrink-0">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <select
-            value={selectedTagFilter}
-            onChange={e => setSelectedTagFilter(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 pr-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
-          >
-            <option value="">All Tags</option>
-            {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+  // LIST VIEW
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <Box className="text-blue-500" /> Product Inventory
+          <span className="text-sm font-normal text-slate-500 ml-2">{filteredProducts.length} items</span>
+        </h2>
+        <div className="flex-1 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input
+              type="text"
+              placeholder="Search name or dest..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 text-sm text-slate-200 focus:border-blue-500 outline-none h-10 transition-colors focus:bg-slate-800/80"
+            />
+          </div>
+          <div className="relative w-[180px] shrink-0 hidden sm:block">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <select
+              value={selectedTagFilter}
+              onChange={e => setSelectedTagFilter(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 pr-8 text-sm text-slate-200 focus:border-blue-500 outline-none appearance-none h-10 cursor-pointer hover:bg-slate-700/50 transition-colors"
+            >
+              <option value="">All Tags</option>
+              {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {products.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">No products added yet.</div>}
-        {products.length > 0 && filteredProducts.length === 0 && <div className="text-center text-slate-500 mt-4 text-sm">No products match your search.</div>}
+      <div className="flex-1 overflow-y-auto pr-2 pb-20">
+        {products.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
+            <Box size={48} className="mb-2 opacity-50" />
+            <p>No products added yet.</p>
+            <p className="text-sm">Use the form on the left to add items.</p>
+          </div>
+        )}
 
-        {filteredProducts.map(p => {
-          const isSelected = selectedProductIds.has(p.id);
-          return (
-            <div key={p.id} className={`p-3 rounded border flex gap-3 items-start group transition-colors ${editingProductId === p.id ? 'bg-blue-900/20 border-blue-500' : 'bg-slate-900/50 border-slate-700 hover:border-blue-500/30'}`}>
-              <div className="pt-1">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleProductSelection(p.id)}
-                  className="w-4 h-4 rounded border-slate-600 text-blue-600 bg-slate-800 focus:ring-blue-500 focus:ring-offset-slate-900"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start pr-2">
-                  <div className="text-sm font-medium text-slate-200">{p.name}</div>
+        {products.length > 0 && filteredProducts.length === 0 && (
+          <div className="text-center text-slate-500 mt-10 text-sm">No products match your search.</div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map(p => {
+            const isSelected = selectedProductIds.has(p.id);
+            return (
+              <div
+                key={p.id}
+                onClick={() => toggleProductSelection(p.id)}
+                className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${isSelected
+                    ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
+                    : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
+                  } ${editingProductId === p.id ? 'ring-2 ring-blue-500' : ''}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold text-slate-200 truncate pr-6">{p.name}</h3>
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 bg-slate-900/50'}`}>
+                    {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400 mt-1 flex items-center gap-3 flex-wrap">
-                  <span className="flex items-center gap-1"><Scale size={10} /> {p.weightKg}kg</span>
-                  <span className="flex items-center gap-1"><Box size={10} /> {p.volumeM3}m³</span>
-                  {p.destination && <span className="flex items-center gap-1 text-blue-400"><MapPin size={10} /> {p.destination}</span>}
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
+                  <div className="flex items-center gap-1.5"><Scale size={14} className="text-slate-500" /> {p.weightKg} kg</div>
+                  <div className="flex items-center gap-1.5"><Box size={14} className="text-slate-500" /> {p.volumeM3} m³</div>
                 </div>
-                {(p.shipDeadline || p.arrivalDeadline || p.readyDate) && (
-                  <div className="text-[10px] text-slate-500 mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-slate-800 pt-1 w-fit">
-                    {p.readyDate && <span className="text-blue-400 font-medium">Ready: {p.readyDate}</span>}
-                    {p.shipDeadline && <span>Ship &lt; {p.shipDeadline}</span>}
-                    {p.arrivalDeadline && <span>Arrive &lt; {p.arrivalDeadline}</span>}
+
+                {(p.destination || p.readyDate) && (
+                  <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 space-y-1">
+                    {p.destination && <div className="flex items-center gap-1.5 text-blue-400"><MapPin size={12} /> {p.destination}</div>}
+                    {p.readyDate && <div className="flex items-center gap-1.5">Ready: {p.readyDate}</div>}
                   </div>
                 )}
+
                 {p.restrictions.length > 0 && (
-                  <div className="flex gap-1 mt-2 flex-wrap">
+                  <div className="flex gap-1 flex-wrap mb-2">
                     {p.restrictions.map((r, i) => (
-                      <span key={i} className="text-[10px] bg-red-900/20 text-red-400 px-1.5 py-0.5 rounded border border-red-900/30">{r}</span>
+                      <span key={i} className="text-[10px] bg-red-900/20 text-red-300 px-1.5 py-0.5 rounded border border-red-900/20">{r}</span>
                     ))}
                   </div>
                 )}
+
+                <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-xl z-20">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleEditProduct(p); }}
+                    className="p-1.5 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id); }}
+                    className="p-1.5 hover:bg-red-600 hover:text-white text-slate-400 rounded transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => handleEditProduct(p)} className="text-slate-600 hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-800">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => handleRemoveProduct(p.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-slate-800">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

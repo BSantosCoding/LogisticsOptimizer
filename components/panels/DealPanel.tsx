@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { Deal } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Scale, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Scale, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown, Container } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface DealPanelProps {
+  viewMode: 'form' | 'list';
   deals: Deal[];
   newDeal: Omit<Deal, 'id'>;
   setNewDeal: (d: Omit<Deal, 'id'>) => void;
@@ -19,6 +20,7 @@ interface DealPanelProps {
 }
 
 const DealPanel: React.FC<DealPanelProps> = ({
+  viewMode,
   deals,
   newDeal,
   setNewDeal,
@@ -42,8 +44,8 @@ const DealPanel: React.FC<DealPanelProps> = ({
     return textMatch && tagMatch;
   });
 
-  return (
-    <>
+  if (viewMode === 'form') {
+    return (
       <div className={`p-4 border-b border-slate-700 z-10 ${editingDealId ? 'bg-blue-900/10' : 'bg-slate-800'}`}>
         <div className="space-y-3">
           {editingDealId && (
@@ -112,61 +114,89 @@ const DealPanel: React.FC<DealPanelProps> = ({
           </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Search & Filter Bar */}
-      <div className="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <input
-            type="text"
-            placeholder="Search deals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
-          />
-        </div>
-        <div className="relative w-[140px] shrink-0">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-          <select
-            value={selectedTagFilter}
-            onChange={e => setSelectedTagFilter(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 pl-9 pr-8 text-xs text-slate-200 focus:border-blue-500 outline-none appearance-none h-9 cursor-pointer"
-          >
-            <option value="">All Caps</option>
-            {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+  // LIST VIEW
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <Container className="text-blue-500" /> Logistics Deals
+          <span className="text-sm font-normal text-slate-500 ml-2">{filteredDeals.length} deals</span>
+        </h2>
+        <div className="flex-1 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <input
+              type="text"
+              placeholder="Search deals..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 text-sm text-slate-200 focus:border-blue-500 outline-none h-10 transition-colors focus:bg-slate-800/80"
+            />
+          </div>
+          <div className="relative w-[180px] shrink-0 hidden sm:block">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <select
+              value={selectedTagFilter}
+              onChange={e => setSelectedTagFilter(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 pr-8 text-sm text-slate-200 focus:border-blue-500 outline-none appearance-none h-10 cursor-pointer hover:bg-slate-700/50 transition-colors"
+            >
+              <option value="">All Caps</option>
+              {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {deals.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">No deals added yet.</div>}
-        {deals.length > 0 && filteredDeals.length === 0 && <div className="text-center text-slate-500 mt-4 text-sm">No deals match your search.</div>}
+      <div className="flex-1 overflow-y-auto pr-2 pb-20">
+        {deals.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
+            <Container size={48} className="mb-2 opacity-50" />
+            <p>No deals added yet.</p>
+            <p className="text-sm">Use the form on the left to add carrier deals.</p>
+          </div>
+        )}
 
-        {filteredDeals.map(d => {
-          const isSelected = selectedDealIds.has(d.id);
-          return (
-            <div key={d.id} className={`p-3 rounded border flex gap-3 items-start group transition-colors ${editingDealId === d.id ? 'bg-blue-900/20 border-blue-500' : 'bg-slate-900/50 border-slate-700 hover:border-blue-500/30'}`}>
-              <div className="pt-1">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleDealSelection(d.id)}
-                  className="w-4 h-4 rounded border-slate-600 text-blue-600 bg-slate-800 focus:ring-blue-500 focus:ring-offset-slate-900"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-slate-200 flex justify-between pr-2">
-                  <span>{d.carrierName}</span>
-                  <span className="text-slate-500 text-xs font-normal bg-slate-800 px-1 rounded">{d.containerType}</span>
+        {deals.length > 0 && filteredDeals.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">No deals match your search.</div>}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredDeals.map(d => {
+            const isSelected = selectedDealIds.has(d.id);
+            return (
+              <div
+                key={d.id}
+                onClick={() => toggleDealSelection(d.id)}
+                className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${isSelected
+                    ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
+                    : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
+                  } ${editingDealId === d.id ? 'ring-2 ring-blue-500' : ''}`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-semibold text-slate-200">{d.carrierName}</h3>
+                    <span className="text-xs text-slate-500 font-medium bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">{d.containerType}</span>
+                  </div>
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 bg-slate-900/50'}`}>
+                    {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400 mt-1 flex items-center gap-3">
-                  <span className="flex items-center gap-1"><MapPin size={10} /> {d.destination || 'Anywhere'}</span>
-                  <span className="flex items-center gap-1 text-green-400"><DollarSign size={10} /> {d.cost}</span>
-                  <span className="flex items-center gap-1"><Clock size={10} /> {d.transitTimeDays}d</span>
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3 pt-2">
+                  <div className="flex items-center gap-1.5"><DollarSign size={14} className="text-green-500" /> {d.cost}</div>
+                  <div className="flex items-center gap-1.5"><Clock size={14} className="text-slate-500" /> {d.transitTimeDays}d</div>
+                  <div className="flex items-center gap-1.5 col-span-2 text-blue-400"><MapPin size={14} /> {d.destination || 'Anywhere'}</div>
                 </div>
+
+                <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 flex justify-between">
+                  <span>{d.maxWeightKg}kg / {d.maxVolumeM3}m³</span>
+                  <span>{d.availableFrom}</span>
+                </div>
+
                 {d.restrictions.length > 0 && (
-                  <div className="flex gap-1 mt-2 flex-wrap">
+                  <div className="flex gap-1 flex-wrap mb-1">
                     {d.restrictions.map((r, i) => (
                       <span key={i} className="text-[10px] bg-green-900/20 text-green-400 px-1.5 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
                         <ShieldAlert size={8} /> {r}
@@ -174,24 +204,21 @@ const DealPanel: React.FC<DealPanelProps> = ({
                     ))}
                   </div>
                 )}
-                <div className="text-xs text-slate-500 mt-1.5 border-t border-slate-800 pt-1.5 flex justify-between">
-                  <span>Cap: {d.maxWeightKg}kg / {d.maxVolumeM3}m³</span>
-                  <span>Avail: {d.availableFrom}</span>
+
+                <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-xl z-20">
+                  <button onClick={(e) => { e.stopPropagation(); handleEditDeal(d) }} className="p-1.5 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleRemoveDeal(d.id) }} className="p-1.5 hover:bg-red-600 hover:text-white text-slate-400 rounded transition-colors">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => handleEditDeal(d)} className="text-slate-600 hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-800">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => handleRemoveDeal(d.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-slate-800">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

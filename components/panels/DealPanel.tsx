@@ -17,6 +17,8 @@ interface DealPanelProps {
   restrictionTags: string[];
   selectedDealIds: Set<string>;
   toggleDealSelection: (id: string) => void;
+  onImport: (csv: string) => void;
+  onClearAll: () => void;
 }
 
 const DealPanel: React.FC<DealPanelProps> = ({
@@ -31,10 +33,25 @@ const DealPanel: React.FC<DealPanelProps> = ({
   handleCancelDealEdit,
   restrictionTags,
   selectedDealIds,
-  toggleDealSelection
+  toggleDealSelection,
+  onImport,
+  onClearAll
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      if (content) onImport(content);
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset
+  };
 
   const filteredDeals = deals.filter(d => {
     const textMatch = d.carrierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,6 +142,17 @@ const DealPanel: React.FC<DealPanelProps> = ({
           <Container className="text-blue-500" /> Logistics Deals
           <span className="text-sm font-normal text-slate-500 ml-2">{filteredDeals.length} deals</span>
         </h2>
+        <div className="flex gap-2">
+          <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
+          <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
+            Import CSV
+          </button>
+          {deals.length > 0 && (
+            <button onClick={onClearAll} className="text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
+              Clear All
+            </button>
+          )}
+        </div>
         <div className="flex-1 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
@@ -170,8 +198,8 @@ const DealPanel: React.FC<DealPanelProps> = ({
                 key={d.id}
                 onClick={() => toggleDealSelection(d.id)}
                 className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${isSelected
-                    ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
-                    : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
+                  ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
+                  : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
                   } ${editingDealId === d.id ? 'ring-2 ring-blue-500' : ''}`}
               >
                 <div className="flex justify-between items-start mb-2">

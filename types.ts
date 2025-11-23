@@ -38,7 +38,7 @@ export interface OptimizationResult {
   assignments: LoadedDeal[];
   unassignedProducts: Product[];
   totalCost: number;
-  reasoning: string;
+  reasoning?: string;
   safetyMarginUsed: number;
 }
 

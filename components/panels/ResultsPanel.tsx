@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { OptimizationResult, Deal, Product } from '../../types';
-import { MessageSquare, Layers, Clock, Calendar, AlertTriangle, Move, Box, CheckSquare, X, MapPin, DollarSign, Package, Container } from 'lucide-react';
+import { OptimizationResult, Deal, Product, OptimizationPriority } from '../../types';
+import { MessageSquare, Layers, Clock, Calendar, AlertTriangle, Move, Box, CheckSquare, X, MapPin, DollarSign, Package, Container, Zap } from 'lucide-react';
 
 interface ResultsPanelProps {
-  result: OptimizationResult | null;
+  results: Record<OptimizationPriority, OptimizationResult> | null;
+  activePriority: OptimizationPriority;
+  setActivePriority: (p: OptimizationPriority) => void;
   deals: Deal[];
   products?: Product[];
   selectedProductIds?: Set<string>;
@@ -14,10 +16,13 @@ interface ResultsPanelProps {
   handleDragStart: (e: React.DragEvent, productId: string, sourceId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, targetId: string) => void;
+  draggedProductId: string | null;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
-  result,
+  results,
+  activePriority,
+  setActivePriority,
   deals,
   products = [],
   selectedProductIds = new Set(),
@@ -26,13 +31,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   toggleDealSelection = (id: string) => { },
   handleDragStart,
   handleDragOver,
-  handleDrop
+  handleDrop,
+  draggedProductId
 }) => {
   const selectedProductsList = products.filter(p => selectedProductIds.has(p.id));
   const selectedDealsList = deals.filter(d => selectedDealIds.has(d.id));
   const hasSelections = selectedProductsList.length > 0 || selectedDealsList.length > 0;
 
-  if (!result) {
+  if (!results) {
     if (hasSelections) {
       return (
         <div className="space-y-6">
@@ -135,14 +141,42 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     );
   }
 
+  const result = results[activePriority];
+
   const getUnusedDeals = () => {
     if (!result) return [];
     const usedIds = new Set(result.assignments.map(a => a.deal.id));
     return deals.filter(d => !usedIds.has(d.id));
   };
 
+  // Find the dragged product to calculate compatibility
+  const draggedProduct = draggedProductId ? (
+    products.find(p => p.id === draggedProductId) ||
+    result?.unassignedProducts.find(p => p.id === draggedProductId) ||
+    result?.assignments.flatMap(a => a.assignedProducts).find(p => p.id === draggedProductId)
+  ) : null;
+
   return (
     <>
+      {/* Plan Tabs */}
+      <div className="flex gap-2 mb-4 bg-slate-800/50 p-1 rounded-lg border border-slate-700/50">
+        {[OptimizationPriority.COST, OptimizationPriority.BALANCE, OptimizationPriority.TIME].map(p => (
+          <button
+            key={p}
+            onClick={() => setActivePriority(p)}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${activePriority === p
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              }`}
+          >
+            {p === OptimizationPriority.COST && <DollarSign size={14} />}
+            {p === OptimizationPriority.TIME && <Clock size={14} />}
+            {p === OptimizationPriority.BALANCE && <Zap size={14} />}
+            {p} Plan
+          </button>
+        ))}
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
@@ -159,109 +193,136 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         </div>
       </div>
 
-      {/* Logic Summary */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-5 border border-slate-700/50">
-        <h4 className="text-sm font-semibold text-blue-300 mb-2 flex items-center gap-2">
-          <MessageSquare size={16} /> Optimization Summary
-        </h4>
-        <p className="text-slate-300 leading-relaxed text-sm whitespace-pre-line">{result.reasoning}</p>
-      </div>
-
       {/* Assignments Visualizer */}
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Layers size={20} className="text-blue-500" /> Packing Plan</h3>
 
-        {result.assignments.map((loadedDeal) => (
-          <div
-            key={loadedDeal.deal.id}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, loadedDeal.deal.id)}
-            className={`bg-slate-800 rounded-lg border transition-all ${(loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'
-              }`}
-          >
-            <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
-              }`}>
-              <div>
-                <div className="font-semibold text-white flex items-center gap-2">
-                  {loadedDeal.deal.carrierName}
-                  <span className="text-slate-500 text-sm font-normal">({loadedDeal.deal.containerType})</span>
-                  {loadedDeal.deal.restrictions.length > 0 && (
-                    <div className="flex gap-1">
-                      {loadedDeal.deal.restrictions.map(r => (
-                        <span key={r} className="text-[10px] px-1.5 rounded bg-green-900/30 text-green-400 border border-green-800/50">{r}</span>
-                      ))}
+        {result.assignments.map((loadedDeal) => {
+          // Visual Feedback Logic
+          let isCompatible = true;
+          let ghostWeight = 0;
+          let ghostVolume = 0;
+
+          if (draggedProduct) {
+            const currentWeight = loadedDeal.assignedProducts.reduce((sum, p) => sum + p.weightKg, 0);
+            const currentVolume = loadedDeal.assignedProducts.reduce((sum, p) => sum + p.volumeM3, 0);
+
+            // Check if product is already in this deal
+            const isAlreadyHere = loadedDeal.assignedProducts.some(p => p.id === draggedProduct.id);
+
+            if (!isAlreadyHere) {
+              ghostWeight = (draggedProduct.weightKg / loadedDeal.deal.maxWeightKg) * 100;
+              ghostVolume = (draggedProduct.volumeM3 / loadedDeal.deal.maxVolumeM3) * 100;
+
+              // Simple capacity check (ignoring advanced constraints for visual feedback speed)
+              if (currentWeight + draggedProduct.weightKg > loadedDeal.deal.maxWeightKg ||
+                currentVolume + draggedProduct.volumeM3 > loadedDeal.deal.maxVolumeM3) {
+                isCompatible = false;
+              }
+            }
+          }
+
+          return (
+            <div
+              key={loadedDeal.deal.id}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, loadedDeal.deal.id)}
+              className={`bg-slate-800 rounded-lg border transition-all duration-200 
+              ${(loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
+              ${draggedProduct && isCompatible ? 'ring-2 ring-green-500/50 border-green-500/50' : ''}
+              ${draggedProduct && !isCompatible ? 'opacity-50 grayscale' : ''}
+            `}
+            >
+              <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
+                }`}>
+                <div>
+                  <div className="font-semibold text-white flex items-center gap-2">
+                    {loadedDeal.deal.carrierName}
+                    <span className="text-slate-500 text-sm font-normal">({loadedDeal.deal.containerType})</span>
+                    {loadedDeal.deal.restrictions.length > 0 && (
+                      <div className="flex gap-1">
+                        {loadedDeal.deal.restrictions.map(r => (
+                          <span key={r} className="text-[10px] px-1.5 rounded bg-green-900/30 text-green-400 border border-green-800/50">{r}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 flex gap-3 mt-1">
+                    <span>${loadedDeal.deal.cost}</span>
+                    <span className="flex items-center gap-1"><Clock size={10} /> {loadedDeal.deal.transitTimeDays}d</span>
+                    <span className="flex items-center gap-1"><Calendar size={10} /> {loadedDeal.deal.availableFrom}</span>
+                    <span className="text-blue-400">{loadedDeal.deal.destination}</span>
+                  </div>
+                </div>
+                <div className="text-right text-xs space-y-1">
+                  <div className="flex items-center gap-2 justify-end">
+                    <span className="text-slate-500">Weight</span>
+                    <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden relative">
+                      <div className={`h-full absolute left-0 top-0 transition-all ${loadedDeal.utilizationWeight > 100 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(loadedDeal.utilizationWeight, 100)}%` }}></div>
+                      {ghostWeight > 0 && isCompatible && (
+                        <div className="h-full absolute top-0 bg-green-400/50 animate-pulse" style={{ left: `${Math.min(loadedDeal.utilizationWeight, 100)}%`, width: `${Math.min(ghostWeight, 100 - loadedDeal.utilizationWeight)}%` }}></div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="text-xs text-slate-400 flex gap-3 mt-1">
-                  <span>${loadedDeal.deal.cost}</span>
-                  <span className="flex items-center gap-1"><Clock size={10} /> {loadedDeal.deal.transitTimeDays}d</span>
-                  <span className="flex items-center gap-1"><Calendar size={10} /> {loadedDeal.deal.availableFrom}</span>
-                  <span className="text-blue-400">{loadedDeal.deal.destination}</span>
-                </div>
-              </div>
-              <div className="text-right text-xs space-y-1">
-                <div className="flex items-center gap-2 justify-end">
-                  <span className="text-slate-500">Weight</span>
-                  <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div className={`h-full ${loadedDeal.utilizationWeight > 100 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(loadedDeal.utilizationWeight, 100)}%` }}></div>
+                    <span className="w-8 text-right">{Math.round(loadedDeal.utilizationWeight)}%</span>
                   </div>
-                  <span className="w-8 text-right">{Math.round(loadedDeal.utilizationWeight)}%</span>
-                </div>
-                <div className="flex items-center gap-2 justify-end">
-                  <span className="text-slate-500">Volume</span>
-                  <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div className={`h-full ${loadedDeal.utilizationVolume > 100 ? 'bg-red-500' : 'bg-purple-500'}`} style={{ width: `${Math.min(loadedDeal.utilizationVolume, 100)}%` }}></div>
+                  <div className="flex items-center gap-2 justify-end">
+                    <span className="text-slate-500">Volume</span>
+                    <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden relative">
+                      <div className={`h-full absolute left-0 top-0 transition-all ${loadedDeal.utilizationVolume > 100 ? 'bg-red-500' : 'bg-purple-500'}`} style={{ width: `${Math.min(loadedDeal.utilizationVolume, 100)}%` }}></div>
+                      {ghostVolume > 0 && isCompatible && (
+                        <div className="h-full absolute top-0 bg-green-400/50 animate-pulse" style={{ left: `${Math.min(loadedDeal.utilizationVolume, 100)}%`, width: `${Math.min(ghostVolume, 100 - loadedDeal.utilizationVolume)}%` }}></div>
+                      )}
+                    </div>
+                    <span className="w-8 text-right">{Math.round(loadedDeal.utilizationVolume)}%</span>
                   </div>
-                  <span className="w-8 text-right">{Math.round(loadedDeal.utilizationVolume)}%</span>
                 </div>
               </div>
-            </div>
 
-            {/* Validation Issues */}
-            {loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0 && (
-              <div className="bg-red-900/40 text-red-200 text-xs p-2 border-b border-red-900/50">
-                <div className="font-bold flex items-center gap-1"><AlertTriangle size={12} /> Issues Detected:</div>
-                <ul className="list-disc list-inside pl-1 mt-1 space-y-0.5">
-                  {loadedDeal.validationIssues.map((issue, i) => <li key={i}>{issue}</li>)}
-                </ul>
-              </div>
-            )}
-
-            <div className="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 min-h-[50px]">
-              {loadedDeal.assignedProducts.length === 0 && (
-                <div className="col-span-full text-center text-slate-600 text-xs py-4 border border-dashed border-slate-700 rounded">
-                  Drag items here
+              {/* Validation Issues */}
+              {loadedDeal.validationIssues && loadedDeal.validationIssues.length > 0 && (
+                <div className="bg-red-900/40 text-red-200 text-xs p-2 border-b border-red-900/50">
+                  <div className="font-bold flex items-center gap-1"><AlertTriangle size={12} /> Issues Detected:</div>
+                  <ul className="list-disc list-inside pl-1 mt-1 space-y-0.5">
+                    {loadedDeal.validationIssues.map((issue, i) => <li key={i}>{issue}</li>)}
+                  </ul>
                 </div>
               )}
-              {loadedDeal.assignedProducts.map(prod => (
-                <div
-                  key={prod.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, prod.id, loadedDeal.deal.id)}
-                  className="bg-slate-700/30 p-2 rounded border border-slate-700/50 text-sm cursor-move hover:bg-slate-700/50 transition-colors shadow-sm hover:shadow-md text-slate-200"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Move size={12} className="text-slate-500" />
-                    <div className="truncate font-medium" title={prod.name}>{prod.name}</div>
+
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 min-h-[50px]">
+                {loadedDeal.assignedProducts.length === 0 && (
+                  <div className="col-span-full text-center text-slate-600 text-xs py-4 border border-dashed border-slate-700 rounded">
+                    Drag items here
                   </div>
-                  {(prod.shipDeadline || prod.arrivalDeadline || prod.readyDate) && (
-                    <div className="text-[10px] text-slate-500 pl-5">
-                      {prod.readyDate && <div>Ready: {prod.readyDate}</div>}
-                      {prod.shipDeadline && <div>Ship by {prod.shipDeadline}</div>}
-                      {prod.arrivalDeadline && <div>Arr by {prod.arrivalDeadline}</div>}
+                )}
+                {loadedDeal.assignedProducts.map(prod => (
+                  <div
+                    key={prod.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, prod.id, loadedDeal.deal.id)}
+                    className="bg-slate-700/30 p-2 rounded border border-slate-700/50 text-sm cursor-move hover:bg-slate-700/50 transition-colors shadow-sm hover:shadow-md text-slate-200"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Move size={12} className="text-slate-500" />
+                      <div className="truncate font-medium" title={prod.name}>{prod.name}</div>
                     </div>
-                  )}
-                  {prod.restrictions.length > 0 && (
-                    <div className="flex gap-1 mt-1 pl-5">
-                      {prod.restrictions.map(r => <span key={r} className="text-[9px] bg-slate-800 px-1 rounded text-slate-400">{r}</span>)}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {(prod.shipDeadline || prod.arrivalDeadline || prod.readyDate) && (
+                      <div className="text-[10px] text-slate-500 pl-5">
+                        {prod.readyDate && <div>Ready: {prod.readyDate}</div>}
+                        {prod.shipDeadline && <div>Ship by {prod.shipDeadline}</div>}
+                        {prod.arrivalDeadline && <div>Arr by {prod.arrivalDeadline}</div>}
+                      </div>
+                    )}
+                    {prod.restrictions.length > 0 && (
+                      <div className="flex gap-1 mt-1 pl-5">
+                        {prod.restrictions.map(r => <span key={r} className="text-[9px] bg-slate-800 px-1 rounded text-slate-400">{r}</span>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Unused Deals Section */}
         {getUnusedDeals().length > 0 && (

@@ -15,8 +15,8 @@ const SUPABASE_URL: string = 'https://jhlizehwrpfxlcrjoeqb.supabase.co';
 const SUPABASE_ANON_KEY: string = 'sb_publishable_rh-XCh-Mo2McXBdkqwpc6Q_5DHHLLWM';
 
 // This helper checks if you have replaced the placeholders
-export const isConfigured = 
-  SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' && 
+export const isConfigured =
+  SUPABASE_URL !== 'https://YOUR_PROJECT_ID.supabase.co' &&
   !SUPABASE_URL.includes('YOUR_PROJECT_ID') &&
   SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY';
 

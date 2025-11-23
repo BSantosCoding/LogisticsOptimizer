@@ -9,7 +9,8 @@ import {
   Search,
   Clock,
   RefreshCw,
-  LogOut
+  LogOut,
+  AlertTriangle
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Header from './components/Header';
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   const [availableCompanies, setAvailableCompanies] = useState<{ id: string, name: string }[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [isSettingUp, setIsSettingUp] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
   const [inputMode, setInputMode] = useState<'products' | 'deals' | 'config'>('products');
@@ -200,6 +202,7 @@ const App: React.FC = () => {
   const handleCompleteSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSettingUp(true);
+    setSetupError(null);
 
     try {
       let targetCompanyId = selectedCompanyId;
@@ -239,7 +242,11 @@ const App: React.FC = () => {
 
     } catch (err: any) {
       console.error("Setup failed:", err);
-      alert("Failed to setup workspace: " + err.message);
+      if (err.message && err.message.includes("row-level security")) {
+        setSetupError("Database permissions denied. Please run the SQL policies provided in the chat.");
+      } else {
+        setSetupError("Failed to setup workspace: " + err.message);
+      }
     } finally {
       setIsSettingUp(false);
     }
@@ -256,6 +263,7 @@ const App: React.FC = () => {
     setResult(null);
     setIsSetupRequired(false);
     setApprovalStatus(null);
+    setSetupError(null);
   };
 
 
@@ -557,13 +565,13 @@ const App: React.FC = () => {
 
           <div className="flex bg-slate-900 p-1 rounded-lg mb-6">
             <button
-              onClick={() => setSetupMode('create')}
+              onClick={() => { setSetupMode('create'); setSetupError(null); }}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${setupMode === 'create' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Create Workspace
             </button>
             <button
-              onClick={() => setSetupMode('join')}
+              onClick={() => { setSetupMode('join'); setSetupError(null); }}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${setupMode === 'join' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Join Existing
@@ -571,6 +579,13 @@ const App: React.FC = () => {
           </div>
 
           <form onSubmit={handleCompleteSetup}>
+            {setupError && (
+              <div className="bg-red-900/40 border border-red-500/50 rounded-lg p-3 mb-4 flex gap-2 items-start animate-in fade-in slide-in-from-top-2">
+                <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={16} />
+                <div className="text-xs text-red-200">{setupError}</div>
+              </div>
+            )}
+
             {setupMode === 'create' ? (
               <div className="mb-4 animate-in fade-in slide-in-from-right-4">
                 <label className="block text-xs text-slate-500 uppercase font-bold mb-2">Company Name</label>

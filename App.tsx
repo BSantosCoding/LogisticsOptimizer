@@ -251,7 +251,9 @@ const App: React.FC = () => {
 
     } catch (err: any) {
       console.error("Setup failed:", err);
-      if (err.message && err.message.includes("row-level security")) {
+      if (err.message && err.message.includes("infinite recursion")) {
+        setSetupError("Database Policy Error: Infinite Recursion. Please run the provided 'get_my_company_id' SQL fix in Supabase.");
+      } else if (err.message && err.message.includes("row-level security")) {
         setSetupError("Database permissions denied. Please run the SQL policies.");
       } else {
         setSetupError("Failed to setup workspace: " + err.message);
@@ -272,6 +274,9 @@ const App: React.FC = () => {
     setDeals([]);
     setTemplates([]);
     setResult(null);
+    setApprovalStatus(null);
+    setSetupError(null);
+    setUserRole(null);
 
     // Trigger setup UI
     setSetupMode('join');

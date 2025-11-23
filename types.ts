@@ -8,8 +8,6 @@ export interface Product {
   readyDate?: string; // YYYY-MM-DD (Product ready to ship)
   shipDeadline?: string; // YYYY-MM-DD
   arrivalDeadline?: string; // YYYY-MM-DD
-  unNumber?: string; // e.g. "UN1090"
-  hazardClass?: string; // e.g. "3" or "5.1"
 }
 
 export interface Deal {

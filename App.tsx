@@ -65,7 +65,7 @@ const App: React.FC = () => {
 
   // Forms
   const [newTag, setNewTag] = useState('');
-  const [newTemplate, setNewTemplate] = useState<Partial<Product>>({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], hazardClass: '', unNumber: '' });
+  const [newTemplate, setNewTemplate] = useState<Partial<Product>>({ name: '', weightKg: 0, volumeM3: 0, restrictions: [] });
 
   const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
     name: '',
@@ -74,9 +74,7 @@ const App: React.FC = () => {
     restrictions: [],
     readyDate: '',
     shipDeadline: '',
-    arrivalDeadline: '',
-    unNumber: '',
-    hazardClass: ''
+    arrivalDeadline: ''
   });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
@@ -179,7 +177,13 @@ const App: React.FC = () => {
       setIsSetupRequired(false);
 
       // 2. Load Data from Supabase
-      const { data: productsData } = await supabase.from('products').select('*').eq('company_id', profile.company_id);
+      // FILTER PRODUCTS BY CREATED_BY
+      const { data: productsData } = await supabase
+        .from('products')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .eq('created_by', session.user.id); // Only show current user's products
+
       const { data: dealsData } = await supabase.from('deals').select('*').eq('company_id', profile.company_id);
       const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', profile.company_id);
       const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', profile.company_id);
@@ -288,12 +292,13 @@ const App: React.FC = () => {
       await supabase.from('products').insert([{
         id: newId,
         company_id: companyId,
+        created_by: session.user.id, // Assign to current user
         data: productData
       }]);
     }
 
     setProducts(updatedProducts);
-    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', unNumber: '', hazardClass: '' });
+    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
   };
 
   const handleEditProduct = (p: Product) => {
@@ -304,9 +309,7 @@ const App: React.FC = () => {
       restrictions: p.restrictions,
       readyDate: p.readyDate || '',
       shipDeadline: p.shipDeadline || '',
-      arrivalDeadline: p.arrivalDeadline || '',
-      unNumber: p.unNumber || '',
-      hazardClass: p.hazardClass || ''
+      arrivalDeadline: p.arrivalDeadline || ''
     });
     setEditingProductId(p.id);
     setInputMode('products');
@@ -318,7 +321,7 @@ const App: React.FC = () => {
   };
 
   const handleCancelProductEdit = () => {
-    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', unNumber: '', hazardClass: '' });
+    setNewProduct({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
     setEditingProductId(null);
   };
 
@@ -415,7 +418,7 @@ const App: React.FC = () => {
         data: templateData
       }]);
 
-      setNewTemplate({ name: '', weightKg: 0, volumeM3: 0, restrictions: [], hazardClass: '', unNumber: '' });
+      setNewTemplate({ name: '', weightKg: 0, volumeM3: 0, restrictions: [] });
     }
   };
 
@@ -427,9 +430,7 @@ const App: React.FC = () => {
       restrictions: t.restrictions,
       readyDate: '',
       shipDeadline: '',
-      arrivalDeadline: '',
-      unNumber: t.unNumber || '',
-      hazardClass: t.hazardClass || ''
+      arrivalDeadline: ''
     });
     setInputMode('products');
   };

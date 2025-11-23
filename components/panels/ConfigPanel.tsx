@@ -9,6 +9,7 @@ interface ConfigPanelProps {
   newTemplate: Partial<Product>;
   setNewTemplate: (t: Partial<Product>) => void;
   handleAddTemplate: () => void;
+  handleRemoveTemplate: (id: string) => void;
   applyTemplate: (t: Product) => void;
   restrictionTags: string[];
   newTag: string;
@@ -24,6 +25,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   newTemplate,
   setNewTemplate,
   handleAddTemplate,
+  handleRemoveTemplate,
   applyTemplate,
   restrictionTags,
   newTag,
@@ -140,9 +142,16 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <div className="font-medium text-sm text-slate-200">{t.name}</div>
                 <div className="text-xs text-slate-500">{t.weightKg}kg | {t.volumeM3}m³ | {t.restrictions.join(', ')}</div>
               </div>
-              <button onClick={() => applyTemplate(t)} className="text-xs bg-blue-600/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all">
-                Use
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => applyTemplate(t)} className="text-xs bg-blue-600/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all">
+                  Use
+                </button>
+                {canManageConfig && (
+                  <button onClick={() => handleRemoveTemplate(t.id)} className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -180,7 +189,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             <div key={tag} className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700 text-sm flex items-center gap-2 text-slate-300">
               {tag}
               {!DEFAULT_RESTRICTIONS.includes(tag) && canManageConfig && (
-                <button onClick={() => handleRemoveTag(tag)} className="text-slate-500 hover:text-red-400"><Trash2 size={12} /></button>
+                <button onClick={() => handleRemoveTag(tag)} className="text-slate-500 hover:text-red-400 p-1 rounded-full hover:bg-slate-700 transition-colors"><Trash2 size={12} /></button>
               )}
             </div>
           ))}

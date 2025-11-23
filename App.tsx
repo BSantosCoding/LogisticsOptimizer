@@ -487,6 +487,11 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRemoveTemplate = async (id: string) => {
+    setTemplates(templates.filter(t => t.id !== id));
+    await supabase.from('templates').delete().eq('id', id);
+  };
+
   const applyTemplate = (t: Product) => {
     setNewProduct({
       name: t.name,
@@ -789,6 +794,7 @@ const App: React.FC = () => {
               newTemplate={newTemplate}
               setNewTemplate={setNewTemplate}
               handleAddTemplate={handleAddTemplate}
+              handleRemoveTemplate={handleRemoveTemplate}
               applyTemplate={applyTemplate}
               restrictionTags={restrictionTags}
               newTag={newTag}

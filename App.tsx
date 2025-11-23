@@ -692,6 +692,10 @@ const App: React.FC = () => {
           const newLoadedDeal = validateLoadedDeal(freshDeal, [product], marginPercentage, ignoreWeight, ignoreVolume);
           newAssignments.push(newLoadedDeal);
         }
+      } else {
+        targetDeal.assignedProducts.push(product);
+        const revalidatedTarget = validateLoadedDeal(targetDeal.deal, targetDeal.assignedProducts, marginPercentage, ignoreWeight, ignoreVolume);
+        Object.assign(targetDeal, revalidatedTarget);
       }
     }
 

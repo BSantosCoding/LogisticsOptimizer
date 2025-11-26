@@ -29,6 +29,7 @@ import ResultsPanel from './components/panels/ResultsPanel';
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';
 import ImportConfirmModal from './components/ImportConfirmModal';
+import ImportSummaryModal from './components/ImportSummaryModal';
 import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor } from './types';
 
 // Default options
@@ -105,6 +106,8 @@ const App: React.FC = () => {
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [pendingImportData, setPendingImportData] = useState<{ products: Product[], productsWithMissingFF: string[] } | null>(null);
+  const [showImportSummary, setShowImportSummary] = useState(false);
+  const [importSummaryData, setImportSummaryData] = useState<{ total: number, savedToDb: boolean, issues: string[] } | null>(null);
 
   // --- AUTH Initialization ---
   useEffect(() => {
@@ -497,10 +500,14 @@ const App: React.FC = () => {
       if (error) console.error('Error importing products:', error);
     }
 
-    // Show alert if there are products with missing form factors
+    // Show summary if there are products with missing form factors
     if (productsWithMissingFF.length > 0) {
-      const message = `Imported ${newProducts.length} products${saveToDb ? ' to database' : ' (session only)'}.\n\n⚠️ ${productsWithMissingFF.length} product(s) have UNKNOWN form factors and need attention:\n\n${productsWithMissingFF.slice(0, 5).map(p => `• ${p}`).join('\n')}${productsWithMissingFF.length > 5 ? `\n... and ${productsWithMissingFF.length - 5} more` : ''}\n\nPlease assign form factors to these products before running optimization.`;
-      alert(message);
+      setImportSummaryData({
+        total: newProducts.length,
+        savedToDb: saveToDb,
+        issues: productsWithMissingFF
+      });
+      setShowImportSummary(true);
     }
 
     // Close modal and clear pending data
@@ -1193,6 +1200,19 @@ const App: React.FC = () => {
           onCancel={() => {
             setShowImportModal(false);
             setPendingImportData(null);
+          }}
+        />
+      )}
+
+      {/* Import Summary Modal */}
+      {showImportSummary && importSummaryData && (
+        <ImportSummaryModal
+          totalImported={importSummaryData.total}
+          savedToDb={importSummaryData.savedToDb}
+          productsWithIssues={importSummaryData.issues}
+          onClose={() => {
+            setShowImportSummary(false);
+            setImportSummaryData(null);
           }}
         />
       )}

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X } from 'lucide-react';
+import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -27,6 +27,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onClose,
   optimalRange = { min: 85, max: 100 }
 }) => {
+  const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
+
+  const toggleDestination = (dest: string) => {
+    setCollapsedDestinations(prev => {
+      const next = new Set(prev);
+      if (next.has(dest)) next.delete(dest);
+      else next.add(dest);
+      return next;
+    });
+  };
 
   if (!results) {
     return (
@@ -83,94 +93,101 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Assignments Visualizer */}
       <div className="space-y-8">
-        {Object.entries(groupedAssignments).map(([destination, assignments]) => (
-          <div key={destination} className="space-y-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2 border-b border-slate-700 pb-2">
-              <Move size={20} className="text-blue-500" />
-              {destination.split('|')[0] || destination}
-              <span className="text-sm font-normal text-slate-500 ml-2">({assignments.length} Containers)</span>
-            </h3>
+        {Object.entries(groupedAssignments).map(([destination, assignments]) => {
+          const isCollapsed = collapsedDestinations.has(destination);
+          return (
+            <div key={destination} className="space-y-4">
+              <h3
+                className="text-lg font-semibold text-white flex items-center gap-2 border-b border-slate-700 pb-2 cursor-pointer hover:text-blue-400 transition-colors"
+                onClick={() => toggleDestination(destination)}
+              >
+                {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
+                <Move size={20} className="text-blue-500" />
+                {destination.split('|')[0] || destination}
+                <span className="text-sm font-normal text-slate-500 ml-2">({assignments.length} Containers)</span>
+              </h3>
 
-            {assignments.map((loadedContainer) => {
-              // Extract instance number from ID (format: templateId-instance-N)
-              const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
-              const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
+              {!isCollapsed && assignments.map((loadedContainer) => {
+                // Extract instance number from ID (format: templateId-instance-N)
+                const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
+                const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
 
-              const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
-              const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
+                const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
+                const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
 
-              return (
-                <div
-                  key={loadedContainer.container.id}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, loadedContainer.container.id)}
-                  className={`bg-slate-800 rounded-lg border transition-all duration-200 
-                  ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
-                `}
-                >
-                  <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
-                    }`}>
-                    <div>
-                      <div className="font-semibold text-white flex items-center gap-2">
-                        {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
-                        {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
-                          <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">
-                            <AlertTriangle size={12} /> Issues Found
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5 flex gap-3">
-                        <span>{loadedContainer.container.destination || 'No Dest'}</span>
-                        <span>•</span>
-                        <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
-                        {loadedContainer.totalUtilization.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-slate-500">Utilization</div>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="h-2 bg-slate-900 w-full">
-                    <div
-                      className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
-                      style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
-                    />
-                  </div>
-
-                  {/* Products List */}
-                  <div className="p-3 space-y-2">
-                    {loadedContainer.assignedProducts.length === 0 ? (
-                      <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
-                    ) : (
-                      loadedContainer.assignedProducts.map((p, idx) => (
-                        <div
-                          key={`${p.id}-${idx}`}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
-                          className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
-                        >
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <Box size={14} className="text-blue-400 shrink-0" />
-                            <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
-                              {p.quantity} units
+                return (
+                  <div
+                    key={loadedContainer.container.id}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, loadedContainer.container.id)}
+                    className={`bg-slate-800 rounded-lg border transition-all duration-200 
+                    ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
+                  `}
+                  >
+                    <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
+                      }`}>
+                      <div>
+                        <div className="font-semibold text-white flex items-center gap-2">
+                          {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
+                          {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
+                            <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">
+                              <AlertTriangle size={12} /> Issues Found
                             </span>
-                          </div>
+                          )}
                         </div>
-                      ))
-                    )}
+                        <div className="text-xs text-slate-400 mt-0.5 flex gap-3">
+                          <span>{loadedContainer.container.destination || 'No Dest'}</span>
+                          <span>•</span>
+                          <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
+                          {loadedContainer.totalUtilization.toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-slate-500">Utilization</div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="h-2 bg-slate-900 w-full">
+                      <div
+                        className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
+                        style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
+                      />
+                    </div>
+
+                    {/* Products List */}
+                    <div className="p-3 space-y-2">
+                      {loadedContainer.assignedProducts.length === 0 ? (
+                        <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
+                      ) : (
+                        loadedContainer.assignedProducts.map((p, idx) => (
+                          <div
+                            key={`${p.id}-${idx}`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
+                            className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
+                          >
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <Box size={14} className="text-blue-400 shrink-0" />
+                              <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
+                                {p.quantity} units
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
       {/* Unassigned Products */}

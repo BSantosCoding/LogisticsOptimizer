@@ -14,7 +14,9 @@ import {
   Layers,
   Database,
   Zap,
-  Box
+  Box,
+  BarChart3,
+  PenLine
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Button from './components/Button';
@@ -939,16 +941,20 @@ const App: React.FC = () => {
         <nav className="flex flex-col gap-4 w-full px-2">
           <button
             onClick={() => setViewMode('data')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'data' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${viewMode === 'data' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="Data Input"
           >
-            Data Input
+            <PenLine size={20} />
+            <span className="text-[10px] font-medium">Input</span>
           </button>
           {results && (
             <button
               onClick={() => setViewMode('results')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${viewMode === 'results' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+              title="Results"
             >
-              Results
+              <BarChart3 size={20} />
+              <span className="text-[10px] font-medium">Results</span>
             </button>
           )}
           <button

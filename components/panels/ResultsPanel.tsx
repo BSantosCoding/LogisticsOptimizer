@@ -181,6 +181,23 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           </div>
                         ))
                       )}
+
+                      {/* Validation Issues */}
+                      {loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-700">
+                          <div className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
+                            <AlertTriangle size={14} />
+                            Validation Issues:
+                          </div>
+                          <ul className="space-y-1">
+                            {loadedContainer.validationIssues.map((issue, idx) => (
+                              <li key={idx} className="text-xs text-red-300 pl-4">
+                                • {issue}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

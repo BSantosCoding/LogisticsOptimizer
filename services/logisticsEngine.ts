@@ -3,6 +3,20 @@ import { Product, Container, OptimizationPriority, LoadedContainer } from "../ty
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
+// --- Helper Functions ---
+
+// Calculate how "large" a container is (sum of capacities as a rough heuristic for sorting)
+const getContainerCapacityScore = (c: Container) =>
+  Object.values(c.capacities).reduce((sum, val) => sum + val, 0);
+
+// Calculate Percentage of Container (PoC) for a single unit of a product
+// Returns 0-1 scale (e.g. 0.05 for 5%)
+const getPoC = (product: Product, container: Container): number => {
+  const cap = container.capacities[product.formFactorId];
+  if (!cap || cap <= 0) return 0;
+  return 1 / cap;
+};
+
 export const checkCompatibility = (product: Product, container: Container): string[] => {
   const issues: string[] = [];
 
@@ -57,6 +71,7 @@ export const checkCompatibility = (product: Product, container: Container): stri
   return issues;
 };
 
+// Validates a fully packed container and calculates final stats
 export const validateLoadedContainer = (
   container: Container,
   products: Product[]
@@ -94,6 +109,102 @@ export const validateLoadedContainer = (
   };
 };
 
+// Helper to check if a list of products fits in a container template
+const canFit = (products: Product[], container: Container): boolean => {
+  let totalUtilization = 0;
+  for (const p of products) {
+    const maxCap = container.capacities[p.formFactorId];
+    if (!maxCap) return false;
+
+    const issues = checkCompatibility(p, container);
+    if (issues.length > 0) return false;
+
+    totalUtilization += (p.quantity / maxCap) * 100;
+  }
+  return totalUtilization <= 100.1;
+};
+
+// --- Core Packing Logic (Greedy) ---
+// Returns a list of raw container instances (unvalidated)
+const packItems = (
+  products: Product[],
+  templates: Container[]
+): Array<{ template: Container; assigned: Product[] }> => {
+
+  if (templates.length === 0) return [];
+
+  // Assuming templates are already sorted (Largest First)
+  // The greedy strategy is: Always try to fill the *current open* container.
+  // If full, create a new container using the LARGEST available template.
+
+  const packedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number }> = [];
+  const unassigned: Product[] = []; // Should be empty if templates are compatible, but safety check
+
+  // Logic:
+  // 1. Loop through products.
+  // 2. Try to fit 'qty' into current open container.
+  // 3. If it doesn't fit completely, fill current, then open new Largest.
+
+  for (const product of products) {
+    let remainingQty = product.quantity;
+
+    // Try to put into existing open container first (Best Fit / First Fit)
+    // We only look at the *last* opened container to simulate "filling up" a truck/container.
+    // (Searching all previous containers handles "Best Fit", but "Next Fit" is better for sequential packing)
+    // Let's stick to filling the last opened container for "Next Fit" behavior which is typical for this problem.
+
+    if (packedInstances.length > 0) {
+      const currentInstance = packedInstances[packedInstances.length - 1];
+      const maxCap = currentInstance.template.capacities[product.formFactorId];
+
+      if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
+        const spacePercent = 100.1 - currentInstance.currentUtil;
+        const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
+
+        if (maxQtyThatFits > 0) {
+          const take = Math.min(maxQtyThatFits, remainingQty);
+          currentInstance.assigned.push({ ...product, quantity: take });
+          currentInstance.currentUtil += (take / maxCap) * 100;
+          remainingQty -= take;
+        }
+      }
+    }
+
+    // If still items left, we need new containers
+    while (remainingQty > 0) {
+      // Find the largest compatible container for this product
+      // We assume 'templates' is sorted Largest -> Smallest
+      const bestTemplate = templates.find(t =>
+        t.capacities[product.formFactorId] &&
+        checkCompatibility(product, t).length === 0
+      );
+
+      if (!bestTemplate) {
+        // Cannot fit anywhere
+        unassigned.push({ ...product, quantity: remainingQty });
+        break;
+      }
+
+      const maxCap = bestTemplate.capacities[product.formFactorId];
+      const take = Math.min(maxCap, remainingQty); // Can't take more than a full container obviously
+
+      // Create new instance
+      packedInstances.push({
+        template: bestTemplate,
+        assigned: [{ ...product, quantity: take }],
+        currentUtil: (take / maxCap) * 100
+      });
+
+      remainingQty -= take;
+    }
+  }
+
+  return packedInstances.map(p => ({ template: p.template, assigned: p.assigned }));
+};
+
+
+// --- Main Calculation Function ---
+
 export const calculatePacking = (
   products: Product[],
   containers: Container[],
@@ -101,9 +212,7 @@ export const calculatePacking = (
   minUtilization: number = 70
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  const MIN_UTILIZATION_THRESHOLD = minUtilization;
-
-  // Group products by destination
+  // 1. Group Products by Destination
   const productsByDestination = products.reduce((acc, product) => {
     const dest = product.destination || 'Unknown';
     if (!acc[dest]) acc[dest] = [];
@@ -111,118 +220,138 @@ export const calculatePacking = (
     return acc;
   }, {} as Record<string, Product[]>);
 
-  // Sort container templates by capacity descending
-  const getCapacityScore = (c: Container) => Object.values(c.capacities).reduce((sum, val) => sum + val, 0);
-  const sortedContainerTemplates = [...containers].sort((a, b) => getCapacityScore(b) - getCapacityScore(a));
-
-  let instanceCounter = 0;
-  const allContainerInstances: LoadedContainer[] = [];
+  let allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];
+  let instanceCounter = 0;
 
-  const createContainerInstance = (template: Container, destination: string) => {
-    instanceCounter++;
-    return {
-      templateId: template.id,
-      instanceId: `${template.id}-instance-${instanceCounter}`,
-      template: { ...template, destination, id: `${template.id}-instance-${instanceCounter}` },
-      currentUtilization: 0,
-      assigned: [] as Product[]
-    };
-  };
+  // Process each destination separately
+  for (const [destination, groupProducts] of Object.entries(productsByDestination)) {
 
-  // Process each destination group independently
-  for (const [destination, destProducts] of Object.entries(productsByDestination)) {
-    const sortedProducts = [...destProducts].sort((a, b) => b.quantity - a.quantity);
+    // 2. Identify Compatible Templates for this group (Match Destination)
+    // We also filter by valid capacities for at least some products in group
+    const compatibleTemplates = containers.filter(c =>
+      (!c.destination || normalize(c.destination) === normalize(destination))
+    );
 
-    const containerInstances: Array<{
-      templateId: string;
-      instanceId: string;
-      template: Container;
-      currentUtilization: number;
-      assigned: Product[];
-    }> = [];
+    if (compatibleTemplates.length === 0) {
+      allUnassigned.push(...groupProducts);
+      continue;
+    }
 
-    // PHASE 1: Pack products into largest containers first
-    for (const product of sortedProducts) {
-      let remainingQty = product.quantity;
+    // 3. Sort Templates: Largest Capacity First (Greedy Baseline)
+    // Secondary sort: Cheaper first
+    const sortedTemplates = [...compatibleTemplates].sort((a, b) => {
+      const capA = getContainerCapacityScore(a);
+      const capB = getContainerCapacityScore(b);
+      if (capA !== capB) return capB - capA;
+      return a.cost - b.cost;
+    });
 
-      while (remainingQty > 0) {
-        // Try existing containers first (Best Fit)
-        let bestInstance = null;
-        let bestScore = Infinity;
-        let bestFitQty = 0;
+    const largestTemplate = sortedTemplates[0];
 
-        for (const instance of containerInstances) {
-          const compatibilityIssues = checkCompatibility(product, instance.template);
-          if (compatibilityIssues.length > 0) continue;
+    // 4. Sort Products: Priority = Restrictions (Desc), then PoC (Desc)
+    const sortedProducts = [...groupProducts].sort((a, b) => {
+      // A. Restrictions (More difficult items first)
+      const restA = a.restrictions.length;
+      const restB = b.restrictions.length;
+      if (restA !== restB) return restB - restA;
 
-          const maxCap = instance.template.capacities[product.formFactorId];
-          if (!maxCap) continue;
+      // B. Percentage of Container (Larger physical items first)
+      // We use the Largest Template as the baseline for "Physical Size"
+      const pocA = getPoC(a, largestTemplate);
+      const pocB = getPoC(b, largestTemplate);
+      if (pocA !== pocB) return pocB - pocA; // Descending
 
-          const remainingSpace = 100 - instance.currentUtilization;
-          const maxQtyThatFits = Math.floor((remainingSpace / 100) * maxCap);
+      // C. Quantity (Largest batches first)
+      return b.quantity - a.quantity;
+    });
 
-          if (maxQtyThatFits > 0) {
-            const qtyToPlace = Math.min(maxQtyThatFits, remainingQty);
-            const utilizationAfter = instance.currentUtilization + ((qtyToPlace / maxCap) * 100);
-            const score = (100 - utilizationAfter);
+    // 5. Phase 1: Greedy Packing
+    let packedInstances = packItems(sortedProducts, sortedTemplates);
 
-            if (score < bestScore) {
-              bestScore = score;
-              bestInstance = instance;
-              bestFitQty = qtyToPlace;
+    // 6. Phase 2: Optimization Loop
+    // We iterate backwards to optimize the "tail" of the packing list
+    if (packedInstances.length > 0) {
+
+      // Step A: Downsize the Last Container (Remainder Check)
+      const lastIdx = packedInstances.length - 1;
+      const lastInstance = packedInstances[lastIdx];
+
+      // Try to find a cheaper template that fits the assignments
+      let bestReplacement = lastInstance.template;
+      let bestCost = lastInstance.template.cost;
+      let foundBetter = false;
+
+      for (const t of sortedTemplates) {
+        if (t.cost < bestCost && canFit(lastInstance.assigned, t)) {
+          bestReplacement = t;
+          bestCost = t.cost;
+          foundBetter = true;
+        }
+      }
+
+      if (foundBetter) {
+        packedInstances[lastIdx].template = bestReplacement;
+      }
+
+      // Step B: Optimize Last Full + Remainder (Backtrack check)
+      // If we have at least 2 containers, check if [Last-1] + [Last] can be repacked 
+      // into smaller containers cheaper than Cost(Last-1) + Cost(Last).
+      if (packedInstances.length >= 2) {
+        const idxTail = packedInstances.length - 1;
+        const idxPrev = packedInstances.length - 2;
+
+        const tail = packedInstances[idxTail];
+        const prev = packedInstances[idxPrev];
+
+        const currentCost = tail.template.cost + prev.template.cost;
+        const combinedItems = [...prev.assigned, ...tail.assigned];
+
+        // To force a different outcome, we try packing these items 
+        // excluding the "Large" template type used in 'prev'.
+        // (Assumes 'prev' used the largest template, which is typical for greedy)
+        const smallerTemplates = sortedTemplates.filter(t => t.id !== prev.template.id);
+
+        if (smallerTemplates.length > 0) {
+          // Simulate packing with smaller containers
+          const alternativePacking = packItems(combinedItems, smallerTemplates);
+
+          // Check if valid (all packed) and cheaper
+          // Note: packItems might return partials if it can't fit everything, 
+          // but here we must ensure everything fits to be a valid replacement.
+          const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
+          const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);
+
+          if (totalAltQty === totalReqQty) {
+            const altCost = alternativePacking.reduce((sum, i) => sum + i.template.cost, 0);
+
+            if (altCost < currentCost) {
+              // Apply Optimization: Replace the last 2 containers with the new set
+              // Remove last 2
+              packedInstances.splice(idxPrev, 2);
+              // Add new ones
+              packedInstances.push(...alternativePacking);
             }
           }
         }
-
-        // If no existing container works, create new one
-        // ALWAYS prefer largest containers first to minimize total container count
-        if (!bestInstance) {
-          for (const template of sortedContainerTemplates) {
-            const compatibilityIssues = checkCompatibility(product, template);
-            if (compatibilityIssues.length > 0) continue;
-
-            const maxCap = template.capacities[product.formFactorId];
-            if (!maxCap) continue;
-
-            const qtyThatFits = Math.min(maxCap, remainingQty);
-
-            // Always use the first (largest) compatible container
-            const newInstance = createContainerInstance(template, destination);
-            containerInstances.push(newInstance);
-            bestInstance = newInstance;
-            bestFitQty = qtyThatFits;
-            break;
-          }
-        }
-
-        // Apply assignment
-        if (bestInstance && bestFitQty > 0) {
-          const maxCap = bestInstance.template.capacities[product.formFactorId]!;
-          const utilizationNeeded = (bestFitQty / maxCap) * 100;
-
-          bestInstance.assigned.push({ ...product, quantity: bestFitQty });
-          bestInstance.currentUtilization += utilizationNeeded;
-          remainingQty -= bestFitQty;
-        } else {
-          break;
-        }
-      }
-
-      if (remainingQty > 0) {
-        allUnassigned.push({ ...product, quantity: remainingQty });
       }
     }
 
-    // Convert to LoadedContainer
-    containerInstances.forEach(instance => {
-      const validated = validateLoadedContainer(instance.template, instance.assigned);
-      allContainerInstances.push(validated);
+    // 7. Finalize Output
+    packedInstances.forEach(inst => {
+      instanceCounter++;
+      // Create a unique ID for this specific container instance
+      const instanceContainer = {
+        ...inst.template,
+        id: `${inst.template.id}-instance-${instanceCounter}`
+      };
+
+      allAssignments.push(validateLoadedContainer(instanceContainer, inst.assigned));
     });
   }
 
   return {
-    assignments: allContainerInstances,
+    assignments: allAssignments,
     unassigned: allUnassigned
   };
 };

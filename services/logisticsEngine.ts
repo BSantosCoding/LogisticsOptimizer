@@ -212,29 +212,54 @@ export const calculatePacking = (
   minUtilization: number = 70
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // 1. Group Products by Destination
-  const productsByDestination = products.reduce((acc, product) => {
-    const dest = product.destination || 'Unknown';
-    if (!acc[dest]) acc[dest] = [];
-    acc[dest].push(product);
-    return acc;
-  }, {} as Record<string, Product[]>);
+  // 1. Group Products by Destination AND Restrictions
+  // We create a composite key to ensure products with specific needs are grouped together
+  // AND products going to different places are separated.
+  const productGroups: Record<string, { products: Product[], destination: string, restrictions: string[] }> = {};
+
+  products.forEach(p => {
+    const dest = p.destination ? normalize(p.destination) : 'unknown';
+    // Sort restrictions to ensure consistent key generation (e.g. "A,B" == "B,A")
+    const restrictionsKey = p.restrictions.map(r => normalize(r)).sort().join(',');
+    const groupKey = `${dest}::${restrictionsKey}`;
+
+    if (!productGroups[groupKey]) {
+      productGroups[groupKey] = {
+        products: [],
+        destination: p.destination || '',
+        restrictions: p.restrictions
+      };
+    }
+    productGroups[groupKey].products.push(p);
+  });
 
   let allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];
   let instanceCounter = 0;
 
-  // Process each destination separately
-  for (const [destination, groupProducts] of Object.entries(productsByDestination)) {
+  // Process each group separately
+  for (const group of Object.values(productGroups)) {
 
-    // 2. Identify Compatible Templates for this group (Match Destination)
-    // We also filter by valid capacities for at least some products in group
-    const compatibleTemplates = containers.filter(c =>
-      (!c.destination || normalize(c.destination) === normalize(destination))
-    );
+    // 2. Identify Compatible Templates for this group
+    // A container is compatible if:
+    // a) Destination matches (or is open/empty)
+    // b) It has ALL the capabilities required by the group restrictions
+    const compatibleTemplates = containers.filter(c => {
+      // Destination Check
+      if (c.destination && normalize(c.destination) !== normalize(group.destination)) return false;
+
+      // Restrictions/Capabilities Check
+      if (group.restrictions.length > 0) {
+        const containerCaps = new Set(c.restrictions.map(normalize));
+        for (const req of group.restrictions) {
+          if (!containerCaps.has(normalize(req))) return false;
+        }
+      }
+      return true;
+    });
 
     if (compatibleTemplates.length === 0) {
-      allUnassigned.push(...groupProducts);
+      allUnassigned.push(...group.products);
       continue;
     }
 
@@ -249,20 +274,15 @@ export const calculatePacking = (
 
     const largestTemplate = sortedTemplates[0];
 
-    // 4. Sort Products: Priority = Restrictions (Desc), then PoC (Desc)
-    const sortedProducts = [...groupProducts].sort((a, b) => {
-      // A. Restrictions (More difficult items first)
-      const restA = a.restrictions.length;
-      const restB = b.restrictions.length;
-      if (restA !== restB) return restB - restA;
-
-      // B. Percentage of Container (Larger physical items first)
-      // We use the Largest Template as the baseline for "Physical Size"
+    // 4. Sort Products: PoC (Percentage of Container) Descending
+    // We use the Largest Template available for THIS group as the baseline for "Physical Size"
+    const sortedProducts = [...group.products].sort((a, b) => {
+      // PoC (Physical Size relative to largest container)
       const pocA = getPoC(a, largestTemplate);
       const pocB = getPoC(b, largestTemplate);
-      if (pocA !== pocB) return pocB - pocA; // Descending
+      if (pocA !== pocB) return pocB - pocA; // Descending (Larger first)
 
-      // C. Quantity (Largest batches first)
+      // Quantity (Largest batches first)
       return b.quantity - a.quantity;
     });
 
@@ -283,6 +303,7 @@ export const calculatePacking = (
       let foundBetter = false;
 
       for (const t of sortedTemplates) {
+        // Check if cost is lower AND strictly compatible with the items assigned
         if (t.cost < bestCost && canFit(lastInstance.assigned, t)) {
           bestReplacement = t;
           bestCost = t.cost;

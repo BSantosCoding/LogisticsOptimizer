@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Box } from 'lucide-react';
+import { Plus, Trash2, Box, Pencil, Save, X } from 'lucide-react';
 import Button from '../Button';
 import { ProductFormFactor } from '../../types';
 
@@ -7,11 +7,15 @@ interface FormFactorPanelProps {
     formFactors: ProductFormFactor[];
     onAdd: (name: string, description: string) => void;
     onRemove: (id: string) => void;
+    onEdit: (id: string, name: string, description: string) => void;
 }
 
-const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove }) => {
+const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove, onEdit }) => {
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editDesc, setEditDesc] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,6 +24,25 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
             setNewName('');
             setNewDesc('');
         }
+    };
+
+    const startEdit = (ff: ProductFormFactor) => {
+        setEditingId(ff.id);
+        setEditName(ff.name);
+        setEditDesc(ff.description || '');
+    };
+
+    const saveEdit = () => {
+        if (editingId && editName) {
+            onEdit(editingId, editName, editDesc);
+            setEditingId(null);
+        }
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditName('');
+        setEditDesc('');
     };
 
     return (
@@ -69,18 +92,61 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                     </div>
                 ) : (
                     formFactors.map(ff => (
-                        <div key={ff.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 flex justify-between items-center group hover:border-slate-600 transition-colors">
-                            <div>
-                                <div className="font-medium text-slate-200">{ff.name}</div>
-                                {ff.description && <div className="text-xs text-slate-500">{ff.description}</div>}
-                            </div>
-                            <button
-                                onClick={() => onRemove(ff.id)}
-                                className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-red-400/10 transition-colors"
-                                title="Remove"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                        <div key={ff.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-slate-600 transition-colors">
+                            {editingId === ff.id ? (
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={editDesc}
+                                        onChange={(e) => setEditDesc(e.target.value)}
+                                        placeholder="Description"
+                                        className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={saveEdit}
+                                            className="flex-1 text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded flex items-center justify-center gap-1"
+                                        >
+                                            <Save size={12} /> Save
+                                        </button>
+                                        <button
+                                            onClick={cancelEdit}
+                                            className="flex-1 text-xs bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded flex items-center justify-center gap-1"
+                                        >
+                                            <X size={12} /> Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <div className="font-medium text-slate-200">{ff.name}</div>
+                                        {ff.description && <div className="text-xs text-slate-500">{ff.description}</div>}
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => startEdit(ff)}
+                                            className="text-slate-500 hover:text-blue-400 p-1 rounded hover:bg-blue-400/10 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => onRemove(ff.id)}
+                                            className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-red-400/10 transition-colors"
+                                            title="Remove"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))
                 )}

@@ -93,20 +93,21 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           </div>
 
           <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
-            <span className="text-xs text-slate-500 uppercase font-bold mb-2 block">Capacities (Max Units)</span>
+            <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">Capacities (Max Units)</span>
             {formFactors.length === 0 ? (
               <div className="text-xs text-red-400">No Form Factors defined. Please add them in the Config panel.</div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
                 {formFactors.map(ff => (
                   <div key={ff.id} className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 w-12 truncate" title={ff.name}>{ff.name}</span>
+                    <label className="text-sm text-slate-300 font-medium w-20 shrink-0" title={ff.description || ff.name}>{ff.name}</label>
                     <input
                       type="number"
                       placeholder="0"
+                      min="0"
                       value={newContainer.capacities[ff.id] || ''}
                       onChange={e => handleCapacityChange(ff.id, e.target.value)}
-                      className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none text-slate-200"
+                      className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
                     />
                   </div>
                 ))}

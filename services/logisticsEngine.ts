@@ -133,8 +133,9 @@ export const calculatePacking = (
 
     if (priority === OptimizationPriority.UTILIZATION) {
       // Best-Fit: Find the container with least remaining space that can still fit this product
+      // Prefer containers without unnecessary special capabilities
       let bestContainer = null;
-      let bestRemainingSpace = Infinity;
+      let bestScore = Infinity;
 
       for (const container of availableContainers) {
         // Check Compatibility
@@ -152,8 +153,20 @@ export const calculatePacking = (
 
         if (utilizationNeeded <= remainingSpace) {
           // This container can fit the product
-          if (remainingSpace < bestRemainingSpace) {
-            bestRemainingSpace = remainingSpace;
+          // Calculate score: prefer containers with less remaining space
+          // but penalize containers with unnecessary special capabilities
+
+          // Check if container has restrictions that the product doesn't need
+          const unnecessaryRestrictions = container.restrictions.filter(
+            r => !product.restrictions.includes(r)
+          ).length;
+
+          // Score: remaining space + penalty for unnecessary restrictions
+          // Lower score is better
+          const score = remainingSpace + (unnecessaryRestrictions * 1000);
+
+          if (score < bestScore) {
+            bestScore = score;
             bestContainer = container;
           }
         }

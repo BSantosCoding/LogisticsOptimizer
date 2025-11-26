@@ -462,6 +462,11 @@ const App: React.FC = () => {
     await supabase.from('form_factors').delete().eq('id', id);
   };
 
+  const handleEditFormFactor = async (id: string, name: string, description: string) => {
+    setFormFactors(formFactors.map(f => f.id === id ? { ...f, name, description } : f));
+    await supabase.from('form_factors').update({ name, description }).eq('id', id);
+  };
+
   const handleOptimization = async () => {
     setViewMode('results');
     setIsOptimizing(true);
@@ -970,6 +975,7 @@ const App: React.FC = () => {
                       formFactors={formFactors}
                       onAdd={handleAddFormFactor}
                       onRemove={handleRemoveFormFactor}
+                      onEdit={handleEditFormFactor}
                     />
                   </div>
                   <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">

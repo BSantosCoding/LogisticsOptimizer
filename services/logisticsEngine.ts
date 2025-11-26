@@ -1,4 +1,3 @@
-
 import { Product, Container, OptimizationPriority, LoadedContainer } from "../types";
 
 const normalize = (s: string) => s.trim().toLowerCase();
@@ -156,6 +155,8 @@ const packItems = (
       const maxCap = currentInstance.template.capacities[product.formFactorId];
 
       // Check if product is compatible with this specific container instance
+      // Standard products will usually be compatible with Specialized containers (e.g. Reefer)
+      // so this allows mixed packing.
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
         const spacePercent = 100.1 - currentInstance.currentUtil;
         const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
@@ -172,8 +173,8 @@ const packItems = (
     // Phase B: If still items left, open new containers
     while (remainingQty > 0) {
       // Find the best template for THIS product
-      // Since products are sorted by difficulty (restrictions), this ensures we pick 
-      // a container that satisfies the hard constraints first.
+      // Since products are sorted by Restricted -> Standard, this ensures that if the current
+      // product is Restricted, we pick a container that supports it (e.g. Reefer).
       const bestTemplate = templates.find(t =>
         t.capacities[product.formFactorId] &&
         checkCompatibility(product, t).length === 0
@@ -213,8 +214,6 @@ export const calculatePacking = (
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
   // 1. Group Products by Destination ONLY
-  // This allows mixing products with different restrictions (e.g. Standard + Temp Control)
-  // as long as they are going to the same place.
   const productGroups: Record<string, { products: Product[], destination: string }> = {};
 
   products.forEach(p => {
@@ -240,7 +239,6 @@ export const calculatePacking = (
   for (const group of Object.values(productGroups)) {
 
     // 2. Identify Compatible Templates for this group
-    // A container is compatible if its destination matches the group (or is generic/open).
     const compatibleTemplates = containers.filter(c => {
       const cDest = normalize(c.destination || '');
       const gDest = normalize(group.destination);
@@ -255,7 +253,6 @@ export const calculatePacking = (
     }
 
     // 3. Sort Templates: Largest Capacity First (Greedy Baseline)
-    // Secondary sort: Cheaper first
     const sortedTemplates = [...compatibleTemplates].sort((a, b) => {
       const capA = getContainerCapacityScore(a);
       const capB = getContainerCapacityScore(b);
@@ -266,24 +263,25 @@ export const calculatePacking = (
     const largestTemplate = sortedTemplates[0];
 
     // 4. Sort Products
-    // Primary: Restriction Count Descending (Pack "Temp Control" items before "Standard")
-    // Secondary: PoC Descending (Pack physically large items first)
-    const sortedProducts = [...group.products].sort((a, b) => {
-      // Restrictions Priority
-      const rA = a.restrictions.length;
-      const rB = b.restrictions.length;
-      if (rA !== rB) return rB - rA; // More restrictions first
+    // Strategy: Create 2 lists (Restricted vs Standard), sort both by PoC Descending, then start picking from Restricted first.
+    const restrictedProducts = group.products.filter(p => p.restrictions.length > 0);
+    const standardProducts = group.products.filter(p => p.restrictions.length === 0);
 
+    const sortByPoC = (a: Product, b: Product) => {
       // PoC (Physical Size relative to largest container)
       const pocA = getPoC(a, largestTemplate);
       const pocB = getPoC(b, largestTemplate);
-      return pocB - pocA; // Larger items first
-    });
+      return pocB - pocA; // Larger items first (Descending)
+    };
+
+    restrictedProducts.sort(sortByPoC);
+    standardProducts.sort(sortByPoC);
+
+    // Pack restricted items first. They will force open "special" containers (e.g. Reefers).
+    // Then pack standard items. They will backfill the open specialized containers if space allows.
+    const sortedProducts = [...restrictedProducts, ...standardProducts];
 
     // 5. Phase 1: Greedy Packing
-    // The packItems function will iterate the sorted products.
-    // Because restricted items are first, it will pick specialized containers (e.g. Reefer) first.
-    // When it reaches standard items, it will fill the remaining space in the Reefer before opening a new (Standard) container.
     let packedInstances = packItems(sortedProducts, sortedTemplates);
 
     // 6. Phase 2: Optimization Loop
@@ -327,11 +325,14 @@ export const calculatePacking = (
         const smallerTemplates = sortedTemplates.filter(t => t.id !== prev.template.id);
 
         if (smallerTemplates.length > 0) {
+          // Re-run packing logic on the combined items with restricted templates
+          // Note: The combined items maintain their relative order (Restricted -> Standard) from the previous sort
           const alternativePacking = packItems(combinedItems, smallerTemplates);
 
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);
 
+          // Only accept if all items fit
           if (totalAltQty === totalReqQty) {
             const altCost = alternativePacking.reduce((sum, i) => sum + i.template.cost, 0);
 

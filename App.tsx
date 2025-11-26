@@ -25,10 +25,10 @@ import ContainerPanel from './components/panels/DealPanel'; // Renamed component
 import ConfigPanel from './components/panels/ConfigPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
-import { supabase } from './services/supabase';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
-import { parseProductsCSV, parseDealsCSV } from './utils';
+import { supabase } from './services/supabase';
+import ImportConfirmModal from './components/ImportConfirmModal';
 import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor } from './types';
 
 // Default options
@@ -103,6 +103,8 @@ const App: React.FC = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState<{ products: Product[], productsWithMissingFF: string[] } | null>(null);
 
   // --- AUTH Initialization ---
   useEffect(() => {
@@ -361,16 +363,6 @@ const App: React.FC = () => {
   const handleImportProducts = async (csvContent: string) => {
     if (!companyId) return;
 
-    // Ask user if they want to store products in database
-    const shouldStore = window.confirm(
-      'Import Products from CSV\n\n' +
-      'Do you want to store these products in the database?\n\n' +
-      '• YES: Products will be saved to your company database\n' +
-      '• NO: Cancel import'
-    );
-
-    if (!shouldStore) return; // User cancelled
-
     const lines = csvContent.split('\n');
     const newProducts: Product[] = [];
     const productsWithMissingFF: string[] = []; // Track products with missing form factors
@@ -442,7 +434,7 @@ const App: React.FC = () => {
         }
       }
 
-      // If no form factor matched, we import it anyway but flag it
+      // If no form factor matched, flag it
       if (!matchedFFId) {
         console.warn(`Could not match form factor for: ${description}`);
         productsWithMissingFF.push(description);
@@ -471,15 +463,28 @@ const App: React.FC = () => {
     }
 
     if (newProducts.length > 0) {
-      setProducts(prev => [...prev, ...newProducts]);
+      // Store parsed data and show modal
+      setPendingImportData({ products: newProducts, productsWithMissingFF });
+      setShowImportModal(true);
+    }
+  };
 
-      // Batch insert to Supabase
+  const confirmImport = async (saveToDb: boolean) => {
+    if (!pendingImportData || !companyId) return;
+
+    const { products: newProducts, productsWithMissingFF } = pendingImportData;
+
+    // Add products to state (session)
+    setProducts(prev => [...prev, ...newProducts]);
+
+    // Optionally save to database
+    if (saveToDb) {
       const { error } = await supabase.from('products').insert(
         newProducts.map(p => ({
           id: p.id,
           company_id: companyId,
           name: p.name,
-          form_factor_id: p.formFactorId,
+          form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
           destination: p.destination,
           restrictions: p.restrictions,
@@ -490,13 +495,17 @@ const App: React.FC = () => {
       );
 
       if (error) console.error('Error importing products:', error);
-
-      // Show alert if there are products with missing form factors
-      if (productsWithMissingFF.length > 0) {
-        const message = `Imported ${newProducts.length} products.\n\n⚠️ ${productsWithMissingFF.length} product(s) have UNKNOWN form factors and need attention:\n\n${productsWithMissingFF.slice(0, 5).map(p => `• ${p}`).join('\n')}${productsWithMissingFF.length > 5 ? `\n... and ${productsWithMissingFF.length - 5} more` : ''}\n\nPlease assign form factors to these products before running optimization.`;
-        alert(message);
-      }
     }
+
+    // Show alert if there are products with missing form factors
+    if (productsWithMissingFF.length > 0) {
+      const message = `Imported ${newProducts.length} products${saveToDb ? ' to database' : ' (session only)'}.\n\n⚠️ ${productsWithMissingFF.length} product(s) have UNKNOWN form factors and need attention:\n\n${productsWithMissingFF.slice(0, 5).map(p => `• ${p}`).join('\n')}${productsWithMissingFF.length > 5 ? `\n... and ${productsWithMissingFF.length - 5} more` : ''}\n\nPlease assign form factors to these products before running optimization.`;
+      alert(message);
+    }
+
+    // Close modal and clear pending data
+    setShowImportModal(false);
+    setPendingImportData(null);
   };
 
   const handleEditProduct = (p: Product) => {
@@ -1175,6 +1184,18 @@ const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Import Confirmation Modal */}
+      {showImportModal && pendingImportData && (
+        <ImportConfirmModal
+          productCount={pendingImportData.products.length}
+          onConfirm={confirmImport}
+          onCancel={() => {
+            setShowImportModal(false);
+            setPendingImportData(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -58,13 +58,23 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
     e.target.value = ''; // Reset
   };
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTag = selectedTagFilter ? p.restrictions.includes(selectedTagFilter) : true;
-    return matchesSearch && matchesTag;
-  });
+  const filteredProducts = products
+    .filter(p => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTag = selectedTagFilter ? p.restrictions.includes(selectedTagFilter) : true;
+      return matchesSearch && matchesTag;
+    })
+    .sort((a, b) => {
+      // Sort products with missing form factors to the top
+      const aHasMissingFF = !a.formFactorId || !formFactors.find(f => f.id === a.formFactorId);
+      const bHasMissingFF = !b.formFactorId || !formFactors.find(f => f.id === b.formFactorId);
+
+      if (aHasMissingFF && !bHasMissingFF) return -1;
+      if (!aHasMissingFF && bHasMissingFF) return 1;
+      return 0;
+    });
 
   if (viewMode === 'form') {
     return (

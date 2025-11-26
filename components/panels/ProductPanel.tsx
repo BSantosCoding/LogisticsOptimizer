@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product, ProductFormFactor } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash, AlertTriangle } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
@@ -203,15 +203,25 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           {filteredProducts.map(p => {
             const isSelected = selectedProductIds.has(p.id);
             const ff = formFactors.find(f => f.id === p.formFactorId);
+            const hasMissingFF = !p.formFactorId || !ff; // Check if form factor is missing
             return (
               <div
                 key={p.id}
                 onClick={() => toggleProductSelection(p.id)}
-                className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${isSelected
-                  ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
-                  : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
+                className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${hasMissingFF
+                  ? 'bg-yellow-900/10 border-yellow-500/50 hover:border-yellow-400/70'
+                  : isSelected
+                    ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
+                    : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
                   } ${editingProductId === p.id ? 'ring-2 ring-blue-500' : ''}`}
               >
+                {hasMissingFF && (
+                  <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1 border border-yellow-500/30">
+                    <AlertTriangle size={10} />
+                    NO FORM FACTOR
+                  </div>
+                )}
+
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold text-slate-200 truncate pr-6">{p.name}</h3>
                   <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 bg-slate-900/50'}`}>
@@ -220,7 +230,10 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
-                  <div className="flex items-center gap-1.5"><Box size={14} className="text-slate-500" /> {ff?.name || 'Unknown'}</div>
+                  <div className={`flex items-center gap-1.5 ${hasMissingFF ? 'text-yellow-400 font-semibold' : ''}`}>
+                    <Box size={14} className={hasMissingFF ? 'text-yellow-500' : 'text-slate-500'} />
+                    {ff?.name || 'Unknown'}
+                  </div>
                   <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} units</div>
                 </div>
 

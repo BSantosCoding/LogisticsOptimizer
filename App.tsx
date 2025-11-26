@@ -361,8 +361,19 @@ const App: React.FC = () => {
   const handleImportProducts = async (csvContent: string) => {
     if (!companyId) return;
 
+    // Ask user if they want to store products in database
+    const shouldStore = window.confirm(
+      'Import Products from CSV\n\n' +
+      'Do you want to store these products in the database?\n\n' +
+      '• YES: Products will be saved to your company database\n' +
+      '• NO: Cancel import'
+    );
+
+    if (!shouldStore) return; // User cancelled
+
     const lines = csvContent.split('\n');
     const newProducts: Product[] = [];
+    const productsWithMissingFF: string[] = []; // Track products with missing form factors
 
     // Sort form factors by length (descending) to match longest name first
     const sortedFormFactors = [...formFactors].sort((a, b) => b.name.length - a.name.length);
@@ -434,6 +445,7 @@ const App: React.FC = () => {
       // If no form factor matched, we import it anyway but flag it
       if (!matchedFFId) {
         console.warn(`Could not match form factor for: ${description}`);
+        productsWithMissingFF.push(description);
         // Use a placeholder or empty string, UI will handle it
       }
 
@@ -478,6 +490,12 @@ const App: React.FC = () => {
       );
 
       if (error) console.error('Error importing products:', error);
+
+      // Show alert if there are products with missing form factors
+      if (productsWithMissingFF.length > 0) {
+        const message = `Imported ${newProducts.length} products.\n\n⚠️ ${productsWithMissingFF.length} product(s) have UNKNOWN form factors and need attention:\n\n${productsWithMissingFF.slice(0, 5).map(p => `• ${p}`).join('\n')}${productsWithMissingFF.length > 5 ? `\n... and ${productsWithMissingFF.length - 5} more` : ''}\n\nPlease assign form factors to these products before running optimization.`;
+        alert(message);
+      }
     }
   };
 

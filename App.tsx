@@ -355,6 +355,130 @@ const App: React.FC = () => {
     setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
   };
 
+  const handleImportProducts = async (csvContent: string) => {
+    if (!companyId) return;
+
+    const lines = csvContent.split('\n');
+    const newProducts: Product[] = [];
+
+    // Sort form factors by length (descending) to match longest name first
+    const sortedFormFactors = [...formFactors].sort((a, b) => b.name.length - a.name.length);
+
+    // Helper to parse CSV line handling quotes
+    const parseCSVLine = (text: string) => {
+      const result = [];
+      let cell = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+          cell = '';
+        } else {
+          cell += char;
+        }
+      }
+      result.push(cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+      return result;
+    };
+
+    // Skip header (index 0)
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const cols = parseCSVLine(line);
+
+      // Extract fields based on CSV structure
+      // Index 4: Ship To: Customer Number
+      // Index 6: Incoterms
+      // Index 7: Incoterms (Part 2)
+      // Index 13: Sales Organization
+      // Index 25: Number of Packages
+      // Index 26: Material Description
+      // Index 30: Temp. Control
+
+      if (cols.length < 27) continue; // Skip malformed lines
+
+      const customerNum = cols[4];
+      const incoterms = cols[6];
+      const incoterms2 = cols[7];
+      const salesOrg = cols[13];
+      const numPackagesStr = cols[25];
+      const description = cols[26];
+      const tempControl = cols[30];
+
+      // 1. Grouping Key -> Destination
+      const destination = `${customerNum}|${incoterms}|${incoterms2}|${salesOrg}`;
+
+      // 2. Quantity
+      // Remove commas from number string (e.g. "7,760" -> 7760)
+      const quantity = parseInt(numPackagesStr.replace(/,/g, ''), 10) || 0;
+      if (quantity <= 0) continue;
+
+      // 3. Form Factor Matching
+      let matchedFFId = '';
+      for (const ff of sortedFormFactors) {
+        if (description.toLowerCase().includes(ff.name.toLowerCase())) {
+          matchedFFId = ff.id;
+          break;
+        }
+      }
+
+      // If no form factor matched, we can't import this product reliably
+      // Alternatively, we could create a default one, but better to skip or warn
+      if (!matchedFFId) {
+        console.warn(`Could not match form factor for: ${description}`);
+        continue;
+      }
+
+      // 4. Restrictions
+      const restrictions: string[] = [];
+      if (tempControl && tempControl.trim().length > 0) {
+        restrictions.push('Temperature Control');
+      }
+
+      const newProduct: Product = {
+        id: `P-${Date.now()}-${i}`,
+        name: description.substring(0, 50), // Truncate name if too long
+        formFactorId: matchedFFId,
+        quantity: quantity,
+        destination: destination,
+        restrictions: restrictions,
+        readyDate: '',
+        shipDeadline: '',
+        arrivalDeadline: ''
+      };
+
+      newProducts.push(newProduct);
+    }
+
+    if (newProducts.length > 0) {
+      setProducts(prev => [...prev, ...newProducts]);
+
+      // Batch insert to Supabase
+      const { error } = await supabase.from('products').insert(
+        newProducts.map(p => ({
+          id: p.id,
+          company_id: companyId,
+          name: p.name,
+          form_factor_id: p.formFactorId,
+          quantity: p.quantity,
+          destination: p.destination,
+          restrictions: p.restrictions,
+          ready_date: null,
+          ship_deadline: null,
+          arrival_deadline: null
+        }))
+      );
+
+      if (error) console.error('Error importing products:', error);
+    }
+  };
+
   const handleEditProduct = (p: Product) => {
     setNewProduct({
       name: p.name,
@@ -599,10 +723,7 @@ const App: React.FC = () => {
   };
 
   // --- Bulk Operations ---
-  const handleImportProducts = async (csvContent: string) => {
-    // TODO: Update CSV parser for new format
-    alert("CSV Import needs update for new format");
-  };
+
 
   const handleClearProducts = async () => {
     if (!companyId) return;

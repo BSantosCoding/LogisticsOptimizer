@@ -243,6 +243,11 @@ export const calculatePacking = (
         }
 
         if (bestInstance && bestFitQty > 0) {
+          // If this is the first assignment, lock the container's destination to the product's destination
+          if (bestInstance.assigned.length === 0 && product.destination) {
+            bestInstance.template.destination = product.destination;
+          }
+
           const maxCap = bestInstance.template.capacities[product.formFactorId]!;
           const utilizationNeeded = (bestFitQty / maxCap) * 100;
 
@@ -273,6 +278,11 @@ export const calculatePacking = (
             const qtyToPlace = Math.min(maxQtyThatFits, remainingQty);
             const utilizationNeeded = (qtyToPlace / maxCap) * 100;
 
+            // Lock destination if first assignment
+            if (instance.assigned.length === 0 && product.destination) {
+              instance.template.destination = product.destination;
+            }
+
             const partialProduct = { ...product, quantity: qtyToPlace };
             instance.assigned.push(partialProduct);
             instance.currentUtilization += utilizationNeeded;
@@ -298,6 +308,12 @@ export const calculatePacking = (
             const utilizationNeeded = (qtyToPlace / maxCap) * 100;
 
             const newInstance = createContainerInstance(template);
+
+            // Lock destination
+            if (product.destination) {
+              newInstance.template.destination = product.destination;
+            }
+
             const partialProduct = { ...product, quantity: qtyToPlace };
             newInstance.assigned.push(partialProduct);
             newInstance.currentUtilization += utilizationNeeded;

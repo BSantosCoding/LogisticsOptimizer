@@ -19,6 +19,8 @@ interface ProductPanelProps {
   onImport: (csv: string) => void;
   onClearAll: () => void;
   formFactors: ProductFormFactor[];
+  onSelectAll?: () => void;
+  allSelected?: boolean;
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({
@@ -36,7 +38,9 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   toggleProductSelection,
   onImport,
   onClearAll,
-  formFactors
+  formFactors,
+  onSelectAll,
+  allSelected
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
@@ -168,6 +172,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
           </div>
+          {onSelectAll && (
+            <button
+              onClick={onSelectAll}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${allSelected
+                ? 'bg-blue-600 text-white border-blue-500'
+                : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white hover:border-slate-500'
+                }`}
+            >
+              {allSelected ? 'Deselect All' : 'Select All'}
+            </button>
+          )}
         </div>
       </div>
 

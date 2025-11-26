@@ -136,8 +136,10 @@ export const calculatePacking = (
       const scoreB = b.cost + (b.transitTimeDays * 100);
       return scoreA - scoreB;
     } else {
-      // UTILIZATION: No specific sorting needed
-      return 0;
+      // UTILIZATION: Sort by capacity descending (largest first)
+      // We use the sum of all capacities as a proxy for overall size
+      const getCapacityScore = (c: Container) => Object.values(c.capacities).reduce((sum, val) => sum + val, 0);
+      return getCapacityScore(b) - getCapacityScore(a);
     }
   });
 

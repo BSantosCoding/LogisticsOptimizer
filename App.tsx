@@ -66,6 +66,7 @@ const App: React.FC = () => {
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [selectedContainerIds, setSelectedContainerIds] = useState<Set<string>>(new Set());
+  const [optimalUtilizationRange, setOptimalUtilizationRange] = useState<{ min: number; max: number }>({ min: 85, max: 100 });
 
   // Forms
   const [newTag, setNewTag] = useState('');
@@ -428,11 +429,10 @@ const App: React.FC = () => {
         }
       }
 
-      // If no form factor matched, we can't import this product reliably
-      // Alternatively, we could create a default one, but better to skip or warn
+      // If no form factor matched, we import it anyway but flag it
       if (!matchedFFId) {
         console.warn(`Could not match form factor for: ${description}`);
-        continue;
+        // Use a placeholder or empty string, UI will handle it
       }
 
       // 4. Restrictions
@@ -951,14 +951,6 @@ const App: React.FC = () => {
               Results
             </button>
           )}
-          {results && (
-            <button
-              onClick={() => setViewMode('results')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
-            >
-              Results
-            </button>
-          )}
           <button
             onClick={() => handleTabChange('products')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
@@ -1030,6 +1022,7 @@ const App: React.FC = () => {
                 handleDragOver={handleDragOver}
                 handleDrop={handleDrop}
                 draggedProductId={draggedProductId}
+                optimalRange={optimalUtilizationRange}
               />
             </div>
           ) : (
@@ -1141,6 +1134,8 @@ const App: React.FC = () => {
                       handleAddTemplate={handleAddTemplate}
                       handleRemoveTemplate={handleRemoveTemplate}
                       applyTemplate={applyTemplate}
+                      optimalRange={optimalUtilizationRange}
+                      setOptimalRange={setOptimalUtilizationRange}
                       restrictionTags={restrictionTags}
                       newTag={newTag}
                       setNewTag={setNewTag}

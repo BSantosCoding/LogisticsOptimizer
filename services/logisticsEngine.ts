@@ -26,6 +26,8 @@ export const checkCompatibility = (product: Product, container: Container): stri
   }
 
   // 2. Check Restrictions
+  // Logic: Container must have ALL capabilities required by the product.
+  // If product has no restrictions, it fits in any container (assuming physical fit).
   if (product.restrictions.length > 0) {
     const containerCaps = new Set(container.restrictions.map(normalize));
     const missingCaps = product.restrictions.filter(req => !containerCaps.has(normalize(req)));
@@ -38,7 +40,9 @@ export const checkCompatibility = (product: Product, container: Container): stri
   const pDest = normalize(product.destination || '');
   const cDest = normalize(container.destination || '');
 
-  if (pDest && cDest && pDest !== cDest) {
+  // If container has a specific destination, product must match it.
+  // If container is generic (empty destination), it can go anywhere.
+  if (cDest && pDest && pDest !== cDest) {
     issues.push(`Destination mismatch: Product to ${product.destination}, Container to ${container.destination}`);
   }
 
@@ -133,30 +137,25 @@ const packItems = (
 
   if (templates.length === 0) return [];
 
-  // Assuming templates are already sorted (Largest First)
-  // The greedy strategy is: Always try to fill the *current open* container.
-  // If full, create a new container using the LARGEST available template.
+  // templates are assumed to be sorted by Preference (usually Capacity Desc, Cost Asc)
 
   const packedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number }> = [];
-  const unassigned: Product[] = []; // Should be empty if templates are compatible, but safety check
+  const unassigned: Product[] = [];
 
   // Logic:
-  // 1. Loop through products.
+  // 1. Loop through products (which are sorted by Priority/Difficulty).
   // 2. Try to fit 'qty' into current open container.
-  // 3. If it doesn't fit completely, fill current, then open new Largest.
+  // 3. If it doesn't fit completely, fill current, then open new Largest Compatible.
 
   for (const product of products) {
     let remainingQty = product.quantity;
 
-    // Try to put into existing open container first (Best Fit / First Fit)
-    // We only look at the *last* opened container to simulate "filling up" a truck/container.
-    // (Searching all previous containers handles "Best Fit", but "Next Fit" is better for sequential packing)
-    // Let's stick to filling the last opened container for "Next Fit" behavior which is typical for this problem.
-
+    // Phase A: Try to fill the *last opened* container first (Next Fit)
     if (packedInstances.length > 0) {
       const currentInstance = packedInstances[packedInstances.length - 1];
       const maxCap = currentInstance.template.capacities[product.formFactorId];
 
+      // Check if product is compatible with this specific container instance
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
         const spacePercent = 100.1 - currentInstance.currentUtil;
         const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
@@ -170,10 +169,11 @@ const packItems = (
       }
     }
 
-    // If still items left, we need new containers
+    // Phase B: If still items left, open new containers
     while (remainingQty > 0) {
-      // Find the largest compatible container for this product
-      // We assume 'templates' is sorted Largest -> Smallest
+      // Find the best template for THIS product
+      // Since products are sorted by difficulty (restrictions), this ensures we pick 
+      // a container that satisfies the hard constraints first.
       const bestTemplate = templates.find(t =>
         t.capacities[product.formFactorId] &&
         checkCompatibility(product, t).length === 0
@@ -212,22 +212,21 @@ export const calculatePacking = (
   minUtilization: number = 70
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // 1. Group Products by Destination AND Restrictions
-  // We create a composite key to ensure products with specific needs are grouped together
-  // AND products going to different places are separated.
-  const productGroups: Record<string, { products: Product[], destination: string, restrictions: string[] }> = {};
+  // 1. Group Products by Destination ONLY
+  // This allows mixing products with different restrictions (e.g. Standard + Temp Control)
+  // as long as they are going to the same place.
+  const productGroups: Record<string, { products: Product[], destination: string }> = {};
 
   products.forEach(p => {
-    const dest = p.destination ? normalize(p.destination) : 'unknown';
-    // Sort restrictions to ensure consistent key generation (e.g. "A,B" == "B,A")
-    const restrictionsKey = p.restrictions.map(r => normalize(r)).sort().join(',');
-    const groupKey = `${dest}::${restrictionsKey}`;
+    const destRaw = p.destination || '';
+    const destNorm = normalize(destRaw);
+    // Use normalized key for grouping, but handle 'empty' as a valid group
+    const groupKey = destNorm || 'unknown';
 
     if (!productGroups[groupKey]) {
       productGroups[groupKey] = {
         products: [],
-        destination: p.destination || '',
-        restrictions: p.restrictions
+        destination: destRaw
       };
     }
     productGroups[groupKey].products.push(p);
@@ -241,20 +240,12 @@ export const calculatePacking = (
   for (const group of Object.values(productGroups)) {
 
     // 2. Identify Compatible Templates for this group
-    // A container is compatible if:
-    // a) Destination matches (or is open/empty)
-    // b) It has ALL the capabilities required by the group restrictions
+    // A container is compatible if its destination matches the group (or is generic/open).
     const compatibleTemplates = containers.filter(c => {
-      // Destination Check
-      if (c.destination && normalize(c.destination) !== normalize(group.destination)) return false;
-
-      // Restrictions/Capabilities Check
-      if (group.restrictions.length > 0) {
-        const containerCaps = new Set(c.restrictions.map(normalize));
-        for (const req of group.restrictions) {
-          if (!containerCaps.has(normalize(req))) return false;
-        }
-      }
+      const cDest = normalize(c.destination || '');
+      const gDest = normalize(group.destination);
+      // If container has a fixed destination, it must match.
+      if (cDest && cDest !== gDest) return false;
       return true;
     });
 
@@ -274,23 +265,28 @@ export const calculatePacking = (
 
     const largestTemplate = sortedTemplates[0];
 
-    // 4. Sort Products: PoC (Percentage of Container) Descending
-    // We use the Largest Template available for THIS group as the baseline for "Physical Size"
+    // 4. Sort Products
+    // Primary: Restriction Count Descending (Pack "Temp Control" items before "Standard")
+    // Secondary: PoC Descending (Pack physically large items first)
     const sortedProducts = [...group.products].sort((a, b) => {
+      // Restrictions Priority
+      const rA = a.restrictions.length;
+      const rB = b.restrictions.length;
+      if (rA !== rB) return rB - rA; // More restrictions first
+
       // PoC (Physical Size relative to largest container)
       const pocA = getPoC(a, largestTemplate);
       const pocB = getPoC(b, largestTemplate);
-      if (pocA !== pocB) return pocB - pocA; // Descending (Larger first)
-
-      // Quantity (Largest batches first)
-      return b.quantity - a.quantity;
+      return pocB - pocA; // Larger items first
     });
 
     // 5. Phase 1: Greedy Packing
+    // The packItems function will iterate the sorted products.
+    // Because restricted items are first, it will pick specialized containers (e.g. Reefer) first.
+    // When it reaches standard items, it will fill the remaining space in the Reefer before opening a new (Standard) container.
     let packedInstances = packItems(sortedProducts, sortedTemplates);
 
     // 6. Phase 2: Optimization Loop
-    // We iterate backwards to optimize the "tail" of the packing list
     if (packedInstances.length > 0) {
 
       // Step A: Downsize the Last Container (Remainder Check)
@@ -315,9 +311,7 @@ export const calculatePacking = (
         packedInstances[lastIdx].template = bestReplacement;
       }
 
-      // Step B: Optimize Last Full + Remainder (Backtrack check)
-      // If we have at least 2 containers, check if [Last-1] + [Last] can be repacked 
-      // into smaller containers cheaper than Cost(Last-1) + Cost(Last).
+      // Step B: Optimize Last Full + Remainder
       if (packedInstances.length >= 2) {
         const idxTail = packedInstances.length - 1;
         const idxPrev = packedInstances.length - 2;
@@ -328,18 +322,13 @@ export const calculatePacking = (
         const currentCost = tail.template.cost + prev.template.cost;
         const combinedItems = [...prev.assigned, ...tail.assigned];
 
-        // To force a different outcome, we try packing these items 
-        // excluding the "Large" template type used in 'prev'.
-        // (Assumes 'prev' used the largest template, which is typical for greedy)
+        // Try packing without the "Large" template type used in 'prev' to force a different combination
+        // (e.g. if we used 1 Large + 1 Small, try 3 Smalls)
         const smallerTemplates = sortedTemplates.filter(t => t.id !== prev.template.id);
 
         if (smallerTemplates.length > 0) {
-          // Simulate packing with smaller containers
           const alternativePacking = packItems(combinedItems, smallerTemplates);
 
-          // Check if valid (all packed) and cheaper
-          // Note: packItems might return partials if it can't fit everything, 
-          // but here we must ensure everything fits to be a valid replacement.
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);
 
@@ -347,10 +336,7 @@ export const calculatePacking = (
             const altCost = alternativePacking.reduce((sum, i) => sum + i.template.cost, 0);
 
             if (altCost < currentCost) {
-              // Apply Optimization: Replace the last 2 containers with the new set
-              // Remove last 2
               packedInstances.splice(idxPrev, 2);
-              // Add new ones
               packedInstances.push(...alternativePacking);
             }
           }
@@ -364,7 +350,10 @@ export const calculatePacking = (
       // Create a unique ID for this specific container instance
       const instanceContainer = {
         ...inst.template,
-        id: `${inst.template.id}-instance-${instanceCounter}`
+        id: `${inst.template.id}-instance-${instanceCounter}`,
+        // FIX: Ensure the instance has the specific destination of the group 
+        // if the template was generic (empty destination)
+        destination: inst.template.destination || group.destination
       };
 
       allAssignments.push(validateLoadedContainer(instanceContainer, inst.assigned));

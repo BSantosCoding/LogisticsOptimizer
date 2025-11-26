@@ -644,7 +644,8 @@ const App: React.FC = () => {
       const { assignments, unassigned } = calculatePacking(
         productsToUse,
         containersToUse,
-        priority
+        priority,
+        optimalUtilizationRange.min
       );
 
       const totalCost = assignments.reduce((sum, a) => sum + a.container.cost, 0);

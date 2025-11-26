@@ -204,6 +204,10 @@ export const calculatePacking = (
 
         // 2. If no existing instance found, create a new one
         if (!bestInstance) {
+          // Try to find the best-sized container for the remaining quantity
+          // Prefer containers that will be at least 70% full to avoid waste
+          const MIN_UTILIZATION_FOR_NEW = 70;
+
           for (const template of sortedContainerTemplates) {
             // Check Compatibility
             const compatibilityIssues = checkCompatibility(product, template);
@@ -213,14 +217,29 @@ export const calculatePacking = (
             const maxCap = template.capacities[product.formFactorId];
             if (!maxCap) continue;
 
-            // First Fit: Pick the first template that works (largest capacity due to sorting)
-            const newInstance = createContainerInstance(template);
-            containerInstances.push(newInstance);
-            bestInstance = newInstance;
+            // Calculate potential utilization
+            const qtyThatFits = Math.min(maxCap, remainingQty);
+            const potentialUtilization = (qtyThatFits / maxCap) * 100;
 
-            // Calculate how much fits in this new empty container
-            bestFitQty = Math.min(maxCap, remainingQty);
-            break; // Stop after finding the first (largest) valid container
+            // If this container would be reasonably full (>70%), use it
+            // Otherwise, try the next smaller container
+            if (potentialUtilization >= MIN_UTILIZATION_FOR_NEW) {
+              const newInstance = createContainerInstance(template);
+              containerInstances.push(newInstance);
+              bestInstance = newInstance;
+              bestFitQty = qtyThatFits;
+              break;
+            }
+
+            // If we've checked all containers and none meet the threshold,
+            // fall back to the smallest one that fits
+            // (This happens on the last iteration if no container is >70% full)
+            if (template === sortedContainerTemplates[sortedContainerTemplates.length - 1]) {
+              const newInstance = createContainerInstance(template);
+              containerInstances.push(newInstance);
+              bestInstance = newInstance;
+              bestFitQty = qtyThatFits;
+            }
           }
         }
 

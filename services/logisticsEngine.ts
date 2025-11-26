@@ -157,19 +157,20 @@ export const calculatePacking = (
       let placed = false;
 
       if (priority === OptimizationPriority.UTILIZATION) {
-        // Best-Fit: Find the instance with least remaining space that can fit some/all of this product
-        // Prefer containers without unnecessary special capabilities
+        // STRATEGY:
+        // 1. Fill existing containers first (Best Fit) to minimize fragmentation
+        // 2. If no existing container fits, open a new one (First Fit Decreasing)
+        //    Since templates are sorted by Capacity Descending, this prioritizes larger containers.
+
         let bestInstance = null;
         let bestScore = Infinity;
         let bestFitQty = 0;
 
-        // Check existing instances first
+        // 1. Try to fill existing instances
         for (const instance of containerInstances) {
           // Check Compatibility
           const compatibilityIssues = checkCompatibility(product, instance.template);
-          if (compatibilityIssues.length > 0) {
-            continue;
-          }
+          if (compatibilityIssues.length > 0) continue;
 
           // Check Capacity
           const maxCap = instance.template.capacities[product.formFactorId];
@@ -179,15 +180,18 @@ export const calculatePacking = (
           const maxQtyThatFits = Math.floor((remainingSpace / 100) * maxCap);
 
           if (maxQtyThatFits > 0) {
-            // This instance can fit at least some of the product
             const qtyToPlace = Math.min(maxQtyThatFits, remainingQty);
+
+            // Score based on how well it fills the container
+            // Lower score is better
+            const utilizationAfter = instance.currentUtilization + ((qtyToPlace / maxCap) * 100);
 
             const unnecessaryRestrictions = instance.template.restrictions.filter(
               r => !product.restrictions.includes(r)
             ).length;
 
-            // Prefer filling containers more completely
-            const utilizationAfter = instance.currentUtilization + ((qtyToPlace / maxCap) * 100);
+            // Primary: Maximize utilization (100 - utilization)
+            // Secondary: Minimize unnecessary restrictions
             const score = (100 - utilizationAfter) + (unnecessaryRestrictions * 1000);
 
             if (score < bestScore) {
@@ -198,54 +202,31 @@ export const calculatePacking = (
           }
         }
 
-        // If no existing instance works well, try creating a new instance from templates
-        if (!bestInstance || bestFitQty < remainingQty) {
-          let bestTemplate = null;
-          let bestTemplateScore = Infinity;
-
+        // 2. If no existing instance found, create a new one
+        if (!bestInstance) {
           for (const template of sortedContainerTemplates) {
             // Check Compatibility
             const compatibilityIssues = checkCompatibility(product, template);
-            if (compatibilityIssues.length > 0) {
-              continue;
-            }
+            if (compatibilityIssues.length > 0) continue;
 
             // Check Capacity
             const maxCap = template.capacities[product.formFactorId];
             if (!maxCap) continue;
 
-            const unnecessaryRestrictions = template.restrictions.filter(
-              r => !product.restrictions.includes(r)
-            ).length;
+            // First Fit: Pick the first template that works (largest capacity due to sorting)
+            const newInstance = createContainerInstance(template);
+            containerInstances.push(newInstance);
+            bestInstance = newInstance;
 
-            // For new instances, we can fit up to maxCap or remainingQty, whichever is smaller
-            const qtyToPlace = Math.min(maxCap, remainingQty);
-            const utilizationAfter = (qtyToPlace / maxCap) * 100;
-            const score = (100 - utilizationAfter) + (unnecessaryRestrictions * 1000);
-
-            if (score < bestTemplateScore) {
-              bestTemplateScore = score;
-              bestTemplate = template;
-            }
-          }
-
-          // Decide whether to use existing instance or create new one
-          if (bestTemplate) {
-            const maxCap = bestTemplate.capacities[product.formFactorId]!;
-            const newInstanceQty = Math.min(maxCap, remainingQty);
-
-            // Create new instance if it's better than existing or if we need more space
-            if (!bestInstance || newInstanceQty > bestFitQty) {
-              const newInstance = createContainerInstance(bestTemplate);
-              containerInstances.push(newInstance);
-              bestInstance = newInstance;
-              bestFitQty = newInstanceQty;
-            }
+            // Calculate how much fits in this new empty container
+            bestFitQty = Math.min(maxCap, remainingQty);
+            break; // Stop after finding the first (largest) valid container
           }
         }
 
+        // 3. Apply assignment
         if (bestInstance && bestFitQty > 0) {
-          // If this is the first assignment, lock the container's destination to the product's destination
+          // If this is the first assignment, lock the container's destination
           if (bestInstance.assigned.length === 0 && product.destination) {
             bestInstance.template.destination = product.destination;
           }
@@ -260,6 +241,9 @@ export const calculatePacking = (
 
           remainingQty -= bestFitQty;
           placed = true;
+        } else {
+          // Could not place product anywhere (no compatible containers)
+          break;
         }
       } else {
         // Original greedy strategy for other priorities

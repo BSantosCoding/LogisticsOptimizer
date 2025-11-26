@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { OptimizationResult, Container, Product, OptimizationPriority } from '../../types';
+import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ResultsPanelProps {
@@ -51,7 +51,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   // Group assignments by destination
   const groupedAssignments = React.useMemo(() => {
-    const groups: Record<string, typeof result.assignments> = {};
+    const groups: Record<string, LoadedContainer[]> = {};
     result.assignments.forEach(a => {
       const dest = a.container.destination || 'Unspecified Destination';
       if (!groups[dest]) groups[dest] = [];
@@ -93,7 +93,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Assignments Visualizer */}
       <div className="space-y-8">
-        {Object.entries(groupedAssignments).map(([destination, assignments]) => {
+        {Object.entries(groupedAssignments).map(([destination, assignments]: [string, LoadedContainer[]]) => {
           const isCollapsed = collapsedDestinations.has(destination);
           return (
             <div key={destination} className="space-y-4">

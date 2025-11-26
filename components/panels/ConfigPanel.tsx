@@ -65,28 +65,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 min-w-0"
                 />
               </div>
-              <div className="flex gap-2">
-                <div className="relative w-1/2">
-                  <input
-                    type="number"
-                    placeholder="kg"
-                    className="w-full bg-slate-900 border border-slate-600 rounded pl-2 pr-6 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                    value={newTemplate.weightKg || ''}
-                    onChange={e => setNewTemplate({ ...newTemplate, weightKg: Number(e.target.value) })}
-                  />
-                  <span className="absolute right-2 top-2 text-xs text-slate-500 pointer-events-none">kg</span>
-                </div>
-                <div className="relative w-1/2">
-                  <input
-                    type="number"
-                    placeholder="m³"
-                    className="w-full bg-slate-900 border border-slate-600 rounded pl-2 pr-6 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                    value={newTemplate.volumeM3 || ''}
-                    onChange={e => setNewTemplate({ ...newTemplate, volumeM3: Number(e.target.value) })}
-                  />
-                  <span className="absolute right-2 top-2 text-xs text-slate-500 pointer-events-none">m³</span>
-                </div>
-              </div>
 
               <div>
                 <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
@@ -172,8 +150,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               {filteredTemplates.map(t => (
                 <div key={t.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-between group hover:border-slate-500 transition-all">
                   <div>
-                    <div className="font-semibold text-slate-200 mb-1">{t.name}</div>
-                    <div className="text-sm text-slate-400 mb-2">{t.weightKg}kg | {t.volumeM3}m³</div>
+                    <div className="font-semibold text-slate-200 mb-2">{t.name}</div>
                     {t.restrictions.length > 0 && (
                       <div className="flex gap-1 flex-wrap mb-3">
                         {t.restrictions.map(r => <span key={r} className="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-700">{r}</span>)}

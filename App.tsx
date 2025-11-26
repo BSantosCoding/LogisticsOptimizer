@@ -862,61 +862,104 @@ const App: React.FC = () => {
         {/* Content Area */}
         <main className="flex-1 overflow-hidden relative flex">
           {viewMode === 'results' && results ? (
-            <div className="absolute inset-0 z-30 bg-slate-900">
+            <div className="absolute inset-0 z-30 bg-slate-900 p-6">
               <ResultsPanel
                 results={results}
                 activePriority={activePriority}
                 setActivePriority={setActivePriority}
+                containers={containers}
                 onClose={() => setViewMode('data')}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
+                handleDragStart={handleDragStart}
+                handleDragOver={handleDragOver}
+                handleDrop={handleDrop}
                 draggedProductId={draggedProductId}
               />
             </div>
           ) : (
             <div className="flex-1 flex overflow-hidden">
               {inputMode === 'products' && (
-                <div className="flex-1 flex flex-col min-w-0">
-                  <ProductPanel
-                    viewMode="form"
-                    products={products}
-                    newProduct={newProduct}
-                    setNewProduct={setNewProduct}
-                    editingProductId={editingProductId}
-                    handleSaveProduct={handleSaveProduct}
-                    handleEditProduct={handleEditProduct}
-                    handleRemoveProduct={handleRemoveProduct}
-                    handleCancelProductEdit={handleCancelProductEdit}
-                    restrictionTags={restrictionTags}
-                    selectedProductIds={selectedProductIds}
-                    toggleProductSelection={toggleProductSelection}
-                    onImport={handleImportProducts}
-                    onClearAll={handleClearProducts}
-                    formFactors={formFactors}
-                  />
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                    <ProductPanel
+                      viewMode="form"
+                      products={products}
+                      newProduct={newProduct}
+                      setNewProduct={setNewProduct}
+                      editingProductId={editingProductId}
+                      handleSaveProduct={handleSaveProduct}
+                      handleEditProduct={handleEditProduct}
+                      handleRemoveProduct={handleRemoveProduct}
+                      handleCancelProductEdit={handleCancelProductEdit}
+                      restrictionTags={restrictionTags}
+                      selectedProductIds={selectedProductIds}
+                      toggleProductSelection={toggleProductSelection}
+                      onImport={handleImportProducts}
+                      onClearAll={handleClearProducts}
+                      formFactors={formFactors}
+                    />
+                  </div>
+                  <div className="flex-1 overflow-hidden p-6">
+                    <ProductPanel
+                      viewMode="list"
+                      products={products}
+                      newProduct={newProduct}
+                      setNewProduct={setNewProduct}
+                      editingProductId={editingProductId}
+                      handleSaveProduct={handleSaveProduct}
+                      handleEditProduct={handleEditProduct}
+                      handleRemoveProduct={handleRemoveProduct}
+                      handleCancelProductEdit={handleCancelProductEdit}
+                      restrictionTags={restrictionTags}
+                      selectedProductIds={selectedProductIds}
+                      toggleProductSelection={toggleProductSelection}
+                      onImport={handleImportProducts}
+                      onClearAll={handleClearProducts}
+                      formFactors={formFactors}
+                    />
+                  </div>
                 </div>
               )}
 
               {inputMode === 'containers' && (
-                <div className="flex-1 flex flex-col min-w-0">
-                  <ContainerPanel
-                    viewMode="form"
-                    containers={containers}
-                    newContainer={newContainer}
-                    setNewContainer={setNewContainer}
-                    editingContainerId={editingContainerId}
-                    handleSaveContainer={handleSaveContainer}
-                    handleEditContainer={handleEditContainer}
-                    handleRemoveContainer={handleRemoveContainer}
-                    handleCancelContainerEdit={handleCancelContainerEdit}
-                    restrictionTags={restrictionTags}
-                    selectedContainerIds={selectedContainerIds}
-                    toggleContainerSelection={toggleContainerSelection}
-                    onImport={handleImportDeals}
-                    onClearAll={handleClearDeals}
-                    formFactors={formFactors}
-                  />
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                    <ContainerPanel
+                      viewMode="form"
+                      containers={containers}
+                      newContainer={newContainer}
+                      setNewContainer={setNewContainer}
+                      editingContainerId={editingContainerId}
+                      handleSaveContainer={handleSaveContainer}
+                      handleEditContainer={handleEditContainer}
+                      handleRemoveContainer={handleRemoveContainer}
+                      handleCancelContainerEdit={handleCancelContainerEdit}
+                      restrictionTags={restrictionTags}
+                      selectedContainerIds={selectedContainerIds}
+                      toggleContainerSelection={toggleContainerSelection}
+                      onImport={handleImportDeals}
+                      onClearAll={handleClearDeals}
+                      formFactors={formFactors}
+                    />
+                  </div>
+                  <div className="flex-1 overflow-hidden p-6">
+                    <ContainerPanel
+                      viewMode="list"
+                      containers={containers}
+                      newContainer={newContainer}
+                      setNewContainer={setNewContainer}
+                      editingContainerId={editingContainerId}
+                      handleSaveContainer={handleSaveContainer}
+                      handleEditContainer={handleEditContainer}
+                      handleRemoveContainer={handleRemoveContainer}
+                      handleCancelContainerEdit={handleCancelContainerEdit}
+                      restrictionTags={restrictionTags}
+                      selectedContainerIds={selectedContainerIds}
+                      toggleContainerSelection={toggleContainerSelection}
+                      onImport={handleImportDeals}
+                      onClearAll={handleClearDeals}
+                      formFactors={formFactors}
+                    />
+                  </div>
                 </div>
               )}
 

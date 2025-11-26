@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { Product } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Scale, Box, Search, Filter, MapPin, ChevronDown } from 'lucide-react';
+import { Product, ProductFormFactor } from '../../types';
+import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
@@ -19,6 +18,7 @@ interface ProductPanelProps {
   toggleProductSelection: (id: string) => void;
   onImport: (csv: string) => void;
   onClearAll: () => void;
+  formFactors: ProductFormFactor[];
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({
@@ -35,7 +35,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   selectedProductIds,
   toggleProductSelection,
   onImport,
-  onClearAll
+  onClearAll,
+  formFactors
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
@@ -74,28 +75,34 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
           <div className="flex gap-2">
             <input
-              placeholder="Product Name"
+              placeholder="Product Name / Request ID"
               value={newProduct.name}
               onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
               className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
             />
-            <div className="relative w-20">
-              <input
-                type="number" placeholder="Kg"
-                value={newProduct.weightKg || ''}
-                onChange={e => setNewProduct({ ...newProduct, weightKg: Number(e.target.value) })}
-                className="w-full bg-slate-900 border border-slate-600 rounded pl-2 pr-6 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
-              />
-              <span className="absolute right-2 top-2 text-xs text-slate-500">kg</span>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <select
+                value={newProduct.formFactorId || ''}
+                onChange={e => setNewProduct({ ...newProduct, formFactorId: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
+              >
+                <option value="" disabled>Select Form Factor...</option>
+                {formFactors.map(ff => (
+                  <option key={ff.id} value={ff.id}>{ff.name}</option>
+                ))}
+              </select>
             </div>
-            <div className="relative w-20">
+            <div className="relative w-24">
               <input
-                type="number" placeholder="m³"
-                value={newProduct.volumeM3 || ''}
-                onChange={e => setNewProduct({ ...newProduct, volumeM3: Number(e.target.value) })}
+                type="number" placeholder="Qty"
+                value={newProduct.quantity || ''}
+                onChange={e => setNewProduct({ ...newProduct, quantity: Number(e.target.value) })}
                 className="w-full bg-slate-900 border border-slate-600 rounded pl-2 pr-6 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
               />
-              <span className="absolute right-2 top-2 text-xs text-slate-500">m³</span>
+              <span className="absolute right-2 top-2 text-xs text-slate-500">#</span>
             </div>
           </div>
 
@@ -220,6 +227,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProducts.map(p => {
             const isSelected = selectedProductIds.has(p.id);
+            const ff = formFactors.find(f => f.id === p.formFactorId);
             return (
               <div
                 key={p.id}
@@ -237,8 +245,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
-                  <div className="flex items-center gap-1.5"><Scale size={14} className="text-slate-500" /> {p.weightKg} kg</div>
-                  <div className="flex items-center gap-1.5"><Box size={14} className="text-slate-500" /> {p.volumeM3} m³</div>
+                  <div className="flex items-center gap-1.5"><Box size={14} className="text-slate-500" /> {ff?.name || 'Unknown'}</div>
+                  <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} units</div>
                 </div>
 
                 {(p.destination || p.readyDate) && (

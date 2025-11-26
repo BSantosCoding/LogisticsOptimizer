@@ -1,45 +1,45 @@
 
+export interface ProductFormFactor {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
-  weightKg: number;
-  volumeM3: number;
-  destination?: string; // Added
+  formFactorId: string; // Link to Form Factor
+  quantity: number; // Number of units requested
+  destination?: string;
   restrictions: string[]; // e.g., "Temperature Controlled", "Hazmat Class 3"
-  readyDate?: string; // YYYY-MM-DD (Product ready to ship)
+  readyDate?: string; // YYYY-MM-DD
   shipDeadline?: string; // YYYY-MM-DD
   arrivalDeadline?: string; // YYYY-MM-DD
 }
 
-export interface Deal {
+export interface Container {
   id: string;
-  carrierName: string;
-  containerType: string;
-  maxWeightKg: number;
-  maxVolumeM3: number;
+  name: string; // Was carrierName + containerType
+  capacities: Record<string, number>; // formFactorId -> maxQuantity
   cost: number;
   transitTimeDays: number;
   availableFrom: string;
   destination: string;
-  restrictions: string[]; // Capabilities of the deal e.g. "Flammable", "Frozen"
+  restrictions: string[]; // Capabilities e.g. "Flammable", "Frozen"
 }
 
-export interface LoadedDeal {
-  deal: Deal;
+export interface LoadedContainer {
+  container: Container;
   assignedProducts: Product[];
-  totalWeight: number;
-  totalVolume: number;
-  utilizationWeight: number; // Percentage 0-100
-  utilizationVolume: number; // Percentage 0-100
-  validationIssues?: string[]; // Warnings if manual packing violates constraints
+  totalUtilization: number; // Percentage 0-100 (based on form factor mix)
+  validationIssues?: string[];
 }
 
 export interface OptimizationResult {
-  assignments: LoadedDeal[];
+  assignments: LoadedContainer[];
   unassignedProducts: Product[];
   totalCost: number;
   reasoning?: string;
-  safetyMarginUsed: number;
 }
 
 export enum OptimizationPriority {

@@ -1,62 +1,55 @@
 
-import { Product, Deal, OptimizationPriority, LoadedDeal } from "../types";
+import { Product, Container, OptimizationPriority, LoadedContainer } from "../types";
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
-export const checkCompatibility = (product: Product, deal: Deal): string[] => {
+export const checkCompatibility = (product: Product, container: Container): string[] => {
   const issues: string[] = [];
 
-  // 1. Check Restrictions
+  // 1. Check Form Factor Capacity
+  if (!container.capacities[product.formFactorId]) {
+    issues.push(`Container cannot hold form factor: ${product.formFactorId}`);
+  }
+
+  // 2. Check Restrictions
   if (product.restrictions.length > 0) {
-    const dealCaps = new Set(deal.restrictions.map(normalize));
-    const missingCaps = product.restrictions.filter(req => !dealCaps.has(normalize(req)));
+    const containerCaps = new Set(container.restrictions.map(normalize));
+    const missingCaps = product.restrictions.filter(req => !containerCaps.has(normalize(req)));
     if (missingCaps.length > 0) {
       issues.push(`Missing capabilities: ${missingCaps.join(', ')}`);
     }
   }
 
-  // 2. Check Destination
+  // 3. Check Destination
   const pDest = normalize(product.destination || '');
-  const dDest = normalize(deal.destination || '');
+  const cDest = normalize(container.destination || '');
 
-  if (pDest && dDest && pDest !== dDest) {
-    issues.push(`Destination mismatch: Product to ${product.destination}, Deal to ${deal.destination}`);
-  }
-  // If deal has a destination but product doesn't, we assume product can't go there unless specified?
-  // Or if product has destination but deal doesn't (wildcard deal)?
-  // We will assume STRICT matching if both exist, or if product has destination, deal must match it.
-  if (pDest && !dDest) {
-    // Logic: Can a 'Anywhere' deal take a specific product? Yes, usually.
-    // But prompt said "only be used in deals that have a matching destination".
-    // This usually implies specificity. However, for now we only flag explicit mismatches.
-  }
-  if (!pDest && dDest) {
-    // Product has no destination, but deal goes to X. 
-    // Usually this is fine if the product is just inventory.
+  if (pDest && cDest && pDest !== cDest) {
+    issues.push(`Destination mismatch: Product to ${product.destination}, Container to ${container.destination}`);
   }
 
-  // 3. Check Dates
-  const dealAvailTime = new Date(deal.availableFrom).getTime();
-  const dealArriveTime = dealAvailTime + (deal.transitTimeDays * 24 * 60 * 60 * 1000);
+  // 4. Check Dates
+  const containerAvailTime = new Date(container.availableFrom).getTime();
+  const containerArriveTime = containerAvailTime + (container.transitTimeDays * 24 * 60 * 60 * 1000);
 
-  // Check if product is ready before deal departs
+  // Check if product is ready before container departs
   if (product.readyDate) {
     const readyTime = new Date(product.readyDate).getTime();
-    if (dealAvailTime < readyTime) {
-      issues.push(`Deal departs (${deal.availableFrom}) before product is ready (${product.readyDate})`);
+    if (containerAvailTime < readyTime) {
+      issues.push(`Container departs (${container.availableFrom}) before product is ready (${product.readyDate})`);
     }
   }
 
   if (product.shipDeadline) {
     const shipDead = new Date(product.shipDeadline).getTime();
-    if (dealAvailTime > shipDead) {
+    if (containerAvailTime > shipDead) {
       issues.push(`Ships after deadline (${product.shipDeadline})`);
     }
   }
 
   if (product.arrivalDeadline) {
     const arriveDead = new Date(product.arrivalDeadline).getTime();
-    if (dealArriveTime > arriveDead) {
+    if (containerArriveTime > arriveDead) {
       issues.push(`Arrives after deadline (${product.arrivalDeadline})`);
     }
   }
@@ -64,74 +57,59 @@ export const checkCompatibility = (product: Product, deal: Deal): string[] => {
   return issues;
 };
 
-export const validateLoadedDeal = (
-  deal: Deal,
-  products: Product[],
-  marginPercentage: number,
-  ignoreWeight: boolean = false,
-  ignoreVolume: boolean = false
-): LoadedDeal => {
-  const effectiveMaxWeight = deal.maxWeightKg * (1 - marginPercentage / 100);
-  const effectiveMaxVolume = deal.maxVolumeM3 * (1 - marginPercentage / 100);
+export const validateLoadedContainer = (
+  container: Container,
+  products: Product[]
+): LoadedContainer => {
 
-  let currentWeight = 0;
-  let currentVolume = 0;
+  let totalUtilization = 0;
   const issues: string[] = [];
 
-  // Check individual product compatibility
+  // Calculate Utilization
+  // Logic: Each product takes up (quantity / max_capacity_for_form_factor) * 100 percent of the container.
+
   products.forEach(p => {
-    const productIssues = checkCompatibility(p, deal);
+    const maxCap = container.capacities[p.formFactorId];
+    if (!maxCap) {
+      issues.push(`${p.name}: Container does not support form factor ${p.formFactorId}`);
+    } else {
+      const utilizationContribution = (p.quantity / maxCap) * 100;
+      totalUtilization += utilizationContribution;
+    }
+
+    const productIssues = checkCompatibility(p, container);
     if (productIssues.length > 0) {
       issues.push(`${p.name}: ${productIssues.join(', ')}`);
     }
-    currentWeight += p.weightKg;
-    currentVolume += p.volumeM3;
   });
 
-  // Check Capacity
-  if (!ignoreWeight && currentWeight > effectiveMaxWeight) {
-    issues.push(`Overweight by ${(currentWeight - effectiveMaxWeight).toFixed(1)}kg (incl. safety margin)`);
-  }
-  if (!ignoreVolume && currentVolume > effectiveMaxVolume) {
-    issues.push(`Over volume by ${(currentVolume - effectiveMaxVolume).toFixed(2)}m³ (incl. safety margin)`);
-  }
-
-  // Check Hard Capacity (ignoring margin, just for sanity, unless explicitly ignored)
-  if (!ignoreWeight && currentWeight > deal.maxWeightKg) {
-    issues.push(`EXCEEDS PHYSICAL WEIGHT LIMIT by ${(currentWeight - deal.maxWeightKg).toFixed(1)}kg`);
+  if (totalUtilization > 100) {
+    issues.push(`Overfilled: ${totalUtilization.toFixed(1)}%`);
   }
 
   return {
-    deal,
+    container,
     assignedProducts: products,
-    totalWeight: currentWeight,
-    totalVolume: currentVolume,
-    utilizationWeight: (currentWeight / effectiveMaxWeight) * 100,
-    utilizationVolume: (currentVolume / effectiveMaxVolume) * 100,
+    totalUtilization,
     validationIssues: issues
   };
 };
 
 export const calculatePacking = (
   products: Product[],
-  deals: Deal[],
-  marginPercentage: number,
-  priority: OptimizationPriority,
-  ignoreWeight: boolean = false,
-  ignoreVolume: boolean = false
-): { assignments: LoadedDeal[]; unassigned: Product[] } => {
+  containers: Container[],
+  priority: OptimizationPriority
+): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  const availableDeals = deals.map(deal => ({
-    ...deal,
-    effectiveMaxWeight: deal.maxWeightKg * (1 - marginPercentage / 100),
-    effectiveMaxVolume: deal.maxVolumeM3 * (1 - marginPercentage / 100),
-    currentWeight: 0,
-    currentVolume: 0,
+  // Prepare containers with tracking state
+  const availableContainers = containers.map(c => ({
+    ...c,
+    currentUtilization: 0,
     assigned: [] as Product[]
   }));
 
-  // Sort Deals
-  availableDeals.sort((a, b) => {
+  // Sort Containers
+  availableContainers.sort((a, b) => {
     if (priority === OptimizationPriority.COST) {
       return a.cost - b.cost;
     } else if (priority === OptimizationPriority.TIME) {
@@ -143,27 +121,29 @@ export const calculatePacking = (
     }
   });
 
-  const sortedProducts = [...products].sort((a, b) => b.volumeM3 - a.volumeM3);
+  // Sort Products (maybe by quantity desc? or arbitrary)
+  const sortedProducts = [...products].sort((a, b) => b.quantity - a.quantity);
   const unassigned: Product[] = [];
 
   for (const product of sortedProducts) {
     let placed = false;
 
-    for (const deal of availableDeals) {
-      // Check Hard Constraints
-      const compatibilityIssues = checkCompatibility(product, deal);
+    for (const container of availableContainers) {
+      // Check Compatibility
+      const compatibilityIssues = checkCompatibility(product, container);
       if (compatibilityIssues.length > 0) {
         continue;
       }
 
       // Check Capacity
-      const fitsWeight = ignoreWeight || (deal.currentWeight + product.weightKg <= deal.effectiveMaxWeight);
-      const fitsVolume = ignoreVolume || (deal.currentVolume + product.volumeM3 <= deal.effectiveMaxVolume);
+      const maxCap = container.capacities[product.formFactorId];
+      if (!maxCap) continue; // Should be caught by compatibility, but double check
 
-      if (fitsWeight && fitsVolume) {
-        deal.assigned.push(product);
-        deal.currentWeight += product.weightKg;
-        deal.currentVolume += product.volumeM3;
+      const utilizationNeeded = (product.quantity / maxCap) * 100;
+
+      if (container.currentUtilization + utilizationNeeded <= 100) {
+        container.assigned.push(product);
+        container.currentUtilization += utilizationNeeded;
         placed = true;
         break;
       }
@@ -174,25 +154,23 @@ export const calculatePacking = (
     }
   }
 
-  const activeAssignments = availableDeals
-    .filter(d => d.assigned.length > 0)
-    .map(d => {
-      // Re-construct original deal object
-      const originalDeal: Deal = {
-        id: d.id,
-        carrierName: d.carrierName,
-        containerType: d.containerType,
-        maxWeightKg: d.maxWeightKg,
-        maxVolumeM3: d.maxVolumeM3,
-        cost: d.cost,
-        transitTimeDays: d.transitTimeDays,
-        availableFrom: d.availableFrom,
-        destination: d.destination,
-        restrictions: d.restrictions
+  const activeAssignments = availableContainers
+    .filter(c => c.assigned.length > 0)
+    .map(c => {
+      // Re-construct original container object
+      const originalContainer: Container = {
+        id: c.id,
+        name: c.name,
+        capacities: c.capacities,
+        cost: c.cost,
+        transitTimeDays: c.transitTimeDays,
+        availableFrom: c.availableFrom,
+        destination: c.destination,
+        restrictions: c.restrictions
       };
 
-      // Return validated deal
-      return validateLoadedDeal(originalDeal, d.assigned, marginPercentage, ignoreWeight, ignoreVolume);
+      // Return validated container
+      return validateLoadedContainer(originalContainer, c.assigned);
     });
 
   return {

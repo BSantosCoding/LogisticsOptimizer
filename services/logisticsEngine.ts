@@ -176,6 +176,7 @@ export const calculatePacking = (
         }
 
         // If no existing container works, create new one
+        // ALWAYS prefer largest containers first to minimize total container count
         if (!bestInstance) {
           for (const template of sortedContainerTemplates) {
             const compatibilityIssues = checkCompatibility(product, template);
@@ -185,23 +186,13 @@ export const calculatePacking = (
             if (!maxCap) continue;
 
             const qtyThatFits = Math.min(maxCap, remainingQty);
-            const potentialUtilization = (qtyThatFits / maxCap) * 100;
 
-            if (potentialUtilization >= MIN_UTILIZATION_THRESHOLD) {
-              const newInstance = createContainerInstance(template, destination);
-              containerInstances.push(newInstance);
-              bestInstance = newInstance;
-              bestFitQty = qtyThatFits;
-              break;
-            }
-
-            // Fallback to smallest container
-            if (template === sortedContainerTemplates[sortedContainerTemplates.length - 1]) {
-              const newInstance = createContainerInstance(template, destination);
-              containerInstances.push(newInstance);
-              bestInstance = newInstance;
-              bestFitQty = qtyThatFits;
-            }
+            // Always use the first (largest) compatible container
+            const newInstance = createContainerInstance(template, destination);
+            containerInstances.push(newInstance);
+            bestInstance = newInstance;
+            bestFitQty = qtyThatFits;
+            break;
           }
         }
 

@@ -670,6 +670,15 @@ const App: React.FC = () => {
     setResults(null);
   };
 
+  const toggleSelectAllProducts = () => {
+    if (selectedProductIds.size === products.length) {
+      setSelectedProductIds(new Set());
+    } else {
+      setSelectedProductIds(new Set(products.map(p => p.id)));
+    }
+    setResults(null);
+  };
+
   // --- Configuration Handlers ---
   const handleAddTag = async () => {
     if (newTag && !restrictionTags.includes(newTag) && companyId) {
@@ -929,6 +938,28 @@ const App: React.FC = () => {
 
         <nav className="flex flex-col gap-4 w-full px-2">
           <button
+            onClick={() => setViewMode('data')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'data' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+          >
+            Data Input
+          </button>
+          {results && (
+            <button
+              onClick={() => setViewMode('results')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              Results
+            </button>
+          )}
+          {results && (
+            <button
+              onClick={() => setViewMode('results')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'results' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
+              Results
+            </button>
+          )}
+          <button
             onClick={() => handleTabChange('products')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Products"
@@ -1041,6 +1072,8 @@ const App: React.FC = () => {
                       onImport={handleImportProducts}
                       onClearAll={handleClearProducts}
                       formFactors={formFactors}
+                      onSelectAll={toggleSelectAllProducts}
+                      allSelected={products.length > 0 && selectedProductIds.size === products.length}
                     />
                   </div>
                 </div>

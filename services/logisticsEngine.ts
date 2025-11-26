@@ -143,145 +143,191 @@ export const calculatePacking = (
 
   // Sort Products by quantity descending (larger items first)
   const sortedProducts = [...products].sort((a, b) => b.quantity - a.quantity);
-  const unassigned: Product[] = [];
+
+  // Track remaining quantity for each product
+  const remainingQuantities = new Map<string, number>();
+  sortedProducts.forEach(p => remainingQuantities.set(p.id, p.quantity));
 
   for (const product of sortedProducts) {
-    let placed = false;
+    let remainingQty = remainingQuantities.get(product.id)!;
 
-    if (priority === OptimizationPriority.UTILIZATION) {
-      // Best-Fit: Find the instance with least remaining space that can still fit this product
-      // Prefer containers without unnecessary special capabilities
-      let bestInstance = null;
-      let bestScore = Infinity;
+    while (remainingQty > 0) {
+      let placed = false;
 
-      // Check existing instances first
-      for (const instance of containerInstances) {
-        // Check Compatibility
-        const compatibilityIssues = checkCompatibility(product, instance.template);
-        if (compatibilityIssues.length > 0) {
-          continue;
-        }
+      if (priority === OptimizationPriority.UTILIZATION) {
+        // Best-Fit: Find the instance with least remaining space that can fit some/all of this product
+        // Prefer containers without unnecessary special capabilities
+        let bestInstance = null;
+        let bestScore = Infinity;
+        let bestFitQty = 0;
 
-        // Check Capacity
-        const maxCap = instance.template.capacities[product.formFactorId];
-        if (!maxCap) continue;
-
-        const utilizationNeeded = (product.quantity / maxCap) * 100;
-        const remainingSpace = 100 - instance.currentUtilization;
-
-        if (utilizationNeeded <= remainingSpace) {
-          // This instance can fit the product
-          const unnecessaryRestrictions = instance.template.restrictions.filter(
-            r => !product.restrictions.includes(r)
-          ).length;
-
-          const score = remainingSpace + (unnecessaryRestrictions * 1000);
-
-          if (score < bestScore) {
-            bestScore = score;
-            bestInstance = instance;
-          }
-        }
-      }
-
-      // If no existing instance works, try creating a new instance from templates
-      if (!bestInstance) {
-        let bestTemplate = null;
-        let bestTemplateScore = Infinity;
-
-        for (const template of sortedContainerTemplates) {
+        // Check existing instances first
+        for (const instance of containerInstances) {
           // Check Compatibility
-          const compatibilityIssues = checkCompatibility(product, template);
+          const compatibilityIssues = checkCompatibility(product, instance.template);
           if (compatibilityIssues.length > 0) {
             continue;
           }
 
           // Check Capacity
-          const maxCap = template.capacities[product.formFactorId];
+          const maxCap = instance.template.capacities[product.formFactorId];
           if (!maxCap) continue;
 
-          const utilizationNeeded = (product.quantity / maxCap) * 100;
+          const remainingSpace = 100 - instance.currentUtilization;
+          const maxQtyThatFits = Math.floor((remainingSpace / 100) * maxCap);
 
-          if (utilizationNeeded <= 100) {
-            // This template can fit the product in a new instance
+          if (maxQtyThatFits > 0) {
+            // This instance can fit at least some of the product
+            const qtyToPlace = Math.min(maxQtyThatFits, remainingQty);
+
+            const unnecessaryRestrictions = instance.template.restrictions.filter(
+              r => !product.restrictions.includes(r)
+            ).length;
+
+            // Prefer filling containers more completely
+            const utilizationAfter = instance.currentUtilization + ((qtyToPlace / maxCap) * 100);
+            const score = (100 - utilizationAfter) + (unnecessaryRestrictions * 1000);
+
+            if (score < bestScore) {
+              bestScore = score;
+              bestInstance = instance;
+              bestFitQty = qtyToPlace;
+            }
+          }
+        }
+
+        // If no existing instance works well, try creating a new instance from templates
+        if (!bestInstance || bestFitQty < remainingQty) {
+          let bestTemplate = null;
+          let bestTemplateScore = Infinity;
+
+          for (const template of sortedContainerTemplates) {
+            // Check Compatibility
+            const compatibilityIssues = checkCompatibility(product, template);
+            if (compatibilityIssues.length > 0) {
+              continue;
+            }
+
+            // Check Capacity
+            const maxCap = template.capacities[product.formFactorId];
+            if (!maxCap) continue;
+
             const unnecessaryRestrictions = template.restrictions.filter(
               r => !product.restrictions.includes(r)
             ).length;
 
-            // For new instances, remaining space is 100 - utilizationNeeded
-            const score = (100 - utilizationNeeded) + (unnecessaryRestrictions * 1000);
+            // For new instances, we can fit up to maxCap or remainingQty, whichever is smaller
+            const qtyToPlace = Math.min(maxCap, remainingQty);
+            const utilizationAfter = (qtyToPlace / maxCap) * 100;
+            const score = (100 - utilizationAfter) + (unnecessaryRestrictions * 1000);
 
             if (score < bestTemplateScore) {
               bestTemplateScore = score;
               bestTemplate = template;
             }
           }
+
+          // Decide whether to use existing instance or create new one
+          if (bestTemplate) {
+            const maxCap = bestTemplate.capacities[product.formFactorId]!;
+            const newInstanceQty = Math.min(maxCap, remainingQty);
+
+            // Create new instance if it's better than existing or if we need more space
+            if (!bestInstance || newInstanceQty > bestFitQty) {
+              const newInstance = createContainerInstance(bestTemplate);
+              containerInstances.push(newInstance);
+              bestInstance = newInstance;
+              bestFitQty = newInstanceQty;
+            }
+          }
         }
 
-        if (bestTemplate) {
-          bestInstance = createContainerInstance(bestTemplate);
-          containerInstances.push(bestInstance);
-        }
-      }
+        if (bestInstance && bestFitQty > 0) {
+          const maxCap = bestInstance.template.capacities[product.formFactorId]!;
+          const utilizationNeeded = (bestFitQty / maxCap) * 100;
 
-      if (bestInstance) {
-        const maxCap = bestInstance.template.capacities[product.formFactorId]!;
-        const utilizationNeeded = (product.quantity / maxCap) * 100;
-        bestInstance.assigned.push(product);
-        bestInstance.currentUtilization += utilizationNeeded;
-        placed = true;
-      }
-    } else {
-      // Original greedy strategy for other priorities
-      // Try to fit in existing instances first
-      for (const instance of containerInstances) {
-        const compatibilityIssues = checkCompatibility(product, instance.template);
-        if (compatibilityIssues.length > 0) {
-          continue;
-        }
+          // Create a partial product entry
+          const partialProduct = { ...product, quantity: bestFitQty };
+          bestInstance.assigned.push(partialProduct);
+          bestInstance.currentUtilization += utilizationNeeded;
 
-        const maxCap = instance.template.capacities[product.formFactorId];
-        if (!maxCap) continue;
-
-        const utilizationNeeded = (product.quantity / maxCap) * 100;
-
-        if (instance.currentUtilization + utilizationNeeded <= 100) {
-          instance.assigned.push(product);
-          instance.currentUtilization += utilizationNeeded;
+          remainingQty -= bestFitQty;
           placed = true;
-          break;
         }
-      }
-
-      // If not placed, try creating a new instance
-      if (!placed) {
-        for (const template of sortedContainerTemplates) {
-          const compatibilityIssues = checkCompatibility(product, template);
+      } else {
+        // Original greedy strategy for other priorities
+        // Try to fit in existing instances first
+        for (const instance of containerInstances) {
+          const compatibilityIssues = checkCompatibility(product, instance.template);
           if (compatibilityIssues.length > 0) {
             continue;
           }
 
-          const maxCap = template.capacities[product.formFactorId];
+          const maxCap = instance.template.capacities[product.formFactorId];
           if (!maxCap) continue;
 
-          const utilizationNeeded = (product.quantity / maxCap) * 100;
+          const remainingSpace = 100 - instance.currentUtilization;
+          const maxQtyThatFits = Math.floor((remainingSpace / 100) * maxCap);
 
-          if (utilizationNeeded <= 100) {
+          if (maxQtyThatFits > 0) {
+            const qtyToPlace = Math.min(maxQtyThatFits, remainingQty);
+            const utilizationNeeded = (qtyToPlace / maxCap) * 100;
+
+            const partialProduct = { ...product, quantity: qtyToPlace };
+            instance.assigned.push(partialProduct);
+            instance.currentUtilization += utilizationNeeded;
+
+            remainingQty -= qtyToPlace;
+            placed = true;
+            break;
+          }
+        }
+
+        // If not placed, try creating a new instance
+        if (!placed) {
+          for (const template of sortedContainerTemplates) {
+            const compatibilityIssues = checkCompatibility(product, template);
+            if (compatibilityIssues.length > 0) {
+              continue;
+            }
+
+            const maxCap = template.capacities[product.formFactorId];
+            if (!maxCap) continue;
+
+            const qtyToPlace = Math.min(maxCap, remainingQty);
+            const utilizationNeeded = (qtyToPlace / maxCap) * 100;
+
             const newInstance = createContainerInstance(template);
-            newInstance.assigned.push(product);
+            const partialProduct = { ...product, quantity: qtyToPlace };
+            newInstance.assigned.push(partialProduct);
             newInstance.currentUtilization += utilizationNeeded;
             containerInstances.push(newInstance);
+
+            remainingQty -= qtyToPlace;
             placed = true;
             break;
           }
         }
       }
+
+      if (!placed) {
+        // Can't place any more of this product
+        break;
+      }
     }
 
-    if (!placed) {
-      unassigned.push(product);
-    }
+    // Update remaining quantity
+    remainingQuantities.set(product.id, remainingQty);
   }
+
+  // Collect unassigned products (those with remaining quantity > 0)
+  const unassigned: Product[] = [];
+  sortedProducts.forEach(product => {
+    const remaining = remainingQuantities.get(product.id)!;
+    if (remaining > 0) {
+      unassigned.push({ ...product, quantity: remaining });
+    }
+  });
 
   const activeAssignments = containerInstances.map(instance => {
     // Use the instance ID to make each container unique

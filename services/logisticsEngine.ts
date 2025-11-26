@@ -83,7 +83,8 @@ export const validateLoadedContainer = (
     }
   });
 
-  if (totalUtilization > 100) {
+  // Allow a small tolerance (0.1%) for floating-point rounding errors
+  if (totalUtilization > 100.1) {
     issues.push(`Overfilled: ${totalUtilization.toFixed(1)}%`);
   }
 

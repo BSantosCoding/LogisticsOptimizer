@@ -31,14 +31,7 @@ import { Product, Container, OptimizationPriority, OptimizationResult, ProductFo
 
 // Default options
 const DEFAULT_RESTRICTIONS = [
-  "Flammable",
-  "Temp < 20C",
-  "Frozen",
-  "Hazmat",
-  "Fragile",
-  "Corrosive",
-  "Liquid",
-  "Explosive"
+  "Temperature Control"
 ];
 
 const App: React.FC = () => {
@@ -482,28 +475,48 @@ const App: React.FC = () => {
       : containers;
 
     setTimeout(async () => {
-      const priorities = [OptimizationPriority.COST, OptimizationPriority.TIME, OptimizationPriority.BALANCE];
-      const newResults: Partial<Record<OptimizationPriority, OptimizationResult>> = {};
+      const priority = OptimizationPriority.UTILIZATION;
+      const { assignments, unassigned } = calculatePacking(
+        productsToUse,
+        containersToUse,
+        priority
+      );
 
-      priorities.forEach(p => {
-        const { assignments, unassigned } = calculatePacking(
-          productsToUse,
-          containersToUse,
-          p
-        );
+      const totalCost = assignments.reduce((sum, a) => sum + a.container.cost, 0);
+      const avgUtilization = assignments.length > 0
+        ? assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignments.length
+        : 0;
 
-        const totalCost = assignments.reduce((sum, a) => sum + a.container.cost, 0);
-
-        newResults[p] = {
+      const newResults: Record<OptimizationPriority, OptimizationResult> = {
+        [OptimizationPriority.UTILIZATION]: {
           assignments,
           unassignedProducts: unassigned,
           totalCost,
-          reasoning: `Optimization complete using ${p} priority.\n${assignments.length} containers used. ${unassigned.length} items unassigned.`
-        };
-      });
+          reasoning: `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.`
+        },
+        // Dummy entries for other priorities (not used)
+        [OptimizationPriority.COST]: {
+          assignments: [],
+          unassignedProducts: [],
+          totalCost: 0,
+          reasoning: ''
+        },
+        [OptimizationPriority.TIME]: {
+          assignments: [],
+          unassignedProducts: [],
+          totalCost: 0,
+          reasoning: ''
+        },
+        [OptimizationPriority.BALANCE]: {
+          assignments: [],
+          unassignedProducts: [],
+          totalCost: 0,
+          reasoning: ''
+        }
+      };
 
-      setResults(newResults as Record<OptimizationPriority, OptimizationResult>);
-      setActivePriority(OptimizationPriority.BALANCE);
+      setResults(newResults);
+      setActivePriority(OptimizationPriority.UTILIZATION);
       setIsOptimizing(false);
     }, 100);
   };
@@ -836,8 +849,8 @@ const App: React.FC = () => {
               onClick={handleOptimization}
               disabled={products.length === 0 || containers.length === 0 || isOptimizing}
               className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                 }`}
             >
               {isOptimizing ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}

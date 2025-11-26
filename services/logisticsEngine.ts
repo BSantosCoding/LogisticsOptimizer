@@ -108,44 +108,85 @@ export const calculatePacking = (
     assigned: [] as Product[]
   }));
 
-  // Sort Containers
+  // Sort Containers based on priority
   availableContainers.sort((a, b) => {
     if (priority === OptimizationPriority.COST) {
       return a.cost - b.cost;
     } else if (priority === OptimizationPriority.TIME) {
       return a.transitTimeDays - b.transitTimeDays;
-    } else {
+    } else if (priority === OptimizationPriority.BALANCE) {
       const scoreA = a.cost + (a.transitTimeDays * 100);
       const scoreB = b.cost + (b.transitTimeDays * 100);
       return scoreA - scoreB;
+    } else {
+      // UTILIZATION: No specific sorting needed, we'll use Best-Fit strategy
+      return 0;
     }
   });
 
-  // Sort Products (maybe by quantity desc? or arbitrary)
+  // Sort Products by quantity descending (larger items first)
   const sortedProducts = [...products].sort((a, b) => b.quantity - a.quantity);
   const unassigned: Product[] = [];
 
   for (const product of sortedProducts) {
     let placed = false;
 
-    for (const container of availableContainers) {
-      // Check Compatibility
-      const compatibilityIssues = checkCompatibility(product, container);
-      if (compatibilityIssues.length > 0) {
-        continue;
+    if (priority === OptimizationPriority.UTILIZATION) {
+      // Best-Fit: Find the container with least remaining space that can still fit this product
+      let bestContainer = null;
+      let bestRemainingSpace = Infinity;
+
+      for (const container of availableContainers) {
+        // Check Compatibility
+        const compatibilityIssues = checkCompatibility(product, container);
+        if (compatibilityIssues.length > 0) {
+          continue;
+        }
+
+        // Check Capacity
+        const maxCap = container.capacities[product.formFactorId];
+        if (!maxCap) continue;
+
+        const utilizationNeeded = (product.quantity / maxCap) * 100;
+        const remainingSpace = 100 - container.currentUtilization;
+
+        if (utilizationNeeded <= remainingSpace) {
+          // This container can fit the product
+          if (remainingSpace < bestRemainingSpace) {
+            bestRemainingSpace = remainingSpace;
+            bestContainer = container;
+          }
+        }
       }
 
-      // Check Capacity
-      const maxCap = container.capacities[product.formFactorId];
-      if (!maxCap) continue; // Should be caught by compatibility, but double check
-
-      const utilizationNeeded = (product.quantity / maxCap) * 100;
-
-      if (container.currentUtilization + utilizationNeeded <= 100) {
-        container.assigned.push(product);
-        container.currentUtilization += utilizationNeeded;
+      if (bestContainer) {
+        const maxCap = bestContainer.capacities[product.formFactorId]!;
+        const utilizationNeeded = (product.quantity / maxCap) * 100;
+        bestContainer.assigned.push(product);
+        bestContainer.currentUtilization += utilizationNeeded;
         placed = true;
-        break;
+      }
+    } else {
+      // Original greedy strategy for other priorities
+      for (const container of availableContainers) {
+        // Check Compatibility
+        const compatibilityIssues = checkCompatibility(product, container);
+        if (compatibilityIssues.length > 0) {
+          continue;
+        }
+
+        // Check Capacity
+        const maxCap = container.capacities[product.formFactorId];
+        if (!maxCap) continue;
+
+        const utilizationNeeded = (product.quantity / maxCap) * 100;
+
+        if (container.currentUtilization + utilizationNeeded <= 100) {
+          container.assigned.push(product);
+          container.currentUtilization += utilizationNeeded;
+          placed = true;
+          break;
+        }
       }
     }
 

@@ -106,46 +106,6 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </div>
           </div>
 
-          <div className="relative">
-            <MapPin className="absolute left-3 top-2.5 text-slate-500" size={14} />
-            <input
-              placeholder="Destination (Optional)"
-              value={newProduct.destination || ''}
-              onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
-              className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 pl-9 text-sm focus:border-blue-500 outline-none text-slate-200"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div className="relative">
-              <span className="absolute left-2 top-2 text-[10px] text-blue-400 font-medium uppercase">Ready Date</span>
-              <input
-                type="date"
-                value={newProduct.readyDate || ''}
-                onChange={e => setNewProduct({ ...newProduct, readyDate: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 pt-6 text-xs focus:border-blue-500 outline-none text-slate-300 h-[46px]"
-              />
-            </div>
-            <div className="relative">
-              <span className="absolute left-2 top-2 text-[10px] text-slate-500 uppercase">Ship Before</span>
-              <input
-                type="date"
-                value={newProduct.shipDeadline || ''}
-                onChange={e => setNewProduct({ ...newProduct, shipDeadline: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 pt-6 text-xs focus:border-blue-500 outline-none text-slate-300 h-[46px]"
-              />
-            </div>
-            <div className="relative">
-              <span className="absolute left-2 top-2 text-[10px] text-slate-500 uppercase">Arr. Before</span>
-              <input
-                type="date"
-                value={newProduct.arrivalDeadline || ''}
-                onChange={e => setNewProduct({ ...newProduct, arrivalDeadline: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-2 pt-6 text-xs focus:border-blue-500 outline-none text-slate-300 h-[46px]"
-              />
-            </div>
-          </div>
-
           <div>
             <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
             <RestrictionSelector

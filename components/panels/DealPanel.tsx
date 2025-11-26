@@ -114,22 +114,6 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             )}
           </div>
 
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input type="number" placeholder="Cost" value={newContainer.cost || ''} onChange={e => setNewContainer({ ...newContainer, cost: Number(e.target.value) })} className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none pl-7 text-slate-200" />
-              <DollarSign size={12} className="absolute left-2.5 top-3 text-slate-500" />
-            </div>
-            <div className="relative flex-1">
-              <input type="number" placeholder="Days" value={newContainer.transitTimeDays || ''} onChange={e => setNewContainer({ ...newContainer, transitTimeDays: Number(e.target.value) })} className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none pl-7 text-slate-200" />
-              <Clock size={12} className="absolute left-2.5 top-3 text-slate-500" />
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <input placeholder="Destination (Empty = Any)" value={newContainer.destination} onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })} className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200" />
-            <input type="date" value={newContainer.availableFrom} onChange={e => setNewContainer({ ...newContainer, availableFrom: e.target.value })} className="w-1/3 bg-slate-900 border border-slate-600 rounded px-2 py-2 text-sm focus:border-blue-500 outline-none text-slate-400" />
-          </div>
-
           <div>
             <span className="text-xs text-slate-500 uppercase font-bold">Capabilities</span>
             <RestrictionSelector

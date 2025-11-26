@@ -80,6 +80,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Layers size={20} className="text-blue-500" /> Packing Plan</h3>
 
         {result.assignments.map((loadedContainer) => {
+          // Extract instance number from ID (format: templateId-instance-N)
+          const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
+          const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
+
           return (
             <div
               key={loadedContainer.container.id}
@@ -93,7 +97,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 }`}>
                 <div>
                   <div className="font-semibold text-white flex items-center gap-2">
-                    {loadedContainer.container.name}
+                    {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
                     {loadedContainer.container.restrictions.length > 0 && (
                       <div className="flex gap-1">
                         {loadedContainer.container.restrictions.map(r => (

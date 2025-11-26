@@ -101,15 +101,32 @@ export const calculatePacking = (
   priority: OptimizationPriority
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // Prepare containers with tracking state
-  const availableContainers = containers.map(c => ({
-    ...c,
-    currentUtilization: 0,
-    assigned: [] as Product[]
-  }));
+  // Containers are now templates - we can create multiple instances
+  // Track all container instances we create
+  const containerInstances: Array<{
+    templateId: string;
+    instanceId: string;
+    template: Container;
+    currentUtilization: number;
+    assigned: Product[];
+  }> = [];
 
-  // Sort Containers based on priority
-  availableContainers.sort((a, b) => {
+  let instanceCounter = 0;
+
+  // Helper to create a new container instance from a template
+  const createContainerInstance = (template: Container) => {
+    instanceCounter++;
+    return {
+      templateId: template.id,
+      instanceId: `${template.id}-instance-${instanceCounter}`,
+      template: { ...template },
+      currentUtilization: 0,
+      assigned: [] as Product[]
+    };
+  };
+
+  // Sort container templates based on priority for selection order
+  const sortedContainerTemplates = [...containers].sort((a, b) => {
     if (priority === OptimizationPriority.COST) {
       return a.cost - b.cost;
     } else if (priority === OptimizationPriority.TIME) {
@@ -119,7 +136,7 @@ export const calculatePacking = (
       const scoreB = b.cost + (b.transitTimeDays * 100);
       return scoreA - scoreB;
     } else {
-      // UTILIZATION: No specific sorting needed, we'll use Best-Fit strategy
+      // UTILIZATION: No specific sorting needed
       return 0;
     }
   });
@@ -132,73 +149,131 @@ export const calculatePacking = (
     let placed = false;
 
     if (priority === OptimizationPriority.UTILIZATION) {
-      // Best-Fit: Find the container with least remaining space that can still fit this product
+      // Best-Fit: Find the instance with least remaining space that can still fit this product
       // Prefer containers without unnecessary special capabilities
-      let bestContainer = null;
+      let bestInstance = null;
       let bestScore = Infinity;
 
-      for (const container of availableContainers) {
+      // Check existing instances first
+      for (const instance of containerInstances) {
         // Check Compatibility
-        const compatibilityIssues = checkCompatibility(product, container);
+        const compatibilityIssues = checkCompatibility(product, instance.template);
         if (compatibilityIssues.length > 0) {
           continue;
         }
 
         // Check Capacity
-        const maxCap = container.capacities[product.formFactorId];
+        const maxCap = instance.template.capacities[product.formFactorId];
         if (!maxCap) continue;
 
         const utilizationNeeded = (product.quantity / maxCap) * 100;
-        const remainingSpace = 100 - container.currentUtilization;
+        const remainingSpace = 100 - instance.currentUtilization;
 
         if (utilizationNeeded <= remainingSpace) {
-          // This container can fit the product
-          // Calculate score: prefer containers with less remaining space
-          // but penalize containers with unnecessary special capabilities
-
-          // Check if container has restrictions that the product doesn't need
-          const unnecessaryRestrictions = container.restrictions.filter(
+          // This instance can fit the product
+          const unnecessaryRestrictions = instance.template.restrictions.filter(
             r => !product.restrictions.includes(r)
           ).length;
 
-          // Score: remaining space + penalty for unnecessary restrictions
-          // Lower score is better
           const score = remainingSpace + (unnecessaryRestrictions * 1000);
 
           if (score < bestScore) {
             bestScore = score;
-            bestContainer = container;
+            bestInstance = instance;
           }
         }
       }
 
-      if (bestContainer) {
-        const maxCap = bestContainer.capacities[product.formFactorId]!;
+      // If no existing instance works, try creating a new instance from templates
+      if (!bestInstance) {
+        let bestTemplate = null;
+        let bestTemplateScore = Infinity;
+
+        for (const template of sortedContainerTemplates) {
+          // Check Compatibility
+          const compatibilityIssues = checkCompatibility(product, template);
+          if (compatibilityIssues.length > 0) {
+            continue;
+          }
+
+          // Check Capacity
+          const maxCap = template.capacities[product.formFactorId];
+          if (!maxCap) continue;
+
+          const utilizationNeeded = (product.quantity / maxCap) * 100;
+
+          if (utilizationNeeded <= 100) {
+            // This template can fit the product in a new instance
+            const unnecessaryRestrictions = template.restrictions.filter(
+              r => !product.restrictions.includes(r)
+            ).length;
+
+            // For new instances, remaining space is 100 - utilizationNeeded
+            const score = (100 - utilizationNeeded) + (unnecessaryRestrictions * 1000);
+
+            if (score < bestTemplateScore) {
+              bestTemplateScore = score;
+              bestTemplate = template;
+            }
+          }
+        }
+
+        if (bestTemplate) {
+          bestInstance = createContainerInstance(bestTemplate);
+          containerInstances.push(bestInstance);
+        }
+      }
+
+      if (bestInstance) {
+        const maxCap = bestInstance.template.capacities[product.formFactorId]!;
         const utilizationNeeded = (product.quantity / maxCap) * 100;
-        bestContainer.assigned.push(product);
-        bestContainer.currentUtilization += utilizationNeeded;
+        bestInstance.assigned.push(product);
+        bestInstance.currentUtilization += utilizationNeeded;
         placed = true;
       }
     } else {
       // Original greedy strategy for other priorities
-      for (const container of availableContainers) {
-        // Check Compatibility
-        const compatibilityIssues = checkCompatibility(product, container);
+      // Try to fit in existing instances first
+      for (const instance of containerInstances) {
+        const compatibilityIssues = checkCompatibility(product, instance.template);
         if (compatibilityIssues.length > 0) {
           continue;
         }
 
-        // Check Capacity
-        const maxCap = container.capacities[product.formFactorId];
+        const maxCap = instance.template.capacities[product.formFactorId];
         if (!maxCap) continue;
 
         const utilizationNeeded = (product.quantity / maxCap) * 100;
 
-        if (container.currentUtilization + utilizationNeeded <= 100) {
-          container.assigned.push(product);
-          container.currentUtilization += utilizationNeeded;
+        if (instance.currentUtilization + utilizationNeeded <= 100) {
+          instance.assigned.push(product);
+          instance.currentUtilization += utilizationNeeded;
           placed = true;
           break;
+        }
+      }
+
+      // If not placed, try creating a new instance
+      if (!placed) {
+        for (const template of sortedContainerTemplates) {
+          const compatibilityIssues = checkCompatibility(product, template);
+          if (compatibilityIssues.length > 0) {
+            continue;
+          }
+
+          const maxCap = template.capacities[product.formFactorId];
+          if (!maxCap) continue;
+
+          const utilizationNeeded = (product.quantity / maxCap) * 100;
+
+          if (utilizationNeeded <= 100) {
+            const newInstance = createContainerInstance(template);
+            newInstance.assigned.push(product);
+            newInstance.currentUtilization += utilizationNeeded;
+            containerInstances.push(newInstance);
+            placed = true;
+            break;
+          }
         }
       }
     }
@@ -208,24 +283,15 @@ export const calculatePacking = (
     }
   }
 
-  const activeAssignments = availableContainers
-    .filter(c => c.assigned.length > 0)
-    .map(c => {
-      // Re-construct original container object
-      const originalContainer: Container = {
-        id: c.id,
-        name: c.name,
-        capacities: c.capacities,
-        cost: c.cost,
-        transitTimeDays: c.transitTimeDays,
-        availableFrom: c.availableFrom,
-        destination: c.destination,
-        restrictions: c.restrictions
-      };
+  const activeAssignments = containerInstances.map(instance => {
+    // Use the instance ID to make each container unique
+    const containerWithInstanceId: Container = {
+      ...instance.template,
+      id: instance.instanceId
+    };
 
-      // Return validated container
-      return validateLoadedContainer(originalContainer, c.assigned);
-    });
+    return validateLoadedContainer(containerWithInstanceId, instance.assigned);
+  });
 
   return {
     assignments: activeAssignments,

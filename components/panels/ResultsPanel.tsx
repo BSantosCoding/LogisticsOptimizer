@@ -7,6 +7,7 @@ interface ResultsPanelProps {
   activePriority: OptimizationPriority;
   setActivePriority: (p: OptimizationPriority) => void;
   containers: Container[];
+  countries: any[];
   handleDragStart: (e: React.DragEvent, productId: string, sourceId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, targetId: string) => void;
@@ -20,6 +21,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   activePriority,
   setActivePriority,
   containers,
+  countries,
   handleDragStart,
   handleDragOver,
   handleDrop,
@@ -27,6 +29,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onClose,
   optimalRange = { min: 85, max: 100 }
 }) => {
+  // Transform countries data into countryCosts map
+  const countryCosts = React.useMemo(() => {
+    const costs: Record<string, Record<string, number>> = {};
+    countries.forEach((country: any) => {
+      if (country.code && country.containerCosts) {
+        costs[country.code] = country.containerCosts;
+      }
+    });
+    return costs;
+  }, [countries]);
+
+  // Helper to get cost for a container
+  const getContainerCost = (loadedContainer: LoadedContainer) => {
+    const country = loadedContainer.assignedProducts[0]?.country;
+    return (country && countryCosts[country]?.[loadedContainer.container.id]) ?? loadedContainer.container.cost;
+  };
   const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
 
   const toggleDestination = (dest: string) => {
@@ -71,7 +89,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="text-slate-400 text-xs uppercase font-bold">Containers Used</div>
           <div className="text-2xl font-bold text-blue-400">{result.assignments.filter(a => a.assignedProducts.length > 0).length}</div>
@@ -79,6 +97,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="text-slate-400 text-xs uppercase font-bold">Avg Utilization</div>
           <div className="text-2xl font-bold text-purple-400">{result.assignments.length > 0 ? (result.assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / result.assignments.length).toFixed(1) : 0}%</div>
+        </div>
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
+          <div className="text-slate-400 text-xs uppercase font-bold">Total Cost</div>
+          <div className="text-2xl font-bold text-green-400">${result.assignments.reduce((sum, a) => sum + getContainerCost(a), 0).toLocaleString()}</div>
         </div>
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="text-slate-400 text-xs uppercase font-bold">Unassigned</div>
@@ -157,6 +179,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   <span className="text-sm font-normal text-slate-500 ml-2">
                     ({assignments.length} Containers)
                   </span>
+                  <span className="text-sm font-normal text-green-400 ml-2">
+                    ${assignments.reduce((sum, a) => sum + getContainerCost(a), 0).toLocaleString()}
+                  </span>
                   {isCollapsed && hasIssues && (
                     <span className="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded flex items-center gap-1">
                       <AlertTriangle size={12} /> Issues
@@ -203,6 +228,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           <span>{loadedContainer.container.destination || 'No Dest'}</span>
                           <span>•</span>
                           <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
+                          <span>•</span>
+                          <span className="text-green-400">${getContainerCost(loadedContainer).toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="text-right">

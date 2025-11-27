@@ -1098,6 +1098,7 @@ const App: React.FC = () => {
                 activePriority={activePriority}
                 setActivePriority={setActivePriority}
                 containers={containers}
+                countries={countries}
                 onClose={() => setViewMode('data')}
                 handleDragStart={handleDragStart}
                 handleDragOver={handleDragOver}

@@ -176,7 +176,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                 </div>
 
                 {/* Country List */}
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredCountries.map(country => (
                         <div key={country.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
                             <div className="flex justify-between items-start mb-4">
@@ -229,7 +229,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                     ))}
 
                     {filteredCountries.length === 0 && (
-                        <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-700 rounded-xl">
+                        <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-700 rounded-xl col-span-full">
                             No countries configured.
                         </div>
                     )}

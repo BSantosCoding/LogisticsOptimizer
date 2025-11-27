@@ -751,7 +751,7 @@ const App: React.FC = () => {
       // Close results and show success
       setViewMode('data');
       setInputMode('shipments');
-      alert('Shipment saved successfully!');
+      // Success feedback is implicit via navigation to shipments tab
 
     } catch (error) {
       console.error('Error saving shipment:', error);

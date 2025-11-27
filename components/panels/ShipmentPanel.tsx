@@ -134,9 +134,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    if (window.confirm(`Unpack ${p.name}? This will remove it from the shipment and make it available again.`)) {
-                                                                        onUnpackItem(shipment.id, p.id);
-                                                                    }
+                                                                    onUnpackItem(shipment.id, p.id);
                                                                 }}
                                                                 className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                 title="Unpack this item"

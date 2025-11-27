@@ -44,6 +44,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  const [shipmentFilter, setShipmentFilter] = useState<'available' | 'shipped' | 'all'>('available');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +65,13 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesTag = selectedTagFilter ? p.restrictions.includes(selectedTagFilter) : true;
-      return matchesSearch && matchesTag;
+
+      const matchesShipment =
+        shipmentFilter === 'all' ? true :
+          shipmentFilter === 'shipped' ? (p.status === 'shipped') :
+            (p.status !== 'shipped'); // Default 'available'
+
+      return matchesSearch && matchesTag && matchesShipment;
     })
     .sort((a, b) => {
       // Sort products with missing form factors to the top
@@ -190,6 +197,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </button>
           )}
         </div>
+        {/* Search & Filter */}
         <div className="flex-1 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />

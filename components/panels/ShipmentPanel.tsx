@@ -7,18 +7,22 @@ interface ShipmentPanelProps {
     onUnpack: (shipmentId: string) => void;
     onLoadAsBase: (shipmentId: string) => void;
     onDelete: (shipmentId: string) => void;
+    onUnpackItem: (shipmentId: string, productId: string) => void;
 }
 
 const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
     shipments,
     onUnpack,
     onLoadAsBase,
-    onDelete
+    onDelete,
+    onUnpackItem
 }) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [expandedContainerIdx, setExpandedContainerIdx] = useState<number | null>(null);
 
     const toggleExpand = (id: string) => {
         setExpandedId(expandedId === id ? null : id);
+        setExpandedContainerIdx(null);
     };
 
     if (shipments.length === 0) {
@@ -101,16 +105,48 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                 <div className="space-y-2">
                                     <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Containers</h4>
                                     {shipment.snapshot?.assignments?.map((a: LoadedContainer, idx: number) => (
-                                        <div key={idx} className="bg-slate-800 p-3 rounded border border-slate-700 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <Box size={14} className="text-slate-500" />
-                                                <span className="text-sm text-slate-300">{a.container.name}</span>
-                                                <span className="text-xs text-slate-500">({a.container.destination})</span>
+                                        <div key={idx} className="bg-slate-800 rounded border border-slate-700 overflow-hidden">
+                                            <div
+                                                className="p-3 flex justify-between items-center cursor-pointer hover:bg-slate-700/50"
+                                                onClick={() => setExpandedContainerIdx(expandedContainerIdx === idx ? null : idx)}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Box size={14} className="text-slate-500" />
+                                                    <span className="text-sm text-slate-300">{a.container.name}</span>
+                                                    <span className="text-xs text-slate-500">({a.container.destination})</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xs text-slate-400">{a.totalUtilization.toFixed(1)}% Full</span>
+                                                    <span className="text-xs text-green-400">${a.container.cost.toLocaleString()}</span>
+                                                    {expandedContainerIdx === idx ? <ChevronDown size={14} className="text-slate-500" /> : <ChevronRight size={14} className="text-slate-500" />}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs text-slate-400">{a.totalUtilization.toFixed(1)}% Full</span>
-                                                <span className="text-xs text-green-400">${a.container.cost.toLocaleString()}</span>
-                                            </div>
+
+                                            {/* Products List */}
+                                            {expandedContainerIdx === idx && (
+                                                <div className="bg-slate-900/50 p-2 border-t border-slate-700 space-y-1">
+                                                    {a.assignedProducts.map(p => (
+                                                        <div key={p.id} className="flex justify-between items-center text-xs p-2 hover:bg-slate-800 rounded group">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-slate-300">{p.name}</span>
+                                                                <span className="text-slate-500">x{p.quantity}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (window.confirm(`Unpack ${p.name}? This will remove it from the shipment and make it available again.`)) {
+                                                                        onUnpackItem(shipment.id, p.id);
+                                                                    }
+                                                                }}
+                                                                className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                title="Unpack this item"
+                                                            >
+                                                                <RotateCcw size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

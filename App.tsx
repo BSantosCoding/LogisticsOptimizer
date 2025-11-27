@@ -33,6 +33,7 @@ import { validateLoadedContainer, calculatePacking } from './services/logisticsE
 import { supabase } from './services/supabase';
 import ImportConfirmModal from './components/ImportConfirmModal';
 import ImportSummaryModal from './components/ImportSummaryModal';
+import ConfirmModal from './components/ConfirmModal';
 import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment } from './types';
 
 // Default options
@@ -112,7 +113,22 @@ const App: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [pendingImportData, setPendingImportData] = useState<{ products: Product[], productsWithMissingFF: string[] } | null>(null);
   const [showImportSummary, setShowImportSummary] = useState(false);
-  const [importSummaryData, setImportSummaryData] = useState<{ total: number, savedToDb: boolean, issues: string[] } | null>(null);
+  const [importSummaryData, setImportSummaryData] = useState<{ total: number, savedToDb: number, issues: string[] } | null>(null);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { }
+  });
 
   // --- AUTH Initialization ---
   useEffect(() => {
@@ -736,58 +752,178 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUnpackShipment = async (shipmentId: string) => {
-    if (!window.confirm('Are you sure you want to unpack this shipment? All items will be returned to the "Available" list.')) return;
+  const handleUnpackShipment = (shipmentId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Unpack Shipment',
+      message: 'Are you sure you want to unpack this shipment? All items will be returned to the "Available" list.',
+      confirmText: 'Unpack',
+      isDestructive: false,
+      onConfirm: async () => {
+        try {
+          // 1. Release Products
+          const { error: productsError } = await supabase
+            .from('products')
+            .update({ shipment_id: null, status: 'available' })
+            .eq('shipment_id', shipmentId);
 
+          if (productsError) throw productsError;
+
+          // 2. Delete Shipment
+          const { error: shipmentError } = await supabase
+            .from('shipments')
+            .delete()
+            .eq('id', shipmentId);
+
+          if (shipmentError) throw shipmentError;
+
+          // 3. Update Local State
+          setShipments(shipments.filter(s => s.id !== shipmentId));
+          setProducts(products.map(p =>
+            p.shipmentId === shipmentId
+              ? { ...p, shipmentId: null, status: 'available' }
+              : p
+          ));
+        } catch (error) {
+          console.error('Error unpacking shipment:', error);
+          alert('Failed to unpack shipment.');
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleLoadBasePlan = (shipmentId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Load as Base Plan',
+      message: 'This will unpack the shipment and load its items for re-optimization. The shipment record will be removed. Continue?',
+      confirmText: 'Load & Re-optimize',
+      onConfirm: async () => {
+        // Reuse unpack logic but keep flow going
+        try {
+          // 1. Release Products
+          const { error: productsError } = await supabase
+            .from('products')
+            .update({ shipment_id: null, status: 'available' })
+            .eq('shipment_id', shipmentId);
+
+          if (productsError) throw productsError;
+
+          // 2. Delete Shipment
+          const { error: shipmentError } = await supabase
+            .from('shipments')
+            .delete()
+            .eq('id', shipmentId);
+
+          if (shipmentError) throw shipmentError;
+
+          // 3. Update Local State
+          setShipments(shipments.filter(s => s.id !== shipmentId));
+          setProducts(products.map(p =>
+            p.shipmentId === shipmentId
+              ? { ...p, shipmentId: null, status: 'available' }
+              : p
+          ));
+
+          setInputMode('products');
+        } catch (error) {
+          console.error('Error loading base plan:', error);
+          alert('Failed to load base plan.');
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleDeleteShipment = (shipmentId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Shipment',
+      message: 'Delete this shipment record? This will also release all items back to available status.',
+      confirmText: 'Delete',
+      isDestructive: true,
+      onConfirm: async () => {
+        // Reuse unpack logic for safety
+        try {
+          // 1. Release Products
+          const { error: productsError } = await supabase
+            .from('products')
+            .update({ shipment_id: null, status: 'available' })
+            .eq('shipment_id', shipmentId);
+
+          if (productsError) throw productsError;
+
+          // 2. Delete Shipment
+          const { error: shipmentError } = await supabase
+            .from('shipments')
+            .delete()
+            .eq('id', shipmentId);
+
+          if (shipmentError) throw shipmentError;
+
+          // 3. Update Local State
+          setShipments(shipments.filter(s => s.id !== shipmentId));
+          setProducts(products.map(p =>
+            p.shipmentId === shipmentId
+              ? { ...p, shipmentId: null, status: 'available' }
+              : p
+          ));
+        } catch (error) {
+          console.error('Error deleting shipment:', error);
+          alert('Failed to delete shipment.');
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  const handleUnpackItem = async (shipmentId: string, productId: string) => {
     try {
-      // 1. Release Products
-      const { error: productsError } = await supabase
+      // 1. Release Product
+      const { error: productError } = await supabase
         .from('products')
         .update({ shipment_id: null, status: 'available' })
-        .eq('shipment_id', shipmentId);
+        .eq('id', productId);
 
-      if (productsError) throw productsError;
+      if (productError) throw productError;
 
-      // 2. Delete Shipment
-      const { error: shipmentError } = await supabase
-        .from('shipments')
-        .delete()
-        .eq('id', shipmentId);
-
-      if (shipmentError) throw shipmentError;
-
-      // 3. Update Local State
-      setShipments(shipments.filter(s => s.id !== shipmentId));
+      // 2. Update Local State
       setProducts(products.map(p =>
-        p.shipmentId === shipmentId
+        p.id === productId
           ? { ...p, shipmentId: null, status: 'available' }
           : p
       ));
 
+      // 3. Update Shipment Snapshot (Optional but good for UI consistency until refresh)
+      // Note: We are NOT updating the DB snapshot here to avoid complexity, 
+      // but the item will be "released" in the products list.
+      // The shipment panel reads from 'shipments' state which has the OLD snapshot.
+      // To make the item disappear from the shipment panel immediately, we'd need to update the shipment state too.
+      // For now, let's just update the products list. The user will see the item become available.
+      // To reflect in ShipmentPanel, we might need to reload shipments or manually filter the snapshot.
+
+      // Let's manually remove it from the local shipment snapshot to give instant feedback
+      setShipments(shipments.map(s => {
+        if (s.id === shipmentId) {
+          const newSnapshot = { ...s.snapshot };
+          newSnapshot.assignments = newSnapshot.assignments.map((a: any) => ({
+            ...a,
+            assignedProducts: a.assignedProducts.filter((p: any) => p.id !== productId)
+          })).filter((a: any) => a.assignedProducts.length > 0); // Remove empty containers
+
+          return { ...s, snapshot: newSnapshot };
+        }
+        return s;
+      }));
+
     } catch (error) {
-      console.error('Error unpacking shipment:', error);
-      alert('Failed to unpack shipment.');
+      console.error('Error unpacking item:', error);
+      alert('Failed to unpack item.');
     }
-  };
-
-  const handleLoadBasePlan = async (shipmentId: string) => {
-    if (!window.confirm('This will unpack the shipment and load its items for re-optimization. The shipment record will be removed. Continue?')) return;
-    // For now, "Load as Base" acts like "Unpack" but keeps the user in the flow to re-optimize.
-    // Ideally, we might want to keep the shipment record until the NEW one is saved, but that adds complexity.
-    // The user asked for "Base Plan", which implies starting from that state.
-    // Simplest approach: Unpack it, then select those items for optimization.
-
-    await handleUnpackShipment(shipmentId);
-    setInputMode('products');
-    // We could auto-select the unpacked items here if we tracked them, but for now just making them available is a good start.
-  };
-
-  const handleDeleteShipment = async (shipmentId: string) => {
-    if (!window.confirm('Delete this shipment record? Products will remain marked as "shipped" (orphaned) or should they be deleted? \n\nFor safety, this action ONLY deletes the shipment record. Products will need manual update if you want them back.')) return;
-    // This is a bit dangerous. Usually deleting a shipment should unpack it.
-    // Let's make Delete = Unpack for safety in this MVP, or just Delete record.
-    // Given the prompt, let's just call Unpack for now as it's safer.
-    handleUnpackShipment(shipmentId);
   };
 
   const handleRunOptimization = () => {
@@ -1170,6 +1306,7 @@ const App: React.FC = () => {
         </div>
 
         <nav className="flex flex-col gap-4 w-full px-2">
+          {/* Operational Group */}
           <button
             onClick={() => setViewMode('data')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${viewMode === 'data' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
@@ -1189,6 +1326,19 @@ const App: React.FC = () => {
             </button>
           )}
           <button
+            onClick={() => setInputMode('shipments')}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="Shipments"
+          >
+            <Package size={20} />
+            <span className="text-[10px] font-medium">Shipments</span>
+          </button>
+
+          {/* Divider */}
+          <div className="h-px bg-slate-800 w-full my-2"></div>
+
+          {/* Setup Group */}
+          <button
             onClick={() => handleTabChange('products')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Products"
@@ -1205,14 +1355,6 @@ const App: React.FC = () => {
             <span className="text-[10px] font-medium">Containers</span>
           </button>
           <button
-            onClick={() => handleTabChange('config')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'config' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Configuration"
-          >
-            <Settings size={20} />
-            <span className="text-[10px] font-medium">Config</span>
-          </button>
-          <button
             onClick={() => setInputMode('countries')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Countries"
@@ -1221,12 +1363,12 @@ const App: React.FC = () => {
             <span className="text-[10px] font-medium">Countries</span>
           </button>
           <button
-            onClick={() => setInputMode('shipments')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Shipments"
+            onClick={() => handleTabChange('config')}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'config' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="Configuration"
           >
-            <Package size={20} />
-            <span className="text-[10px] font-medium">Shipments</span>
+            <Settings size={20} />
+            <span className="text-[10px] font-medium">Config</span>
           </button>
         </nav>
 
@@ -1431,6 +1573,7 @@ const App: React.FC = () => {
                     onUnpack={handleUnpackShipment}
                     onLoadAsBase={handleLoadBasePlan}
                     onDelete={handleDeleteShipment}
+                    onUnpackItem={handleUnpackItem}
                   />
                 </div>
               )}
@@ -1462,6 +1605,17 @@ const App: React.FC = () => {
             }}
           />
         )}
+
+        {/* Confirm Modal */}
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          isDestructive={confirmModal.isDestructive}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        />
       </div>
     </div>
   );

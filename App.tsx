@@ -1310,14 +1310,6 @@ const App: React.FC = () => {
 
         <nav className="flex flex-col gap-4 w-full px-2">
           {/* Operational Group */}
-          <button
-            onClick={() => setViewMode('data')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${viewMode === 'data' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Data Input"
-          >
-            <PenLine size={20} />
-            <span className="text-[10px] font-medium">Input</span>
-          </button>
           {results && (
             <button
               onClick={() => setViewMode('results')}
@@ -1328,6 +1320,11 @@ const App: React.FC = () => {
               <span className="text-[10px] font-medium">Results</span>
             </button>
           )}
+
+          {/* Divider */}
+          <div className="h-px bg-slate-800 w-full my-2"></div>
+
+          {/* Main Tabs */}
           <button
             onClick={() => setInputMode('shipments')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
@@ -1336,11 +1333,6 @@ const App: React.FC = () => {
             <Package size={20} />
             <span className="text-[10px] font-medium">Shipments</span>
           </button>
-
-          {/* Divider */}
-          <div className="h-px bg-slate-800 w-full my-2"></div>
-
-          {/* Setup Group */}
           <button
             onClick={() => handleTabChange('products')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}

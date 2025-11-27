@@ -657,16 +657,30 @@ const App: React.FC = () => {
       ? containers.filter((d: { id: any; }) => selectedContainerIds.has(d.id))
       : containers;
 
+    // Transform countries data into countryCosts map
+    const countryCosts: Record<string, Record<string, number>> = {};
+    countries.forEach((country: any) => {
+      if (country.code && country.containerCosts) {
+        countryCosts[country.code] = country.containerCosts;
+      }
+    });
+
     setTimeout(async () => {
       const priority = OptimizationPriority.UTILIZATION;
       const { assignments, unassigned } = calculatePacking(
         productsToUse,
         containersToUse,
         priority,
-        optimalUtilizationRange.min
+        optimalUtilizationRange.min,
+        countryCosts
       );
 
-      const totalCost = assignments.reduce((sum, a) => sum + a.container.cost, 0);
+      // Calculate total cost using country-specific costs when available
+      const totalCost = assignments.reduce((sum, a) => {
+        const country = a.assignedProducts[0]?.country;
+        const cost = (country && countryCosts[country]?.[a.container.id]) ?? a.container.cost;
+        return sum + cost;
+      }, 0);
       const avgUtilization = assignments.length > 0
         ? assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignments.length
         : 0;

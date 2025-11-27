@@ -210,7 +210,8 @@ export const calculatePacking = (
   products: Product[],
   containers: Container[],
   priority: OptimizationPriority,
-  minUtilization: number = 70
+  minUtilization: number = 70,
+  countryCosts: Record<string, Record<string, number>> = {} // countryCode -> containerTemplateId -> cost
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
   // 1. Group Products by Destination ONLY
@@ -252,12 +253,19 @@ export const calculatePacking = (
       continue;
     }
 
+    // Get country from first product in group (all products in group have same destination/country)
+    const groupCountry = group.products[0]?.country;
+
     // 3. Sort Templates: Largest Capacity First (Greedy Baseline)
     const sortedTemplates = [...compatibleTemplates].sort((a, b) => {
       const capA = getContainerCapacityScore(a);
       const capB = getContainerCapacityScore(b);
       if (capA !== capB) return capB - capA;
-      return a.cost - b.cost;
+
+      // If capacity is the same, sort by cost (use country-specific cost if available)
+      const costA = (groupCountry && countryCosts[groupCountry]?.[a.id]) ?? a.cost;
+      const costB = (groupCountry && countryCosts[groupCountry]?.[b.id]) ?? b.cost;
+      return costA - costB;
     });
 
     const largestTemplate = sortedTemplates[0];

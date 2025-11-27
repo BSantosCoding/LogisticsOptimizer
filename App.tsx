@@ -414,7 +414,12 @@ const App: React.FC = () => {
       if (cols.length < 27) continue; // Skip malformed lines
 
       const customerNum = cols[4];
-      const country = cols[2]; // Ship To: Country (Index 2)
+      const country = cols[2]?.trim(); // Ship To: Country (Index 2)
+
+      if (i < 5) {
+        console.log(`Row ${i}: Country='${country}', Cols[2]='${cols[2]}'`, cols);
+      }
+
       const incoterms = cols[6];
       const incoterms2 = cols[7];
       const salesOrg = cols[13];

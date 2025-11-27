@@ -1192,7 +1192,7 @@ const App: React.FC = () => {
                       onEdit={handleEditFormFactor}
                     />
                   </div>
-                  <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                  <div className="flex-1 rounded-xl border border-slate-700 overflow-hidden p-6">
                     <ConfigPanel
                       viewMode="form"
                       templates={templates}

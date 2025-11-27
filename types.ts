@@ -17,6 +17,18 @@ export interface Product {
   readyDate?: string; // YYYY-MM-DD
   shipDeadline?: string; // YYYY-MM-DD
   arrivalDeadline?: string; // YYYY-MM-DD
+  shipmentId?: string | null;
+  status?: 'available' | 'shipped';
+}
+
+export interface Shipment {
+  id: string;
+  name: string;
+  status: 'draft' | 'finalized';
+  totalCost: number;
+  containerCount: number;
+  snapshot: any; // Stores the loaded containers snapshot
+  createdAt: string;
 }
 
 export interface Container {

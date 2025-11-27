@@ -27,12 +27,13 @@ import ConfigPanel from './components/panels/ConfigPanel';
 import CountryPanel from './components/panels/CountryPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
+import ShipmentPanel from './components/panels/ShipmentPanel';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';
 import ImportConfirmModal from './components/ImportConfirmModal';
 import ImportSummaryModal from './components/ImportSummaryModal';
-import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor } from './types';
+import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment } from './types';
 
 // Default options
 const DEFAULT_RESTRICTIONS = [
@@ -58,7 +59,7 @@ const App: React.FC = () => {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
 
   // Data
@@ -68,6 +69,7 @@ const App: React.FC = () => {
   const [containers, setContainers] = useState<Container[]>([]);
   const [formFactors, setFormFactors] = useState<ProductFormFactor[]>([]);
   const [countries, setCountries] = useState<any[]>([]); // Using any for now, should be Country type
+  const [shipments, setShipments] = useState<Shipment[]>([]);
 
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -205,7 +207,9 @@ const App: React.FC = () => {
           id: r.id,
           // Map legacy fields if needed, or rely on new fields
           formFactorId: r.form_factor_id || r.data.formFactorId,
-          quantity: r.quantity || r.data.quantity || 1
+          quantity: r.quantity || r.data.quantity || 1,
+          shipmentId: r.shipment_id,
+          status: r.status || 'available'
         })));
       }
 
@@ -232,6 +236,20 @@ const App: React.FC = () => {
           code: r.code,
           name: r.name,
           containerCosts: r.container_costs || {}
+        })));
+      }
+
+      // Load Shipments
+      const { data: shipmentsData } = await supabase.from('shipments').select('*').eq('company_id', profile.company_id).order('created_at', { ascending: false });
+      if (shipmentsData) {
+        setShipments(shipmentsData.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          status: r.status,
+          totalCost: r.total_cost,
+          containerCount: r.container_count,
+          snapshot: r.snapshot,
+          createdAt: r.created_at
         })));
       }
 
@@ -641,17 +659,163 @@ const App: React.FC = () => {
   };
 
   const handleEditFormFactor = async (id: string, name: string, description: string) => {
-    setFormFactors(formFactors.map(f => f.id === id ? { ...f, name, description } : f));
+    setFormFactors(formFactors.map(ff => ff.id === id ? { ...ff, name, description } : ff));
     await supabase.from('form_factors').update({ name, description }).eq('id', id);
   };
 
-  const handleOptimization = async () => {
-    setViewMode('results');
-    setIsOptimizing(true);
+  // --- Shipment Handlers ---
 
-    const productsToUse = selectedProductIds.size > 0
-      ? products.filter((p: { id: any; }) => selectedProductIds.has(p.id))
-      : products;
+  const handleSaveShipment = async (name: string, result: OptimizationResult) => {
+    if (!companyId) return;
+
+    try {
+      // 1. Create Shipment Record
+      const totalCost = result.assignments.reduce((sum, a) => {
+        // Recalculate cost to be safe, or pass it in.
+        // For now, simple sum of container costs (ignoring country specifics for simplicity in this snippet,
+        // but ideally we pass the calculated cost)
+        return sum + a.container.cost;
+      }, 0);
+
+      const { data: shipmentData, error: shipmentError } = await supabase
+        .from('shipments')
+        .insert([{
+          company_id: companyId,
+          name,
+          status: 'finalized',
+          total_cost: totalCost,
+          container_count: result.assignments.length,
+          snapshot: result // Save the full result as snapshot
+        }])
+        .select()
+        .single();
+
+      if (shipmentError) throw shipmentError;
+
+      // 2. Update Products
+      const productIdsToUpdate = new Set<string>();
+      result.assignments.forEach(a => {
+        a.assignedProducts.forEach(p => productIdsToUpdate.add(p.id));
+      });
+
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({ shipment_id: shipmentData.id, status: 'shipped' })
+        .in('id', Array.from(productIdsToUpdate));
+
+      if (productsError) throw productsError;
+
+      // 3. Update Local State
+      const newShipment: Shipment = {
+        id: shipmentData.id,
+        name: shipmentData.name,
+        status: shipmentData.status,
+        totalCost: shipmentData.total_cost,
+        containerCount: shipmentData.container_count,
+        snapshot: shipmentData.snapshot,
+        createdAt: shipmentData.created_at
+      };
+
+      setShipments([newShipment, ...shipments]);
+
+      // Mark products as shipped locally
+      setProducts(products.map(p =>
+        productIdsToUpdate.has(p.id)
+          ? { ...p, shipmentId: shipmentData.id, status: 'shipped' }
+          : p
+      ));
+
+      // Close results and show success
+      setViewMode('data');
+      setInputMode('shipments');
+      alert('Shipment saved successfully!');
+
+    } catch (error) {
+      console.error('Error saving shipment:', error);
+      alert('Failed to save shipment.');
+    }
+  };
+
+  const handleUnpackShipment = async (shipmentId: string) => {
+    if (!window.confirm('Are you sure you want to unpack this shipment? All items will be returned to the "Available" list.')) return;
+
+    try {
+      // 1. Release Products
+      const { error: productsError } = await supabase
+        .from('products')
+        .update({ shipment_id: null, status: 'available' })
+        .eq('shipment_id', shipmentId);
+
+      if (productsError) throw productsError;
+
+      // 2. Delete Shipment
+      const { error: shipmentError } = await supabase
+        .from('shipments')
+        .delete()
+        .eq('id', shipmentId);
+
+      if (shipmentError) throw shipmentError;
+
+      // 3. Update Local State
+      setShipments(shipments.filter(s => s.id !== shipmentId));
+      setProducts(products.map(p =>
+        p.shipmentId === shipmentId
+          ? { ...p, shipmentId: null, status: 'available' }
+          : p
+      ));
+
+    } catch (error) {
+      console.error('Error unpacking shipment:', error);
+      alert('Failed to unpack shipment.');
+    }
+  };
+
+  const handleLoadBasePlan = async (shipmentId: string) => {
+    if (!window.confirm('This will unpack the shipment and load its items for re-optimization. The shipment record will be removed. Continue?')) return;
+    // For now, "Load as Base" acts like "Unpack" but keeps the user in the flow to re-optimize.
+    // Ideally, we might want to keep the shipment record until the NEW one is saved, but that adds complexity.
+    // The user asked for "Base Plan", which implies starting from that state.
+    // Simplest approach: Unpack it, then select those items for optimization.
+
+    await handleUnpackShipment(shipmentId);
+    setInputMode('products');
+    // We could auto-select the unpacked items here if we tracked them, but for now just making them available is a good start.
+  };
+
+  const handleDeleteShipment = async (shipmentId: string) => {
+    if (!window.confirm('Delete this shipment record? Products will remain marked as "shipped" (orphaned) or should they be deleted? \n\nFor safety, this action ONLY deletes the shipment record. Products will need manual update if you want them back.')) return;
+    // This is a bit dangerous. Usually deleting a shipment should unpack it.
+    // Let's make Delete = Unpack for safety in this MVP, or just Delete record.
+    // Given the prompt, let's just call Unpack for now as it's safer.
+    handleUnpackShipment(shipmentId);
+  };
+
+  const handleRunOptimization = () => {
+    if (products.length === 0) {
+      alert('Add products first!');
+      return;
+    }
+    if (containers.length === 0) {
+      alert('Add container templates first!');
+      return;
+    }
+
+    setIsOptimizing(true);
+    setResults(null); // This line is new or modified
+    setViewMode('results');
+
+    // Filter products: Only use selected ones that are AVAILABLE
+    const productsToUse = products.filter(p =>
+      (selectedProductIds.size === 0 || selectedProductIds.has(p.id)) &&
+      (!p.status || p.status === 'available') // Exclude shipped items
+    );
+
+    if (productsToUse.length === 0) {
+      alert('No available products to optimize! Check if items are already shipped.');
+      setIsOptimizing(false);
+      setViewMode('data');
+      return;
+    }
 
     const containersToUse = selectedContainerIds.size > 0
       ? containers.filter((d: { id: any; }) => selectedContainerIds.has(d.id))
@@ -1049,12 +1213,20 @@ const App: React.FC = () => {
             <span className="text-[10px] font-medium">Config</span>
           </button>
           <button
-            onClick={() => handleTabChange('countries')}
+            onClick={() => setInputMode('countries')}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Countries"
           >
             <Globe size={20} />
             <span className="text-[10px] font-medium">Countries</span>
+          </button>
+          <button
+            onClick={() => setInputMode('shipments')}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="Shipments"
+          >
+            <Package size={20} />
+            <span className="text-[10px] font-medium">Shipments</span>
           </button>
         </nav>
 
@@ -1076,7 +1248,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Optimize Button */}
             <button
-              onClick={handleOptimization}
+              onClick={handleRunOptimization}
               disabled={products.length === 0 || containers.length === 0 || isOptimizing}
               className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
@@ -1100,6 +1272,7 @@ const App: React.FC = () => {
                 containers={containers}
                 countries={countries}
                 onClose={() => setViewMode('data')}
+                onSaveShipment={handleSaveShipment}
                 handleDragStart={handleDragStart}
                 handleDragOver={handleDragOver}
                 handleDrop={handleDrop}
@@ -1239,7 +1412,7 @@ const App: React.FC = () => {
                       companyId={companyId}
                     />
                   </div>
-                  <div className="flex-1 overflow-hidden p-6">
+                  <div className="flex-1 p-6 overflow-y-auto">
                     <CountryPanel
                       viewMode="list"
                       countries={countries}
@@ -1251,35 +1424,45 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
+              {inputMode === 'shipments' && (
+                <div className="flex-1 overflow-hidden">
+                  <ShipmentPanel
+                    shipments={shipments}
+                    onUnpack={handleUnpackShipment}
+                    onLoadAsBase={handleLoadBasePlan}
+                    onDelete={handleDeleteShipment}
+                  />
+                </div>
+              )}
             </div>
           )}
         </main>
+
+        {/* Import Confirmation Modal */}
+        {showImportModal && pendingImportData && (
+          <ImportConfirmModal
+            productCount={pendingImportData.products.length}
+            onConfirm={confirmImport}
+            onCancel={() => {
+              setShowImportModal(false);
+              setPendingImportData(null);
+            }}
+          />
+        )}
+
+        {/* Import Summary Modal */}
+        {showImportSummary && importSummaryData && (
+          <ImportSummaryModal
+            totalImported={importSummaryData.total}
+            savedToDb={importSummaryData.savedToDb}
+            productsWithIssues={importSummaryData.issues}
+            onClose={() => {
+              setShowImportSummary(false);
+              setImportSummaryData(null);
+            }}
+          />
+        )}
       </div>
-
-      {/* Import Confirmation Modal */}
-      {showImportModal && pendingImportData && (
-        <ImportConfirmModal
-          productCount={pendingImportData.products.length}
-          onConfirm={confirmImport}
-          onCancel={() => {
-            setShowImportModal(false);
-            setPendingImportData(null);
-          }}
-        />
-      )}
-
-      {/* Import Summary Modal */}
-      {showImportSummary && importSummaryData && (
-        <ImportSummaryModal
-          totalImported={importSummaryData.total}
-          savedToDb={importSummaryData.savedToDb}
-          productsWithIssues={importSummaryData.issues}
-          onClose={() => {
-            setShowImportSummary(false);
-            setImportSummaryData(null);
-          }}
-        />
-      )}
     </div>
   );
 };

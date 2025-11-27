@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
+import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save } from 'lucide-react';
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -13,6 +13,7 @@ interface ResultsPanelProps {
   handleDrop: (e: React.DragEvent, targetId: string) => void;
   draggedProductId: string | null;
   onClose: () => void;
+  onSaveShipment: (name: string, result: OptimizationResult) => void;
   optimalRange?: { min: number; max: number };
 }
 
@@ -27,8 +28,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   handleDrop,
   draggedProductId,
   onClose,
+  onSaveShipment,
   optimalRange = { min: 85, max: 100 }
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [shipmentName, setShipmentName] = useState('');
   // Transform countries data into countryCosts map
   const countryCosts = React.useMemo(() => {
     const costs: Record<string, Record<string, number>> = {};
@@ -83,10 +87,59 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
-        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-          <X size={24} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSaving(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors"
+          >
+            <Save size={16} /> Save as Shipment
+          </button>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
+            <X size={24} />
+          </button>
+        </div>
       </div>
+
+      {/* Save Modal */}
+      {isSaving && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-xl">
+            <h3 className="text-lg font-bold text-white mb-4">Save Shipment</h3>
+            <div className="mb-4">
+              <label className="block text-xs text-slate-400 mb-1">Shipment Name</label>
+              <input
+                autoFocus
+                type="text"
+                value={shipmentName}
+                onChange={(e) => setShipmentName(e.target.value)}
+                placeholder="e.g., PO-12345"
+                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsSaving(false)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (shipmentName.trim()) {
+                    onSaveShipment(shipmentName, result);
+                    setIsSaving(false);
+                    setShipmentName('');
+                  }
+                }}
+                disabled={!shipmentName.trim()}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Shipment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

@@ -1310,16 +1310,20 @@ const App: React.FC = () => {
 
         <nav className="flex flex-col gap-4 w-full px-2">
           {/* Operational Group */}
-          {results && (
-            <button
-              onClick={() => setViewMode('results')}
-              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${viewMode === 'results' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-              title="Results"
-            >
-              <BarChart3 size={20} />
-              <span className="text-[10px] font-medium">Results</span>
-            </button>
-          )}
+          <button
+            onClick={() => results && setViewMode('results')}
+            disabled={!results}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${results && viewMode === 'results'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                : results
+                  ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-900 cursor-pointer'
+                  : 'text-slate-700 cursor-not-allowed opacity-50'
+              }`}
+            title={results ? "View optimization results" : "Run an optimization to see results"}
+          >
+            <BarChart3 size={20} />
+            <span className="text-[10px] font-medium">Results</span>
+          </button>
 
           {/* Divider */}
           <div className="h-px bg-slate-800 w-full my-2"></div>

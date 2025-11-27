@@ -201,9 +201,10 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </button>
           )}
         </div>
-        {/* Search & Filter */}
-        <div className="flex-1 flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[150px]">
+
+        {/* Filters Row */}
+        <div className="mb-4 flex items-center gap-2">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
             <input
               type="text"
@@ -213,45 +214,44 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
             />
           </div>
+
           <select
             value={shipmentFilter}
             onChange={(e) => setShipmentFilter(e.target.value as any)}
-            className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
+            className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9 min-w-[100px]"
           >
             <option value="available">Available</option>
             <option value="shipped">Shipped</option>
             <option value="all">All</option>
           </select>
-          <div className="relative w-[180px] shrink-0 hidden sm:block">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-            <select
-              value={selectedTagFilter}
-              onChange={e => setSelectedTagFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 pr-8 text-sm text-slate-200 focus:border-blue-500 outline-none appearance-none h-10 cursor-pointer hover:bg-slate-700/50 transition-colors"
-            >
-              <option value="">All Tags</option>
-              {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
-          </div>
+
+          <select
+            value={selectedTagFilter}
+            onChange={e => setSelectedTagFilter(e.target.value)}
+            className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9 min-w-[120px]"
+          >
+            <option value="">All Tags</option>
+            {restrictionTags.map(tag => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+
           <button
             onClick={() => setShowWarningsOnly(!showWarningsOnly)}
-            className={`px-3 h-9 rounded flex items-center gap-2 text-xs font-medium transition-colors ${showWarningsOnly
-                ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700'
-                : 'bg-slate-800 text-slate-400 border border-slate-600 hover:text-slate-200'
+            className={`px-3 h-9 rounded flex items-center gap-1.5 text-xs font-medium transition-all shrink-0 ${showWarningsOnly
+                ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
+                : 'bg-slate-800 text-slate-400 border border-slate-600 hover:border-slate-500 hover:text-slate-300'
               }`}
             title="Show only products with warnings (missing form factors)"
           >
             <AlertTriangle size={14} />
-            {showWarningsOnly && 'Warnings'}
+            <span className="hidden sm:inline">Warnings</span>
           </button>
+
           {onSelectAll && (
             <button
               onClick={onSelectAll}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${allSelected
-                ? 'bg-blue-600 text-white border-blue-500'
-                : 'bg-slate-800 text-slate-400 border-slate-600 hover:text-white hover:border-slate-500'
-                }`}
+              className="px-3 h-9 rounded text-xs font-medium bg-slate-800 text-slate-400 border border-slate-600 hover:border-blue-500 hover:text-blue-400 transition-colors shrink-0"
             >
               {allSelected ? 'Deselect All' : 'Select All'}
             </button>

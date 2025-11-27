@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -74,7 +74,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="text-slate-400 text-xs uppercase font-bold">Containers Used</div>
-          <div className="text-2xl font-bold text-blue-400">{result.assignments.filter(a => a.assignedProducts.length > 0).length} <span className="text-sm text-slate-500 font-normal">/ {containers.length}</span></div>
+          <div className="text-2xl font-bold text-blue-400">{result.assignments.filter(a => a.assignedProducts.length > 0).length}</div>
         </div>
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <div className="text-slate-400 text-xs uppercase font-bold">Avg Utilization</div>
@@ -88,24 +88,78 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Reasoning */}
       <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-6">
-        <div className="text-sm text-slate-300 whitespace-pre-wrap">{result.reasoning}</div>
+        <h3 className="text-sm font-bold text-slate-300 mb-2">Optimization Strategy</h3>
+        <p className="text-sm text-slate-400 whitespace-pre-line">{result.reasoning}</p>
       </div>
 
       {/* Assignments Visualizer */}
       <div className="space-y-8">
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
+                setCollapsedDestinations(new Set());
+              } else {
+                setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
+              }
+            }}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+          >
+            {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
+          </button>
+        </div>
+
         {Object.entries(groupedAssignments).map(([destination, assignments]: [string, LoadedContainer[]]) => {
           const isCollapsed = collapsedDestinations.has(destination);
+
+          // Check for issues in this group
+          const hasIssues = assignments.some(a => a.validationIssues && a.validationIssues.length > 0);
+          const hasUtilizationWarning = assignments.some(a => {
+            const util = a.totalUtilization;
+            // Use passed optimal range or default
+            const minUtil = optimalRange?.min || 85;
+            const maxUtil = optimalRange?.max || 100;
+            return util < minUtil || util > maxUtil + 0.1; // +0.1 for tolerance
+          });
+
+          const headerColorClass = hasIssues
+            ? 'text-red-400'
+            : hasUtilizationWarning
+              ? 'text-yellow-400'
+              : 'text-slate-200';
+
+          const borderColorClass = hasIssues
+            ? 'border-red-900/50'
+            : hasUtilizationWarning
+              ? 'border-yellow-900/50'
+              : 'border-slate-700';
+
           return (
-            <div key={destination} className="space-y-4">
-              <h3
-                className="text-lg font-semibold text-white flex items-center gap-2 border-b border-slate-700 pb-2 cursor-pointer hover:text-blue-400 transition-colors"
+            <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''}`}>
+              <div
+                className="flex items-center gap-2 cursor-pointer group"
                 onClick={() => toggleDestination(destination)}
               >
-                {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
-                <Move size={20} className="text-blue-500" />
-                {destination.split('|')[0] || destination}
-                <span className="text-sm font-normal text-slate-500 ml-2">({assignments.length} Containers)</span>
-              </h3>
+                {isCollapsed ? <ChevronRight size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
+                <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
+                  <MapPin size={18} />
+                  {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
+                  <span className="text-sm font-normal text-slate-500 ml-2">
+                    ({assignments.length} Containers)
+                  </span>
+                  {isCollapsed && hasIssues && (
+                    <span className="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded flex items-center gap-1">
+                      <AlertTriangle size={12} /> Issues
+                    </span>
+                  )}
+                  {isCollapsed && !hasIssues && hasUtilizationWarning && (
+                    <span className="text-xs bg-yellow-900/30 text-yellow-400 px-2 py-0.5 rounded flex items-center gap-1">
+                      <AlertTriangle size={12} /> Utilization
+                    </span>
+                  )}
+                </h3>
+                <div className="h-px bg-slate-700 flex-1 ml-4 group-hover:bg-slate-600 transition-colors" />
+              </div>
 
               {!isCollapsed && assignments.map((loadedContainer) => {
                 // Extract instance number from ID (format: templateId-instance-N)

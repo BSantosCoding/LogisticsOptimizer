@@ -501,7 +501,7 @@ const App: React.FC = () => {
       }
 
       const newProduct: Product = {
-        id: `P-${Date.now()}-${i}`,
+        id: crypto.randomUUID(),
         name: description.substring(0, 50), // Truncate name if too long
         formFactorId: matchedFFId,
         quantity: quantity,
@@ -542,6 +542,8 @@ const App: React.FC = () => {
           form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
           destination: p.destination,
+          country: p.country || null,
+          ship_to_name: p.shipToName || null,
           restrictions: p.restrictions,
           ready_date: null,
           ship_deadline: null,

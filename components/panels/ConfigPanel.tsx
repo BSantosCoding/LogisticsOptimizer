@@ -133,7 +133,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
 
         {/* Add Tag Form */}
-        <div>
+        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
             <ShieldAlert size={16} className="text-purple-500" /> New Tag
           </h3>

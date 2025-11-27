@@ -16,13 +16,15 @@ import {
   Zap,
   Box,
   BarChart3,
-  PenLine
+  PenLine,
+  Globe
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Button from './components/Button';
 import ProductPanel from './components/panels/ProductPanel';
 import ContainerPanel from './components/panels/DealPanel'; // Renamed component, file kept for now
 import ConfigPanel from './components/panels/ConfigPanel';
+import CountryPanel from './components/panels/CountryPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
 
@@ -56,7 +58,7 @@ const App: React.FC = () => {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
 
   // Data
@@ -65,6 +67,7 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [containers, setContainers] = useState<Container[]>([]);
   const [formFactors, setFormFactors] = useState<ProductFormFactor[]>([]);
+  const [countries, setCountries] = useState<any[]>([]); // Using any for now, should be Country type
 
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -1190,6 +1193,16 @@ const App: React.FC = () => {
                       userRole={userRole}
                     />
                   </div>
+                </div>
+              )}
+              {inputMode === 'countries' && (
+                <div className="flex-1 overflow-hidden p-6">
+                  <CountryPanel
+                    countries={countries}
+                    setCountries={setCountries}
+                    containerTemplates={containers}
+                    userRole={userRole}
+                  />
                 </div>
               )}
             </div>

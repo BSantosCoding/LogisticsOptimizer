@@ -370,7 +370,7 @@ const App: React.FC = () => {
   };
 
   // --- Navigation Helpers ---
-  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team' | 'countries') => {
+  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team' | 'countries' | 'management') => {
     setInputMode(tab);
     setViewMode('data');
   };
@@ -1584,6 +1584,15 @@ const App: React.FC = () => {
                     onLoadAsBase={handleLoadBasePlan}
                     onDelete={handleConsumeShipment}
                     onUnpackItem={handleUnpackItem}
+                  />
+                </div>
+              )}
+
+              {inputMode === 'management' && (userRole === 'admin' || userRole === 'manager') && (
+                <div className="flex-1 overflow-hidden">
+                  <ManagementPanel
+                    viewMode="list"
+                    currentUserId={session?.user?.id || ''}
                   />
                 </div>
               )}

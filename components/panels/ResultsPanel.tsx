@@ -144,6 +144,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
                   <MapPin size={18} />
                   {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
+                  {assignments[0]?.assignedProducts[0]?.country && (
+                    <span className="text-sm font-normal text-slate-400">
+                      ({assignments[0].assignedProducts[0].country})
+                    </span>
+                  )}
                   <span className="text-sm font-normal text-slate-500 ml-2">
                     ({assignments.length} Containers)
                   </span>

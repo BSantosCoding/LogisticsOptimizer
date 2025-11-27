@@ -98,6 +98,32 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
           <div className="flex gap-2">
             <div className="flex-1">
+              <label className="block text-xs text-slate-400 mb-1">Destination</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+                <MapPin size={14} className="text-slate-500 mr-2" />
+                <input
+                  placeholder="Destination"
+                  value={newProduct.destination || ''}
+                  onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+              </div>
+            </div>
+            <div className="w-1/3">
+              <label className="block text-xs text-slate-400 mb-1">Country</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+                <input
+                  placeholder="Country (e.g. CN)"
+                  value={newProduct.country || ''}
+                  onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="flex-1">
               <select
                 value={newProduct.formFactorId || ''}
                 onChange={e => setNewProduct({ ...newProduct, formFactorId: e.target.value })}
@@ -239,17 +265,24 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
-                  <div className={`flex items-center gap-1.5 ${hasMissingFF ? 'text-yellow-400 font-semibold' : ''}`}>
-                    <Box size={14} className={hasMissingFF ? 'text-yellow-500' : 'text-slate-500'} />
-                    {ff?.name || 'Unknown'}
+                <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
+                  <div className="flex items-center gap-1">
+                    <MapPin size={12} />
+                    {p.destination || 'No Destination'}
+                    {p.country && <span className="text-slate-500">({p.country})</span>}
                   </div>
+                  <div className="flex items-center gap-1">
+                    <Box size={12} />
+                    {ff?.name || <span className="text-yellow-500 font-bold">Unknown</span>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
                   <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} units</div>
                 </div>
 
-                {(p.destination || p.readyDate) && (
+                {(p.readyDate) && (
                   <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 space-y-1">
-                    {p.destination && <div className="flex items-center gap-1.5 text-blue-400"><MapPin size={12} /> {p.destination}</div>}
                     {p.readyDate && <div className="flex items-center gap-1.5">Ready: {p.readyDate}</div>}
                   </div>
                 )}

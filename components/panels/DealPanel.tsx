@@ -83,13 +83,57 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             </div>
           )}
 
+          <input
+            placeholder="Container Name (e.g. Maersk 40ft)"
+            value={newContainer.name}
+            onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
+          />
+
           <div className="flex gap-2">
-            <input
-              placeholder="Container Name (e.g. Maersk 40ft)"
-              value={newContainer.name}
-              onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
-              className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
-            />
+            <div className="flex-1">
+              <label className="block text-xs text-slate-400 mb-1">Destination</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+                <MapPin size={14} className="text-slate-500 mr-2" />
+                <input
+                  placeholder="Destination"
+                  value={newContainer.destination}
+                  onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="w-1/2">
+              <label className="block text-xs text-slate-400 mb-1">Cost</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+                <DollarSign size={14} className="text-slate-500 mr-2" />
+                <input
+                  type="number"
+                  placeholder="Cost"
+                  min="0"
+                  value={newContainer.cost}
+                  onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+              </div>
+            </div>
+            <div className="w-1/2">
+              <label className="block text-xs text-slate-400 mb-1">Transit Time (days)</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+                <Clock size={14} className="text-slate-500 mr-2" />
+                <input
+                  type="number"
+                  placeholder="Transit Time"
+                  min="0"
+                  value={newContainer.transitTimeDays}
+                  onChange={e => setNewContainer({ ...newContainer, transitTimeDays: parseInt(e.target.value) || 0 })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
@@ -223,10 +267,15 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3 pt-2">
-                  <div className="flex items-center gap-1.5"><DollarSign size={14} className="text-green-500" /> {c.cost}</div>
-                  <div className="flex items-center gap-1.5"><Clock size={14} className="text-slate-500" /> {c.transitTimeDays}d</div>
-                  <div className="flex items-center gap-1.5 col-span-2 text-blue-400"><MapPin size={14} /> {c.destination || 'Anywhere'}</div>
+                <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
+                  <div className="flex items-center gap-1">
+                    <MapPin size={12} />
+                    {c.destination || 'No Destination'}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock size={12} />
+                    {c.transitTimeDays} days
+                  </div>
                 </div>
 
                 <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 flex justify-between">

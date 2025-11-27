@@ -11,6 +11,7 @@ export interface Product {
   formFactorId: string; // Link to Form Factor
   quantity: number; // Number of units requested
   destination?: string;
+  country?: string;
   restrictions: string[]; // e.g., "Temperature Controlled", "Hazmat Class 3"
   readyDate?: string; // YYYY-MM-DD
   shipDeadline?: string; // YYYY-MM-DD
@@ -25,6 +26,7 @@ export interface Container {
   transitTimeDays: number;
   availableFrom: string;
   destination: string;
+  country?: string;
   restrictions: string[]; // Capabilities e.g. "Flammable", "Frozen"
 }
 

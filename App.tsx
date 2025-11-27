@@ -403,6 +403,7 @@ const App: React.FC = () => {
 
       // Extract fields based on CSV structure
       // Index 4: Ship To: Customer Number
+      // Index 5: Ship To: Country
       // Index 6: Incoterms
       // Index 7: Incoterms (Part 2)
       // Index 13: Sales Organization
@@ -413,6 +414,7 @@ const App: React.FC = () => {
       if (cols.length < 27) continue; // Skip malformed lines
 
       const customerNum = cols[4];
+      const country = cols[5]; // Ship To: Country
       const incoterms = cols[6];
       const incoterms2 = cols[7];
       const salesOrg = cols[13];
@@ -456,6 +458,7 @@ const App: React.FC = () => {
         formFactorId: matchedFFId,
         quantity: quantity,
         destination: destination,
+        country: country, // Map country
         restrictions: restrictions,
         readyDate: '',
         shipDeadline: '',

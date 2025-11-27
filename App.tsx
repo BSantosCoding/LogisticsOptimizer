@@ -538,13 +538,21 @@ const App: React.FC = () => {
         newProducts.map(p => ({
           id: p.id,
           company_id: companyId,
-          name: p.name,
+          created_by: session?.user?.id,
+          data: {
+            name: p.name,
+            restrictions: p.restrictions,
+            formFactorId: p.formFactorId,
+            quantity: p.quantity,
+            destination: p.destination,
+            country: p.country,
+            shipToName: p.shipToName
+          },
           form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
           destination: p.destination,
           country: p.country || null,
-          ship_to_name: p.shipToName || null,
-          restrictions: p.restrictions
+          ship_to_name: p.shipToName || null
         }))
       );
 

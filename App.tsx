@@ -1192,26 +1192,24 @@ const App: React.FC = () => {
                       onEdit={handleEditFormFactor}
                     />
                   </div>
-                  <div className="flex-1 rounded-xl border border-slate-700 overflow-hidden p-6">
-                    <ConfigPanel
-                      viewMode="form"
-                      templates={templates}
-                      newTemplate={newTemplate}
-                      setNewTemplate={setNewTemplate}
-                      handleAddTemplate={handleAddTemplate}
-                      handleRemoveTemplate={handleRemoveTemplate}
-                      applyTemplate={applyTemplate}
-                      optimalRange={optimalUtilizationRange}
-                      setOptimalRange={setOptimalUtilizationRange}
-                      restrictionTags={restrictionTags}
-                      newTag={newTag}
-                      setNewTag={setNewTag}
-                      handleAddTag={handleAddTag}
-                      handleRemoveTag={handleRemoveTag}
-                      DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
-                      userRole={userRole}
-                    />
-                  </div>
+                  <ConfigPanel
+                    viewMode="form"
+                    templates={templates}
+                    newTemplate={newTemplate}
+                    setNewTemplate={setNewTemplate}
+                    handleAddTemplate={handleAddTemplate}
+                    handleRemoveTemplate={handleRemoveTemplate}
+                    applyTemplate={applyTemplate}
+                    optimalRange={optimalUtilizationRange}
+                    setOptimalRange={setOptimalUtilizationRange}
+                    restrictionTags={restrictionTags}
+                    newTag={newTag}
+                    setNewTag={setNewTag}
+                    handleAddTag={handleAddTag}
+                    handleRemoveTag={handleRemoveTag}
+                    DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
+                    userRole={userRole}
+                  />
                 </div>
               )}
               {inputMode === 'countries' && (

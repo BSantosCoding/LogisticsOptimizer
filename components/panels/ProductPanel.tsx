@@ -45,6 +45,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const [shipmentFilter, setShipmentFilter] = useState<'available' | 'shipped' | 'all'>('available');
+  const [showWarningsOnly, setShowWarningsOnly] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +72,10 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           shipmentFilter === 'shipped' ? (p.status === 'shipped') :
             (p.status !== 'shipped'); // Default 'available'
 
-      return matchesSearch && matchesTag && matchesShipment;
+      const hasMissingFF = !p.formFactorId || !formFactors.find(f => f.id === p.formFactorId);
+      const matchesWarnings = showWarningsOnly ? hasMissingFF : true;
+
+      return matchesSearch && matchesTag && matchesShipment && matchesWarnings;
     })
     .sort((a, b) => {
       // Sort products with missing form factors to the top
@@ -198,19 +202,28 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           )}
         </div>
         {/* Search & Filter */}
-        <div className="flex-1 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+        <div className="flex-1 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[150px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
             <input
               type="text"
-              placeholder="Search name or dest..."
+              placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 text-sm text-slate-200 focus:border-blue-500 outline-none h-10 transition-colors focus:bg-slate-800/80"
+              className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
             />
           </div>
+          <select
+            value={shipmentFilter}
+            onChange={(e) => setShipmentFilter(e.target.value as any)}
+            className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
+          >
+            <option value="available">Available</option>
+            <option value="shipped">Shipped</option>
+            <option value="all">All</option>
+          </select>
           <div className="relative w-[180px] shrink-0 hidden sm:block">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
             <select
               value={selectedTagFilter}
               onChange={e => setSelectedTagFilter(e.target.value)}
@@ -221,6 +234,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
           </div>
+          <button
+            onClick={() => setShowWarningsOnly(!showWarningsOnly)}
+            className={`px-3 h-9 rounded flex items-center gap-2 text-xs font-medium transition-colors ${showWarningsOnly
+                ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-700'
+                : 'bg-slate-800 text-slate-400 border border-slate-600 hover:text-slate-200'
+              }`}
+            title="Show only products with warnings (missing form factors)"
+          >
+            <AlertTriangle size={14} />
+            {showWarningsOnly && 'Warnings'}
+          </button>
           {onSelectAll && (
             <button
               onClick={onSelectAll}

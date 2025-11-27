@@ -124,10 +124,11 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
           <div className="flex gap-2">
             <div className="flex-1">
+              <label className="block text-xs text-slate-400 mb-1">Form Factor</label>
               <select
                 value={newProduct.formFactorId || ''}
                 onChange={e => setNewProduct({ ...newProduct, formFactorId: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
+                className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
               >
                 <option value="" disabled>Select Form Factor...</option>
                 {formFactors.map(ff => (
@@ -135,14 +136,18 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 ))}
               </select>
             </div>
-            <div className="relative w-24">
-              <input
-                type="number" placeholder="Qty"
-                value={newProduct.quantity || ''}
-                onChange={e => setNewProduct({ ...newProduct, quantity: Number(e.target.value) })}
-                className="w-full bg-slate-900 border border-slate-600 rounded pl-2 pr-6 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
-              />
-              <span className="absolute right-2 top-2 text-xs text-slate-500">#</span>
+            <div className="w-1/3">
+              <label className="block text-xs text-slate-400 mb-1">Units</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2 h-[38px]">
+                <input
+                  type="number"
+                  min="1"
+                  value={newProduct.quantity}
+                  onChange={e => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 1 })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+                <span className="text-slate-500 text-xs ml-1">#</span>
+              </div>
             </div>
           </div>
 

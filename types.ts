@@ -12,6 +12,7 @@ export interface Product {
   quantity: number; // Number of units requested
   destination?: string;
   country?: string;
+  shipToName?: string;
   restrictions: string[]; // e.g., "Temperature Controlled", "Hazmat Class 3"
   readyDate?: string; // YYYY-MM-DD
   shipDeadline?: string; // YYYY-MM-DD

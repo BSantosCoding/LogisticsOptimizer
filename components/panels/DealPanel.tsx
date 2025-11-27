@@ -144,14 +144,14 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
               <div className="space-y-2">
                 {formFactors.map(ff => (
                   <div key={ff.id} className="flex items-center gap-2">
-                    <label className="text-sm text-slate-300 font-medium w-20 shrink-0" title={ff.description || ff.name}>{ff.name}</label>
+                    <label className="w-24 text-xs text-slate-400 font-medium truncate" title={ff.name}>{ff.name}</label>
                     <input
                       type="number"
-                      placeholder="0"
                       min="0"
-                      value={newContainer.capacities[ff.id] || ''}
+                      placeholder="0"
+                      value={newContainer.capacities[ff.id] || 0}
                       onChange={e => handleCapacityChange(ff.id, e.target.value)}
-                      className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
+                      className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
                     />
                   </div>
                 ))}

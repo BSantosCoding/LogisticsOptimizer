@@ -410,16 +410,11 @@ const App: React.FC = () => {
       // Index 25: Number of Packages
       // Index 26: Material Description
       // Index 30: Temp. Control
-
       if (cols.length < 27) continue; // Skip malformed lines
 
       const customerNum = cols[4];
       const country = cols[2]?.trim(); // Ship To: Country (Index 2)
-
-      if (i < 5) {
-        console.log(`Row ${i}: Country='${country}', Cols[2]='${cols[2]}'`, cols);
-      }
-
+      const shipToName = cols[5]?.trim(); // Ship To: Name (Index 5)
       const incoterms = cols[6];
       const incoterms2 = cols[7];
       const salesOrg = cols[13];
@@ -464,6 +459,7 @@ const App: React.FC = () => {
         quantity: quantity,
         destination: destination,
         country: country, // Map country
+        shipToName: shipToName, // Map shipToName
         restrictions: restrictions,
         readyDate: '',
         shipDeadline: '',

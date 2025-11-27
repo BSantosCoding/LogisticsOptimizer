@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shipment, LoadedContainer } from '../../types';
-import { Package, Calendar, DollarSign, Box, ChevronRight, ChevronDown, Trash2, RefreshCw, RotateCcw } from 'lucide-react';
+import { Package, Calendar, DollarSign, Box, ChevronRight, ChevronDown, Trash2, RefreshCw, RotateCcw, Truck } from 'lucide-react';
 
 interface ShipmentPanelProps {
     shipments: Shipment[];
@@ -94,10 +94,10 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onDelete(shipment.id); }}
-                                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 py-2 px-4 rounded flex items-center justify-center transition-colors"
-                                        title="Delete Shipment Record"
+                                        className="bg-green-900/30 hover:bg-green-900/50 text-green-400 py-2 px-4 rounded flex items-center justify-center transition-colors"
+                                        title="Consume Plan (Ship Items)"
                                     >
-                                        <Trash2 size={16} />
+                                        <Truck size={16} />
                                     </button>
                                 </div>
 

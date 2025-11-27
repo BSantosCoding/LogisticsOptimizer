@@ -544,10 +544,7 @@ const App: React.FC = () => {
           destination: p.destination,
           country: p.country || null,
           ship_to_name: p.shipToName || null,
-          restrictions: p.restrictions,
-          ready_date: null,
-          ship_deadline: null,
-          arrival_deadline: null
+          restrictions: p.restrictions
         }))
       );
 
@@ -840,20 +837,19 @@ const App: React.FC = () => {
     });
   };
 
-  const handleDeleteShipment = (shipmentId: string) => {
+  const handleConsumeShipment = (shipmentId: string) => {
     setConfirmModal({
       isOpen: true,
-      title: 'Delete Shipment',
-      message: 'Delete this shipment record? This will also release all items back to available status.',
-      confirmText: 'Delete',
+      title: 'Consume Shipment (Ship Items)',
+      message: 'Mark this shipment as consumed? This will PERMANENTLY DELETE the shipment record AND all associated products from the database (as if they were shipped out). This cannot be undone.',
+      confirmText: 'Consume & Delete',
       isDestructive: true,
       onConfirm: async () => {
-        // Reuse unpack logic for safety
         try {
-          // 1. Release Products
+          // 1. Delete Products (Consume them)
           const { error: productsError } = await supabase
             .from('products')
-            .update({ shipment_id: null, status: 'available' })
+            .delete()
             .eq('shipment_id', shipmentId);
 
           if (productsError) throw productsError;
@@ -868,14 +864,11 @@ const App: React.FC = () => {
 
           // 3. Update Local State
           setShipments(shipments.filter(s => s.id !== shipmentId));
-          setProducts(products.map(p =>
-            p.shipmentId === shipmentId
-              ? { ...p, shipmentId: null, status: 'available' }
-              : p
-          ));
+          setProducts(products.filter(p => p.shipmentId !== shipmentId));
+
         } catch (error) {
-          console.error('Error deleting shipment:', error);
-          alert('Failed to delete shipment.');
+          console.error('Error consuming shipment:', error);
+          alert('Failed to consume shipment.');
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -1574,7 +1567,7 @@ const App: React.FC = () => {
                     shipments={shipments}
                     onUnpack={handleUnpackShipment}
                     onLoadAsBase={handleLoadBasePlan}
-                    onDelete={handleDeleteShipment}
+                    onDelete={handleConsumeShipment}
                     onUnpackItem={handleUnpackItem}
                   />
                 </div>

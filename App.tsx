@@ -24,6 +24,7 @@ import Button from './components/Button';
 import ProductPanel from './components/panels/ProductPanel';
 import ContainerPanel from './components/panels/DealPanel'; // Renamed component, file kept for now
 import ConfigPanel from './components/panels/ConfigPanel';
+import ManagementPanel from './components/panels/ManagementPanel';
 import CountryPanel from './components/panels/CountryPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
@@ -60,7 +61,7 @@ const App: React.FC = () => {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
 
   // Data
@@ -1314,10 +1315,10 @@ const App: React.FC = () => {
             onClick={() => results && setViewMode('results')}
             disabled={!results}
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${results && viewMode === 'results'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                : results
-                  ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-900 cursor-pointer'
-                  : 'text-slate-700 cursor-not-allowed opacity-50'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+              : results
+                ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-900 cursor-pointer'
+                : 'text-slate-700 cursor-not-allowed opacity-50'
               }`}
             title={results ? "View optimization results" : "Run an optimization to see results"}
           >
@@ -1369,6 +1370,16 @@ const App: React.FC = () => {
             <Settings size={20} />
             <span className="text-[10px] font-medium">Config</span>
           </button>
+          {(userRole === 'admin' || userRole === 'manager') && (
+            <button
+              onClick={() => handleTabChange('management')}
+              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+              title="User Management"
+            >
+              <Users size={20} />
+              <span className="text-[10px] font-medium">Users</span>
+            </button>
+          )}
         </nav>
 
         <div className="mt-auto flex flex-col gap-4">

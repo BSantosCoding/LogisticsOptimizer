@@ -1267,6 +1267,9 @@ const App: React.FC = () => {
             </div>
           </div>
           <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Aboard</h2>
+          <p className="text-slate-400 text-sm text-center mb-6">
+            {setupMode === 'create' ? 'Create a new workspace' : 'Join an existing workspace'}
+          </p>
           <form onSubmit={handleCompleteSetup}>
             <div className="mb-4">
               {setupMode === 'create' ? (
@@ -1275,20 +1278,46 @@ const App: React.FC = () => {
                   placeholder="Company Name"
                   value={setupCompanyName}
                   onChange={(e: { target: { value: any; }; }) => setSetupCompanyName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-blue-500 outline-none transition-colors"
                   required
                 />
               ) : (
                 <select
                   value={selectedCompanyId}
                   onChange={(e: { target: { value: any; }; }) => setSelectedCompanyId(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200"
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-blue-500 outline-none transition-colors cursor-pointer"
                   required
                 >
                   <option value="" disabled>Choose a company...</option>
-                  {availableCompanies.map((c: { id: any; name: any; }) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {availableCompanies.map((c: { id: any; name: any; }) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} (ID: {c.id.substring(0, 8)})
+                    </option>
+                  ))}
                 </select>
               )}
+            </div>
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setSetupMode('create')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${setupMode === 'create'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+              >
+                Create New
+              </button>
+              <button
+                type="button"
+                onClick={() => setSetupMode('join')}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${setupMode === 'join'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+              >
+                Join Existing
+              </button>
             </div>
             <Button type="submit" isLoading={isSettingUp} className="w-full py-3 mt-2">
               {setupMode === 'create' ? 'Create & Start' : 'Request to Join'}
@@ -1392,10 +1421,13 @@ const App: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center gap-4">
+        <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-white tracking-tight">{companyName}</h1>
-            <span className="px-2 py-0.5 bg-slate-800 rounded text-xs text-slate-500 border border-slate-700">{userRole}</span>
+            <span className="text-xs text-slate-500 font-mono">ID: {companyId?.substring(0, 8)}</span>
+            {userRole === 'admin' && (
+              <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             {/* Optimize Button */}

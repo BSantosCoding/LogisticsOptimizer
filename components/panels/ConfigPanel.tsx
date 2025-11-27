@@ -57,10 +57,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         {/* Optimal Utilization Settings */}
         {optimalRange && setOptimalRange && (
           <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-            <div className="flex items-center gap-2 mb-4 text-blue-400">
-              <Settings size={20} />
-              <h3 className="font-semibold">Optimization Settings</h3>
-            </div>
+            <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
+              <Settings size={16} className="text-blue-500" /> Optimization Settings
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Optimal Utilization Range (%)</label>

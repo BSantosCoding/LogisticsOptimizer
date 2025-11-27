@@ -324,7 +324,7 @@ const App: React.FC = () => {
   };
 
   // --- Navigation Helpers ---
-  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team') => {
+  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team' | 'countries') => {
     setInputMode(tab);
     setViewMode('data');
   };
@@ -1022,6 +1022,14 @@ const App: React.FC = () => {
           >
             <Settings size={20} />
             <span className="text-[10px] font-medium">Config</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('countries')}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="Countries"
+          >
+            <Globe size={20} />
+            <span className="text-[10px] font-medium">Countries</span>
           </button>
         </nav>
 

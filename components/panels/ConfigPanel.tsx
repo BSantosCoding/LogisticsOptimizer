@@ -53,7 +53,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
   if (viewMode === 'form') {
     return (
-      <div className="h-full flex flex-col gap-6 overflow-y-auto pr-2">
+      <div className="h-full flex flex-col gap-8 overflow-y-auto pr-2">
         {/* Optimal Utilization Settings */}
         {optimalRange && setOptimalRange && (
           <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">

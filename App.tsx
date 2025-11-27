@@ -224,6 +224,17 @@ const App: React.FC = () => {
       const dbTags = tagsData?.map((t: any) => t.name) || [];
       setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
 
+      // Load countries
+      const { data: countriesData } = await supabase.from('countries').select('*').eq('company_id', profile.company_id);
+      if (countriesData) {
+        setCountries(countriesData.map((r: any) => ({
+          id: r.id,
+          code: r.code,
+          name: r.name,
+          containerCosts: r.container_costs || {}
+        })));
+      }
+
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -1204,13 +1215,27 @@ const App: React.FC = () => {
                 </div>
               )}
               {inputMode === 'countries' && (
-                <div className="flex-1 overflow-hidden p-6">
-                  <CountryPanel
-                    countries={countries}
-                    setCountries={setCountries}
-                    containerTemplates={containers}
-                    userRole={userRole}
-                  />
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                    <CountryPanel
+                      viewMode="form"
+                      countries={countries}
+                      setCountries={setCountries}
+                      containerTemplates={containers}
+                      userRole={userRole}
+                      companyId={companyId}
+                    />
+                  </div>
+                  <div className="flex-1 overflow-hidden p-6">
+                    <CountryPanel
+                      viewMode="list"
+                      countries={countries}
+                      setCountries={setCountries}
+                      containerTemplates={containers}
+                      userRole={userRole}
+                      companyId={companyId}
+                    />
+                  </div>
                 </div>
               )}
             </div>

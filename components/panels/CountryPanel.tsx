@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Container, ProductFormFactor } from '../../types';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
+import { supabase } from '../../services/supabase';
 
 interface Country {
     id: string;
@@ -10,17 +11,21 @@ interface Country {
 }
 
 interface CountryPanelProps {
+    viewMode: 'form' | 'list';
     countries: Country[];
     setCountries: (countries: Country[]) => void;
     containerTemplates: Container[];
     userRole: 'admin' | 'manager' | 'standard' | null;
+    companyId?: string | null;
 }
 
 const CountryPanel: React.FC<CountryPanelProps> = ({
+    viewMode,
     countries,
     setCountries,
     containerTemplates,
-    userRole
+    userRole,
+    companyId
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
@@ -32,23 +37,72 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
 
     const canManage = userRole === 'admin' || userRole === 'manager';
 
-    const handleAddCountry = () => {
-        if (!newCountry.code || !newCountry.name) return;
-        const country: Country = {
-            id: `C-${Date.now()}`,
-            ...newCountry
-        };
-        setCountries([...countries, country]);
-        setNewCountry({ code: '', name: '', containerCosts: {} });
+    const handleAddCountry = async () => {
+        if (!newCountry.code || !newCountry.name || !companyId) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('countries')
+                .insert([{
+                    company_id: companyId,
+                    code: newCountry.code,
+                    name: newCountry.name,
+                    container_costs: newCountry.containerCosts
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            const country: Country = {
+                id: data.id,
+                code: data.code,
+                name: data.name,
+                containerCosts: data.container_costs || {}
+            };
+            setCountries([...countries, country]);
+            setNewCountry({ code: '', name: '', containerCosts: {} });
+        } catch (error) {
+            console.error('Error adding country:', error);
+            alert('Failed to add country');
+        }
     };
 
-    const handleUpdateCountry = (id: string, updates: Partial<Country>) => {
-        setCountries(countries.map(c => c.id === id ? { ...c, ...updates } : c));
+    const handleUpdateCountry = async (id: string, updates: Partial<Country>) => {
+        try {
+            const { error } = await supabase
+                .from('countries')
+                .update({
+                    code: updates.code,
+                    name: updates.name,
+                    container_costs: updates.containerCosts
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setCountries(countries.map(c => c.id === id ? { ...c, ...updates } : c));
+        } catch (error) {
+            console.error('Error updating country:', error);
+            alert('Failed to update country');
+        }
     };
 
-    const handleRemoveCountry = (id: string) => {
-        if (window.confirm('Are you sure you want to delete this country configuration?')) {
+    const handleRemoveCountry = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this country configuration?')) return;
+
+        try {
+            const { error } = await supabase
+                .from('countries')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
             setCountries(countries.filter(c => c.id !== id));
+        } catch (error) {
+            console.error('Error deleting country:', error);
+            alert('Failed to delete country');
         }
     };
 
@@ -57,12 +111,57 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
         c.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (viewMode === 'form') {
+        return (
+            <div className="p-4 border-b border-slate-700 bg-slate-800">
+                <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
+                        <Plus size={16} className="text-blue-500" /> Add Country
+                    </h3>
+
+                    <div>
+                        <label className="block text-xs text-slate-400 mb-1">Country Code</label>
+                        <input
+                            value={newCountry.code}
+                            onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
+                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
+                            placeholder="CN"
+                            maxLength={2}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs text-slate-400 mb-1">Country Name</label>
+                        <input
+                            value={newCountry.name}
+                            onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
+                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
+                            placeholder="China"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleAddCountry}
+                        disabled={!newCountry.code || !newCountry.name}
+                        className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Plus size={16} className="mr-2" /> Add Country
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // LIST VIEW
     return (
         <div className="h-full flex flex-col">
             <div className="mb-6">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
-                    <Globe className="text-blue-500" /> Country Configuration
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Globe className="text-blue-500" /> Country Configuration
+                        <span className="text-sm font-normal text-slate-500 ml-2">({countries.length} Countries)</span>
+                    </h2>
+                </div>
 
                 {/* Search */}
                 <div className="mb-6 relative">
@@ -75,43 +174,6 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                         className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
                     />
                 </div>
-
-                {/* Add New Country */}
-                {canManage && (
-                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
-                        <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-                            <Plus size={16} className="text-blue-500" /> Add Country
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-xs text-slate-400 mb-1">Country Code (e.g. CN)</label>
-                                <input
-                                    value={newCountry.code}
-                                    onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
-                                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                                    placeholder="CN"
-                                    maxLength={2}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-slate-400 mb-1">Country Name</label>
-                                <input
-                                    value={newCountry.name}
-                                    onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                                    placeholder="China"
-                                />
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleAddCountry}
-                            disabled={!newCountry.code || !newCountry.name}
-                            className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Add Country
-                        </button>
-                    </div>
-                )}
 
                 {/* Country List */}
                 <div className="space-y-4">

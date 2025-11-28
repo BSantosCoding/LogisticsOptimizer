@@ -118,30 +118,53 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(p.id));
     if (selectedItems.length === 0) return null;
 
-    // Calculate total volume of selected items
-    const totalVolume = selectedItems.reduce((sum, p) => sum + (p.volume * p.quantity), 0);
+    // Group selected items by form factor
+    const itemsByFormFactor = selectedItems.reduce((acc, p) => {
+      if (!acc[p.formFactorId]) acc[p.formFactorId] = 0;
+      acc[p.formFactorId] += p.quantity;
+      return acc;
+    }, {} as Record<string, number>);
 
     // Check if items can be grouped together (same destination, compatible requirements)
     const destinations = new Set(selectedItems.map(p => p.country));
-    const hasTemperatureControl = selectedItems.some(p => p.requiresTemperatureControl);
+    const hasTemperatureControl = selectedItems.some(p => p.restrictions?.includes('Temperature Control'));
     const canGroup = destinations.size === 1;
 
     // Calculate utilization for each container
     const containerPreviews = containers.map(container => {
       // Check if container meets requirements
       const meetsRequirements = !hasTemperatureControl || container.capabilities?.includes('Temperature Control');
-      const utilization = (totalVolume / container.capacity) * 100;
+
+      // Calculate utilization based on capacities
+      let maxUtilization = 0;
+      let fits = true;
+
+      for (const [formFactorId, quantity] of Object.entries(itemsByFormFactor)) {
+        const capacity = container.capacities[formFactorId];
+        if (!capacity || typeof capacity !== 'number' || capacity === 0) {
+          fits = false;
+          maxUtilization = 100;
+          break;
+        }
+        // Explicitly convert to number to satisfy TypeScript
+        const capacityNum = Number(capacity);
+        const utilization = (quantity / capacityNum) * 100;
+        maxUtilization = Math.max(maxUtilization, utilization);
+        if (utilization > 100) {
+          fits = false;
+        }
+      }
 
       return {
         container,
-        utilization: Math.min(utilization, 100),
+        utilization: maxUtilization,
         meetsRequirements,
-        fits: utilization <= 100 && meetsRequirements
+        fits: fits && meetsRequirements && maxUtilization <= 100
       };
     }).filter(p => p.meetsRequirements);
 
     return {
-      totalVolume,
+      itemsByFormFactor,
       canGroup,
       destinations: Array.from(destinations),
       hasTemperatureControl,

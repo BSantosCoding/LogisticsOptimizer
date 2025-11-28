@@ -1014,6 +1014,12 @@ const App: React.FC = () => {
           unassignedProducts: [],
           totalCost: 0,
           reasoning: ''
+        },
+        [OptimizationPriority.MANUAL]: {
+          assignments: [],
+          unassignedProducts: [...products], // Start with all products unassigned
+          totalCost: 0,
+          reasoning: 'Manual planning mode'
         }
       };
 
@@ -1420,6 +1426,28 @@ const App: React.FC = () => {
     );
   }
 
+  const handleAddContainer = (container: Container) => {
+    if (!results) return;
+
+    const currentResult = results[activePriority];
+    // Only allow adding containers in MANUAL mode (though UI restricts it too)
+    if (activePriority !== OptimizationPriority.MANUAL) return;
+
+    const newContainer = { ...container, id: `${container.id}-instance-${Date.now()}` };
+    const newLoadedContainer = validateLoadedContainer(newContainer, []);
+
+    const newAssignments = [...currentResult.assignments, newLoadedContainer];
+
+    const newResults = {
+      ...results,
+      [activePriority]: {
+        ...currentResult,
+        assignments: newAssignments
+      }
+    };
+    setResults(newResults);
+  };
+
   // --- MAIN APP VIEW ---
   return (
     <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden font-sans">
@@ -1553,6 +1581,7 @@ const App: React.FC = () => {
                 handleDrop={handleDrop}
                 draggedProductId={draggedProductId}
                 optimalRange={optimalUtilizationRange}
+                onAddContainer={handleAddContainer}
               />
             </div>
           ) : (

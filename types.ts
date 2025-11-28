@@ -61,7 +61,8 @@ export enum OptimizationPriority {
   COST = 'Cost',
   TIME = 'Time',
   BALANCE = 'Balance',
-  UTILIZATION = 'Utilization'
+  UTILIZATION = 'Utilization',
+  MANUAL = 'Manual'
 }
 
 export interface UserProfile {

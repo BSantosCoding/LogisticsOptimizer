@@ -15,6 +15,7 @@ interface ResultsPanelProps {
   onClose: () => void;
   onSaveShipment: (name: string, result: OptimizationResult) => void;
   optimalRange?: { min: number; max: number };
+  onAddContainer?: (container: Container) => void;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -29,10 +30,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   draggedProductId,
   onClose,
   onSaveShipment,
-  optimalRange = { min: 85, max: 100 }
+  optimalRange = { min: 85, max: 100 },
+  onAddContainer
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [shipmentName, setShipmentName] = useState('');
+  const [addContainerModal, setAddContainerModal] = useState(false);
+
+  const handleAddContainer = (container: Container) => {
+    if (onAddContainer) {
+      onAddContainer(container);
+      setAddContainerModal(false);
+    }
+  };
 
   // Move Quantity Modal State
   const [moveModal, setMoveModal] = useState<{
@@ -179,18 +189,39 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   return (
     <div className="h-full overflow-y-auto p-6 relative">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsSaving(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            <Save size={16} /> Save as Shipment
-          </button>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
-            <X size={24} />
-          </button>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSaving(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors"
+            >
+              <Save size={16} /> Save as Shipment
+            </button>
+            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+
+        {/* Priority Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-700 pb-1">
+          {Object.values(OptimizationPriority).map((priority) => (
+            <button
+              key={priority}
+              onClick={() => setActivePriority(priority)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${activePriority === priority
+                ? 'text-blue-400 bg-slate-800 border-t border-x border-slate-700'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+            >
+              {priority}
+              {activePriority === priority && (
+                <div className="absolute bottom-[-5px] left-0 right-0 h-[5px] bg-slate-800" />
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -314,7 +345,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Assignments Visualizer */}
       <div className="space-y-8">
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          {activePriority === OptimizationPriority.MANUAL && (
+            <button
+              onClick={() => setAddContainerModal(true)}
+              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors border border-slate-600"
+            >
+              <Box size={16} /> Add Container
+            </button>
+          )}
           <button
             onClick={() => {
               if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
@@ -323,11 +362,45 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
               }
             }}
-            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 ml-auto"
           >
             {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
           </button>
         </div>
+
+        {/* Add Container Modal */}
+        {addContainerModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl max-h-[80vh] overflow-y-auto">
+              <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
+              <div className="space-y-2">
+                {containers.map((container) => (
+                  <button
+                    key={container.id}
+                    onClick={() => handleAddContainer(container)}
+                    className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600 transition-colors flex justify-between items-center group"
+                  >
+                    <div>
+                      <div className="font-medium text-slate-200">{container.name}</div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        {container.destination || 'No Destination'} • ${container.cost.toLocaleString()}
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-500 group-hover:text-white" />
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setAddContainerModal(false)}
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {Object.entries(groupedAssignments).map(([destination, assignments]: [string, LoadedContainer[]]) => {
           const isCollapsed = collapsedDestinations.has(destination);

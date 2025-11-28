@@ -1255,11 +1255,12 @@ const App: React.FC = () => {
       if (sourceId === 'unassigned') {
         newUnassigned = processList(newUnassigned);
       } else {
-        const sourceContainer = newAssignments.find((a: { container: { id: any; }; }) => a.container.id === sourceId);
-        if (sourceContainer) {
-          sourceContainer.assignedProducts = processList(sourceContainer.assignedProducts);
-          const revalidatedSource = validateLoadedContainer(sourceContainer.container, sourceContainer.assignedProducts);
-          Object.assign(sourceContainer, revalidatedSource);
+        const sourceContainerIndex = newAssignments.findIndex((a: { container: { id: any; }; }) => a.container.id === sourceId);
+        if (sourceContainerIndex !== -1) {
+          const sourceContainer = newAssignments[sourceContainerIndex];
+          const updatedProducts = processList(sourceContainer.assignedProducts);
+          const revalidatedSource = validateLoadedContainer(sourceContainer.container, updatedProducts);
+          newAssignments[sourceContainerIndex] = revalidatedSource;
         }
       }
 
@@ -1299,9 +1300,10 @@ const App: React.FC = () => {
     if (targetId === 'unassigned') {
       newUnassigned.push(...productsToInsert);
     } else {
-      const targetContainer = newAssignments.find((a: { container: { id: string; }; }) => a.container.id === targetId);
+      const targetContainerIndex = newAssignments.findIndex((a: { container: { id: string; }; }) => a.container.id === targetId);
 
-      if (!targetContainer) {
+      if (targetContainerIndex === -1) {
+        // Container doesn't exist yet, create new one
         const freshContainer = containers.find((d: { id: string; }) => d.id === targetId);
         if (freshContainer) {
           const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert);
@@ -1309,10 +1311,12 @@ const App: React.FC = () => {
           newAssignments.push(newLoadedContainer);
         }
       } else {
-        targetContainer.assignedProducts.push(...productsToInsert);
-        targetContainer.container.destination = productsToInsert[0].destination;
-        const revalidatedTarget = validateLoadedContainer(targetContainer.container, targetContainer.assignedProducts);
-        Object.assign(targetContainer, revalidatedTarget);
+        // Container exists, update it
+        const targetContainer = newAssignments[targetContainerIndex];
+        const updatedProducts = [...targetContainer.assignedProducts, ...productsToInsert];
+        const updatedContainer = { ...targetContainer.container, destination: productsToInsert[0].destination };
+        const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts);
+        newAssignments[targetContainerIndex] = revalidatedTarget;
       }
     }
 

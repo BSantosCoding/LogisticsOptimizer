@@ -215,7 +215,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       canGroup,
       destinations: Array.from(destinations),
       productRestrictions: Array.from(productRestrictions),
-      containerPreviews
+      containerPreviews,
+      selectedCount: selectedItems.length,
+      includedCount: filteredItems.length,
+      excludedCount: selectedItems.length - filteredItems.length,
+      filterDestination: firstDestination
     };
   }, [results, activePriority, selectedProducts, containers]);
 
@@ -568,7 +572,21 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   .filter(([key, group]: [string, { products: Product[], totalQty: number }]) => {
                     const p = group.products[0];
                     if (!p) return false;
-                    return p.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+                    // Filter by search query
+                    if (!p.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                      return false;
+                    }
+
+                    // Filter by destination if any product is selected
+                    if (selectedProducts.size > 0 && utilizationPreview) {
+                      // Only show products matching the destination of selected items
+                      if (p.country !== utilizationPreview.filterDestination) {
+                        return false;
+                      }
+                    }
+
+                    return true;
                   })
                   .map(([groupKey, group]: [string, { products: Product[], totalQty: number }], idx) => {
                     const p = group.products[0];
@@ -608,13 +626,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
               <h4 className="text-[10px] font-semibold text-white mb-1.5">
                 Selected: {selectedProducts.size} items
+                {utilizationPreview.filterDestination && (
+                  <span className="text-blue-400 ml-1">
+                    ({utilizationPreview.filterDestination})
+                  </span>
+                )}
               </h4>
-
-              {!utilizationPreview.canGroup && (
-                <div className="mb-1.5 p-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded text-[10px] text-yellow-400">
-                  ⚠️ Different destinations
-                </div>
-              )}
 
               {utilizationPreview.productRestrictions.length > 0 && (
                 <div className="mb-1.5 p-1.5 bg-blue-500/10 border border-blue-500/30 rounded text-[10px] text-blue-400">

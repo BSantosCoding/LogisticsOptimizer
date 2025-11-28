@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2 } from 'lucide-react';
@@ -34,6 +35,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onAddContainer
 }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const result = results ? results[activePriority] : null;
   const [shipmentName, setShipmentName] = useState('');
   const [addContainerModal, setAddContainerModal] = useState(false);
 
@@ -111,12 +113,32 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     });
   };
 
+  // Group unassigned products by name and form factor
+  const groupedUnassigned = React.useMemo(() => {
+    if (!result) return {};
+    return result.unassignedProducts.reduce((acc, p) => {
+      const key = `${p.name} -${p.formFactorId} `;
+      if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
+      acc[key].products.push(p);
+      acc[key].totalQty += p.quantity;
+      return acc;
+    }, {} as Record<string, { products: Product[], totalQty: number }>);
+  }, [result?.unassignedProducts]);
+
   // Calculate utilization preview for selected products
   const utilizationPreview = React.useMemo(() => {
     const result = results ? results[activePriority] : null;
     if (!result || selectedProducts.size === 0) return null;
 
-    const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(`${p.name}-${p.formFactorId}`));
+    // Use groupedUnassigned to find selected items
+    const selectedItems: Product[] = [];
+    selectedProducts.forEach(key => {
+      const group = groupedUnassigned[key];
+      if (group) {
+        selectedItems.push(...group.products);
+      }
+    });
+
     if (selectedItems.length === 0) return null;
 
     // Group selected items by form factor
@@ -262,7 +284,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     setMoveModal(null);
   };
 
-  const result = results ? results[activePriority] : null;
+
 
   // Group assignments by destination
   const groupedAssignments = React.useMemo(() => {
@@ -276,17 +298,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return groups;
   }, [result]);
 
-  // Group unassigned products
-  const groupedUnassigned = React.useMemo(() => {
-    if (!result) return {};
-    return result.unassignedProducts.reduce((acc, p) => {
-      const key = `${p.name}-${p.formFactorId}`;
-      if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
-      acc[key].products.push(p);
-      acc[key].totalQty += p.quantity;
-      return acc;
-    }, {} as Record<string, { products: Product[], totalQty: number }>);
-  }, [result?.unassignedProducts]);
+
 
   if (!results || !result) {
     return (
@@ -328,7 +340,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${activePriority === priority
                   ? 'text-blue-400 bg-slate-800 border-t border-x border-slate-700'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                  }`}
+                  } `}
               >
                 {priority}
                 {activePriority === priority && (
@@ -532,7 +544,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
                           className="flex-1 flex justify-between items-center cursor-grab active:cursor-grabbing min-w-0"
                         >
-                          <div className="font-medium text-slate-300 truncate text-[11px]">{p.name}</div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="font-medium text-slate-300 truncate text-[11px]">{p.name}</div>
+                          </div>
                           <div className="text-red-400 font-bold text-[10px] ml-1 flex-shrink-0">{group.totalQty}</div>
                         </div>
                       </div>
@@ -731,7 +745,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     {!isCollapsed && assignments.map((loadedContainer) => {
                       // Extract instance number from ID (format: templateId-instance-N)
                       const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
-                      const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
+                      const instanceNumber = instanceMatch ? `#${instanceMatch[1]} ` : '';
 
                       const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
                       const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
@@ -753,10 +767,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
                           className={`bg-slate-800 rounded-lg border transition-all duration-200 
                     ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
-                  `}
+`}
                         >
                           <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
-                            }`}>
+                            } `}>
                             <div>
                               <div className="font-semibold text-white flex items-center gap-2">
                                 {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}

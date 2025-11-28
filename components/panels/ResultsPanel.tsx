@@ -156,8 +156,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     if (selectedItems.length === 0) return null;
 
     // Filter by matching destination - only include products with same destination as first selected
-    const firstDestination = selectedItems[0]?.product.country;
-    const filteredItems = selectedItems.filter(item => item.product.country === firstDestination);
+    const firstDestination = selectedItems[0]?.product.destination;
+    const filteredItems = selectedItems.filter(item => item.product.destination === firstDestination);
 
     if (filteredItems.length === 0) return null;
 
@@ -179,7 +179,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     });
 
     // Check if items can be grouped together (same destination)
-    const destinations = new Set(filteredItems.map(item => item.product.country));
+    const destinations = new Set(filteredItems.map(item => item.product.destination));
     const canGroup = destinations.size === 1;
 
     // Calculate utilization for each container
@@ -577,7 +577,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 </div>
               ) : (
                 Object.entries(groupedUnassigned)
-                  .filter(([key, group]: [string, { products: Product[], totalQty: number }]) => {
+                  .filter(([key, group]: [string, { products: Product[], totalQty: number }], idx) => {
                     const p = group.products[0];
                     if (!p) return false;
 
@@ -589,7 +589,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     // Filter by destination if any product is selected
                     if (Object.keys(previewQuantities).length > 0 && utilizationPreview) {
                       // Only show products matching the destination of selected items
-                      if (p.country !== utilizationPreview.filterDestination) {
+                      if (p.destination !== utilizationPreview.filterDestination) {
                         return false;
                       }
                     }
@@ -605,10 +605,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     return (
                       <div
                         key={groupKey}
-                        className={`bg-slate-800 p-1.5 rounded border flex items-center gap-1.5 transition-colors text-xs ${isPreviewing ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
+                        className={`bg-slate-800 p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]' : 'border-slate-700 hover:border-slate-600'
                           }`}
                       >
-                        <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex flex-col items-center gap-1">
                           <input
                             type="number"
                             min="0"
@@ -619,11 +619,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               const val = parseInt(e.target.value) || 0;
                               handleQuantityChange(groupKey, val, group.totalQty);
                             }}
-                            className="w-10 h-5 bg-slate-900 border border-slate-600 rounded text-center text-[10px] text-white focus:border-blue-500 outline-none"
+                            className="w-12 h-7 bg-slate-900 border border-slate-600 rounded text-center text-xs text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
                           />
                           <button
                             onClick={() => handleQuantityChange(groupKey, group.totalQty, group.totalQty)}
-                            className="text-[8px] text-slate-500 hover:text-blue-400 uppercase tracking-wider"
+                            className="text-[9px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-wider transition-colors hover:bg-slate-700/50 px-1 rounded"
                           >
                             Max
                           </button>
@@ -652,7 +652,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 Previewing: {Object.values(previewQuantities).reduce((a: number, b: number) => a + b, 0)} units
                 {utilizationPreview.filterDestination && (
                   <span className="text-blue-400 ml-1">
-                    ({utilizationPreview.filterDestination})
+                    ({utilizationPreview.filterDestination.split('|')[0]})
                   </span>
                 )}
               </h4>

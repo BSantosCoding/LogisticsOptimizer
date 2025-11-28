@@ -1310,6 +1310,7 @@ const App: React.FC = () => {
         }
       } else {
         targetContainer.assignedProducts.push(...productsToInsert);
+        targetContainer.container.destination = productsToInsert[0].destination;
         const revalidatedTarget = validateLoadedContainer(targetContainer.container, targetContainer.assignedProducts);
         Object.assign(targetContainer, revalidatedTarget);
       }

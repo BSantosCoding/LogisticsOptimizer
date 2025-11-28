@@ -35,7 +35,7 @@ import { supabase } from './services/supabase';
 import ImportConfirmModal from './components/ImportConfirmModal';
 import ImportSummaryModal from './components/ImportSummaryModal';
 import ConfirmModal from './components/ConfirmModal';
-import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment } from './types';
+import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment, LoadedContainer } from './types';
 
 // Default options
 const DEFAULT_RESTRICTIONS = [
@@ -1316,13 +1316,16 @@ const App: React.FC = () => {
 
     setDraggedProductId(null);
 
-    const totalCost = newAssignments.reduce((sum: any, a: { container: { cost: any; }; }) => sum + a.container.cost, 0);
+    // Auto-remove empty containers
+    const nonEmptyAssignments = newAssignments.filter((a: LoadedContainer) => a.assignedProducts.length > 0);
+
+    const totalCost = nonEmptyAssignments.reduce((sum: any, a: { container: { cost: any; }; }) => sum + a.container.cost, 0);
 
     setResults({
       ...results,
       [activePriority]: {
         ...currentResult,
-        assignments: newAssignments,
+        assignments: nonEmptyAssignments,
         unassignedProducts: newUnassigned,
         totalCost
       }
@@ -1465,6 +1468,32 @@ const App: React.FC = () => {
     setResults(newResults);
   };
 
+  const handleDeleteContainer = (containerId: string, priority: OptimizationPriority) => {
+    if (!results) return;
+
+    const currentResult = results[priority];
+
+    // Find the container to delete
+    const containerToDelete = currentResult.assignments.find(a => a.container.id === containerId);
+    if (!containerToDelete) return;
+
+    // Remove the container from assignments
+    const newAssignments = currentResult.assignments.filter(a => a.container.id !== containerId);
+
+    // Move all products from deleted container back to unassigned
+    const newUnassigned = [...currentResult.unassignedProducts, ...containerToDelete.assignedProducts];
+
+    const newResults = {
+      ...results,
+      [priority]: {
+        ...currentResult,
+        assignments: newAssignments,
+        unassignedProducts: newUnassigned
+      }
+    };
+    setResults(newResults);
+  };
+
   // --- MAIN APP VIEW ---
   return (
     <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden font-sans">
@@ -1599,6 +1628,7 @@ const App: React.FC = () => {
                 draggedProductId={draggedProductId}
                 optimalRange={optimalUtilizationRange}
                 onAddContainer={handleAddContainer}
+                onDeleteContainer={handleDeleteContainer}
               />
             </div>
           ) : (

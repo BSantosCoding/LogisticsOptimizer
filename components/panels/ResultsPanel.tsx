@@ -17,6 +17,7 @@ interface ResultsPanelProps {
   onSaveShipment: (name: string, result: OptimizationResult) => void;
   optimalRange?: { min: number; max: number };
   onAddContainer?: (container: Container) => void;
+  onDeleteContainer?: (containerId: string, priority: OptimizationPriority) => void;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -32,17 +33,26 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onClose,
   onSaveShipment,
   optimalRange = { min: 85, max: 100 },
-  onAddContainer
+  onAddContainer,
+  onDeleteContainer
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const result = results ? results[activePriority] : null;
   const [shipmentName, setShipmentName] = useState('');
   const [addContainerModal, setAddContainerModal] = useState(false);
+  const [deleteContainerModal, setDeleteContainerModal] = useState<string | null>(null);
 
   const handleAddContainer = (container: Container) => {
     if (onAddContainer) {
       onAddContainer(container);
       setAddContainerModal(false);
+    }
+  };
+
+  const handleDeleteContainer = (containerId: string) => {
+    if (onDeleteContainer) {
+      onDeleteContainer(containerId, activePriority);
+      setDeleteContainerModal(null);
     }
   };
 
@@ -141,8 +151,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
     if (selectedItems.length === 0) return null;
 
+    // Filter by matching destination - only include products with same destination as first selected
+    const firstDestination = selectedItems[0]?.country;
+    const filteredItems = selectedItems.filter(p => p.country === firstDestination);
+
+    if (filteredItems.length === 0) return null;
+
     // Group selected items by form factor
-    const itemsByFormFactor = selectedItems.reduce((acc, p) => {
+    const itemsByFormFactor = filteredItems.reduce((acc, p) => {
       if (!acc[p.formFactorId]) acc[p.formFactorId] = 0;
       acc[p.formFactorId] += p.quantity;
       return acc;
@@ -150,12 +166,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
     // Collect all unique restrictions from selected items
     const productRestrictions = new Set<string>();
-    selectedItems.forEach(p => {
+    filteredItems.forEach(p => {
       p.restrictions?.forEach(r => productRestrictions.add(r));
     });
 
     // Check if items can be grouped together (same destination)
-    const destinations = new Set(selectedItems.map(p => p.country));
+    const destinations = new Set(filteredItems.map(p => p.country));
     const canGroup = destinations.size === 1;
 
     // Calculate utilization for each container
@@ -397,6 +413,37 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium"
               >
                 Move {moveQty} Units
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Container Confirmation Modal */}
+      {deleteContainerModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <Trash2 size={20} className="text-red-400" />
+              Delete Container
+            </h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Are you sure you want to delete this container? All items will be moved back to unassigned.
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteContainerModal(null)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteContainer(deleteContainerModal)}
+                className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2"
+              >
+                <Trash2 size={16} />
+                Delete Container
               </button>
             </div>
           </div>
@@ -646,9 +693,36 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               {/* Add Container Modal */}
               {addContainerModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                  <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl max-h-[80vh] overflow-y-auto">
+                  <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[500px] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
                     <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
-                    <div className="space-y-2">
+
+                    {/* Unassigned Products Summary */}
+                    {result && result.unassignedProducts.length > 0 && (
+                      <div className="mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                        <h4 className="text-xs font-semibold text-slate-400 mb-2">
+                          Unassigned Items ({result.unassignedProducts.length})
+                        </h4>
+                        <div className="max-h-32 overflow-y-auto scrollbar-hide space-y-1">
+                          {(Object.values(groupedUnassigned) as { products: Product[], totalQty: number }[]).slice(0, 10).map((group, idx) => {
+                            const p = group.products[0];
+                            return (
+                              <div key={idx} className="flex justify-between text-xs">
+                                <span className="text-slate-300 truncate flex-1">{p.name}</span>
+                                <span className="text-red-400 font-bold ml-2">{group.totalQty}</span>
+                              </div>
+                            );
+                          })}
+                          {Object.keys(groupedUnassigned).length > 10 && (
+                            <div className="text-xs text-slate-500 italic">
+                              +{Object.keys(groupedUnassigned).length - 10} more...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Container Selection */}
+                    <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2">
                       {containers.map((container) => (
                         <button
                           key={container.id}
@@ -788,11 +862,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                 <span className="text-green-400">${getContainerCost(loadedContainer).toLocaleString()}</span>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
-                                {loadedContainer.totalUtilization.toFixed(1)}%
+                            <div className="text-right flex items-center gap-3">
+                              <button
+                                onClick={() => setDeleteContainerModal(loadedContainer.container.id)}
+                                className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded hover:bg-red-500/10"
+                                title="Delete container"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                              <div>
+                                <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
+                                  {loadedContainer.totalUtilization.toFixed(1)}%
+                                </div>
+                                <div className="text-xs text-slate-500">Utilization</div>
                               </div>
-                              <div className="text-xs text-slate-500">Utilization</div>
                             </div>
                           </div>
 

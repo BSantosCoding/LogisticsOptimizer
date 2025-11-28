@@ -970,7 +970,7 @@ const App: React.FC = () => {
     });
 
     setTimeout(async () => {
-      const priority = OptimizationPriority.UTILIZATION;
+      const priority = OptimizationPriority.AUTOMATIC;
       const { assignments, unassigned } = calculatePacking(
         productsToUse,
         containersToUse,
@@ -989,7 +989,7 @@ const App: React.FC = () => {
         ? assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignments.length
         : 0;
 
-      const utilizationResult: OptimizationResult = {
+      const automaticResult: OptimizationResult = {
         assignments,
         unassignedProducts: unassigned,
         totalCost,
@@ -997,7 +997,7 @@ const App: React.FC = () => {
       };
 
       const newResults: Record<OptimizationPriority, OptimizationResult> = {
-        [OptimizationPriority.UTILIZATION]: utilizationResult,
+        [OptimizationPriority.AUTOMATIC]: automaticResult,
         [OptimizationPriority.MANUAL]: results?.[OptimizationPriority.MANUAL] || {
           assignments: [],
           unassignedProducts: [...products],
@@ -1007,9 +1007,10 @@ const App: React.FC = () => {
       };
 
       setResults(newResults);
-      setActivePriority(OptimizationPriority.UTILIZATION);
+      setActivePriority(OptimizationPriority.AUTOMATIC);
       setIsOptimizing(false);
-    }, 100);
+      setViewMode('results');
+    }, 500);
   };
 
   // Initialize and sync Manual Mode
@@ -1017,7 +1018,7 @@ const App: React.FC = () => {
     if (!results) {
       // First time initialization
       setResults({
-        [OptimizationPriority.UTILIZATION]: {
+        [OptimizationPriority.AUTOMATIC]: {
           assignments: [],
           unassignedProducts: [],
           totalCost: 0,

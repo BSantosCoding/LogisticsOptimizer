@@ -58,7 +58,7 @@ export interface OptimizationResult {
 }
 
 export enum OptimizationPriority {
-  UTILIZATION = 'Utilization',
+  AUTOMATIC = 'Automatic',
   MANUAL = 'Manual'
 }
 

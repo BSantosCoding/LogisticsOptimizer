@@ -116,7 +116,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     const result = results ? results[activePriority] : null;
     if (!result || selectedProducts.size === 0) return null;
 
-    const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(p.id));
+    const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(`${p.name}-${p.formFactorId}`));
     if (selectedItems.length === 0) return null;
 
     // Group selected items by form factor
@@ -505,26 +505,26 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   Drag items here to unassign
                 </div>
               ) : (
-                Object.values(groupedUnassigned)
-                  .filter((group: { products: Product[], totalQty: number }) => {
+                Object.entries(groupedUnassigned)
+                  .filter(([key, group]: [string, { products: Product[], totalQty: number }]) => {
                     const p = group.products[0];
                     if (!p) return false;
                     return p.name.toLowerCase().includes(searchQuery.toLowerCase());
                   })
-                  .map((group: { products: Product[], totalQty: number }, idx) => {
+                  .map(([groupKey, group]: [string, { products: Product[], totalQty: number }], idx) => {
                     const p = group.products[0];
                     if (!p) return null;
-                    const isSelected = selectedProducts.has(p.id);
+                    const isSelected = selectedProducts.has(groupKey);
                     return (
                       <div
-                        key={`${p.id}-${idx}`}
+                        key={groupKey}
                         className={`bg-slate-800 p-1.5 rounded border flex items-center gap-1.5 transition-colors text-xs ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
                           }`}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleProductSelection(p.id)}
+                          onChange={() => toggleProductSelection(groupKey)}
                           className="w-3 h-3 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer flex-shrink-0"
                         />
                         <div

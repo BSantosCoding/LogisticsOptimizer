@@ -132,8 +132,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
     // Calculate utilization for each container
     const containerPreviews = containers.map(container => {
-      // Check if container meets requirements
-      const meetsRequirements = !hasTemperatureControl || container.capabilities?.includes('Temperature Control');
+      // Check if container meets requirements - use 'restrictions' not 'capabilities'
+      const meetsRequirements = !hasTemperatureControl || container.restrictions?.includes('Temperature Control');
 
       // Calculate utilization based on capacities
       let maxUtilization = 0;
@@ -452,17 +452,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {/* Split Content Area */}
       <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
-        <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
-          {/* Add Container Button */}
-          <button
-            onClick={() => setAddContainerModal(true)}
-            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors border border-slate-600"
-          >
-            <Box size={16} /> Add Container
-          </button>
+        <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden">
+          {/* Sticky Add Container Button */}
+          <div className="flex-shrink-0 pb-3">
+            <button
+              onClick={() => setAddContainerModal(true)}
+              className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors border border-slate-600"
+            >
+              <Box size={16} /> Add Container
+            </button>
+          </div>
 
-          {/* Unassigned Products */}
-          <div className="flex-1 flex flex-col min-h-0">
+          {/* Scrollable Unassigned Products */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-red-400" /> Unassigned Items
             </h3>

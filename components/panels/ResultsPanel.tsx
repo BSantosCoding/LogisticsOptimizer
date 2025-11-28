@@ -73,6 +73,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Handler to unassign all units of a product from a container
   const handleUnassignProduct = (productId: string, containerId: string) => {
@@ -456,142 +457,153 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {/* Split Content Area */}
       <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
-        <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden">
+        <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden gap-2">
           {/* Sticky Add Container Button */}
-          <div className="flex-shrink-0 pb-3">
-            <button
-              onClick={() => setAddContainerModal(true)}
-              className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors border border-slate-600"
-            >
-              <Box size={16} /> Add Container
-            </button>
+          <button
+            onClick={() => setAddContainerModal(true)}
+            className="flex-shrink-0 w-full bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium transition-colors border border-slate-600"
+          >
+            <Box size={14} /> Add Container
+          </button>
+
+          {/* Search Bar */}
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-shrink-0 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+          />
+
+          {/* Unassigned Items Header */}
+          <div className="flex-shrink-0 flex items-center gap-2 text-xs font-semibold text-white">
+            <AlertTriangle size={14} className="text-red-400" />
+            Unassigned Items
           </div>
 
-          {/* Scrollable Unassigned Products */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <AlertTriangle size={16} className="text-red-400" /> Unassigned Items
-            </h3>
-            <div
-              className="flex-1 bg-slate-800/50 rounded-xl border border-slate-700 p-3 min-h-[200px] transition-colors overflow-y-auto scrollbar-hide"
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.currentTarget.classList.add('bg-slate-800');
-                e.currentTarget.classList.add('border-blue-500');
-              }}
-              onDragLeave={(e) => {
-                e.currentTarget.classList.remove('bg-slate-800');
-                e.currentTarget.classList.remove('border-blue-500');
-              }}
-              onDrop={(e) => {
-                e.currentTarget.classList.remove('bg-slate-800');
-                e.currentTarget.classList.remove('border-blue-500');
-                onDropWrapper(e, 'unassigned');
-              }}
-            >
-              <div className="space-y-2">
-                {result.unassignedProducts.length === 0 ? (
-                  <div className="text-center text-slate-500 py-8 italic text-xs">
-                    Drag items here to unassign
-                  </div>
-                ) : (
-                  Object.values(groupedUnassigned).map((group: { products: Product[], totalQty: number }, idx) => {
+          {/* Scrollable Products List */}
+          <div
+            className="flex-1 bg-slate-800/50 rounded-lg border border-slate-700 p-2 overflow-y-auto scrollbar-hide min-h-0"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.add('bg-slate-800');
+              e.currentTarget.classList.add('border-blue-500');
+            }}
+            onDragLeave={(e) => {
+              e.currentTarget.classList.remove('bg-slate-800');
+              e.currentTarget.classList.remove('border-blue-500');
+            }}
+            onDrop={(e) => {
+              e.currentTarget.classList.remove('bg-slate-800');
+              e.currentTarget.classList.remove('border-blue-500');
+              onDropWrapper(e, 'unassigned');
+            }}
+          >
+            <div className="space-y-1.5">
+              {result.unassignedProducts.length === 0 ? (
+                <div className="text-center text-slate-500 py-4 italic text-[10px]">
+                  Drag items here to unassign
+                </div>
+              ) : (
+                Object.values(groupedUnassigned)
+                  .filter((group: { products: Product[], totalQty: number }) => {
+                    const p = group.products[0];
+                    if (!p) return false;
+                    return p.name.toLowerCase().includes(searchQuery.toLowerCase());
+                  })
+                  .map((group: { products: Product[], totalQty: number }, idx) => {
                     const p = group.products[0];
                     if (!p) return null;
                     const isSelected = selectedProducts.has(p.id);
                     return (
                       <div
                         key={`${p.id}-${idx}`}
-                        className={`bg-slate-800 p-2 rounded-lg border flex items-center gap-2 transition-colors text-sm ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
+                        className={`bg-slate-800 p-1.5 rounded border flex items-center gap-1.5 transition-colors text-xs ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
                           }`}
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleProductSelection(p.id)}
-                          className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer"
+                          className="w-3 h-3 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer flex-shrink-0"
                         />
                         <div
                           draggable
                           onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
-                          className="flex-1 flex justify-between items-center cursor-grab active:cursor-grabbing"
+                          className="flex-1 flex justify-between items-center cursor-grab active:cursor-grabbing min-w-0"
                         >
-                          <div className="font-medium text-slate-300 truncate">{p.name}</div>
-                          <div className="text-red-400 font-bold text-xs ml-2">{group.totalQty}</div>
+                          <div className="font-medium text-slate-300 truncate text-[11px]">{p.name}</div>
+                          <div className="text-red-400 font-bold text-[10px] ml-1 flex-shrink-0">{group.totalQty}</div>
                         </div>
                       </div>
                     );
                   })
-                )}
+              )}
+            </div>
+          </div>
+
+          {/* Utilization Preview - Always Visible */}
+          {utilizationPreview && (
+            <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+              <h4 className="text-[10px] font-semibold text-white mb-1.5">
+                Selected: {selectedProducts.size} items
+              </h4>
+
+              {!utilizationPreview.canGroup && (
+                <div className="mb-1.5 p-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded text-[10px] text-yellow-400">
+                  ⚠️ Different destinations
+                </div>
+              )}
+
+              {utilizationPreview.productRestrictions.length > 0 && (
+                <div className="mb-1.5 p-1.5 bg-blue-500/10 border border-blue-500/30 rounded text-[10px] text-blue-400">
+                  {utilizationPreview.productRestrictions.join(', ')}
+                </div>
+              )}
+
+              <div className="space-y-1 max-h-32 overflow-y-auto scrollbar-hide">
+                {utilizationPreview.containerPreviews.map((preview) => {
+                  // Determine color scheme based on compatibility and fit
+                  let bgColor, borderColor, textColor;
+                  if (!preview.meetsRequirements) {
+                    bgColor = 'bg-slate-700/30';
+                    borderColor = 'border-slate-600';
+                    textColor = 'text-slate-500';
+                  } else if (preview.fits) {
+                    bgColor = 'bg-green-500/10';
+                    borderColor = 'border-green-500/30';
+                    textColor = 'text-green-400';
+                  } else {
+                    bgColor = 'bg-red-500/10';
+                    borderColor = 'border-red-500/30';
+                    textColor = 'text-red-400';
+                  }
+
+                  return (
+                    <div
+                      key={preview.container.id}
+                      className={`p-1.5 rounded text-[10px] ${bgColor} border ${borderColor}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className={`${textColor} truncate`}>
+                          {preview.container.name}
+                        </span>
+                        <span className={`font-bold ${textColor} ml-1`}>
+                          {preview.utilization.toFixed(1)}%
+                        </span>
+                      </div>
+                      {!preview.meetsRequirements && (
+                        <div className="text-slate-500 text-[9px] mt-0.5">Missing capabilities</div>
+                      )}
+                      {preview.meetsRequirements && !preview.fits && preview.utilization > 100 && (
+                        <div className="text-red-300 text-[9px] mt-0.5">Too large</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            {/* Utilization Preview */}
-            {utilizationPreview && (
-              <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                <h4 className="text-xs font-semibold text-white mb-2">
-                  Selected: {selectedProducts.size} items
-                </h4>
-
-                {!utilizationPreview.canGroup && (
-                  <div className="mb-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-400">
-                    ⚠️ Items from different destinations
-                  </div>
-                )}
-
-                {utilizationPreview.productRestrictions.length > 0 && (
-                  <div className="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-400">
-                    Requirements: {utilizationPreview.productRestrictions.join(', ')}
-                  </div>
-                )}
-
-                <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-hide">
-                  {utilizationPreview.containerPreviews.map((preview) => {
-                    // Determine color scheme based on compatibility and fit
-                    let bgColor, borderColor, textColor;
-                    if (!preview.meetsRequirements) {
-                      // Gray for incompatible (missing capabilities)
-                      bgColor = 'bg-slate-700/30';
-                      borderColor = 'border-slate-600';
-                      textColor = 'text-slate-500';
-                    } else if (preview.fits) {
-                      // Green for compatible and fits
-                      bgColor = 'bg-green-500/10';
-                      borderColor = 'border-green-500/30';
-                      textColor = 'text-green-400';
-                    } else {
-                      // Red/Yellow for compatible but doesn't fit
-                      bgColor = 'bg-red-500/10';
-                      borderColor = 'border-red-500/30';
-                      textColor = 'text-red-400';
-                    }
-
-                    return (
-                      <div
-                        key={preview.container.id}
-                        className={`p-2 rounded text-xs ${bgColor} border ${borderColor}`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className={textColor}>
-                            {preview.container.name}
-                          </span>
-                          <span className={`font-bold ${textColor}`}>
-                            {preview.utilization.toFixed(1)}%
-                          </span>
-                        </div>
-                        {!preview.meetsRequirements && (
-                          <div className="text-slate-500 text-[10px] mt-0.5">Missing capabilities</div>
-                        )}
-                        {preview.meetsRequirements && !preview.fits && preview.utilization > 100 && (
-                          <div className="text-red-300 text-[10px] mt-0.5">Too large</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Main Content - Containers (RIGHT, 80%) */}
@@ -843,7 +855,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

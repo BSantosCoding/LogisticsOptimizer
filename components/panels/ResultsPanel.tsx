@@ -479,16 +479,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
 
                 // Group products for display
-                const groupedProducts = React.useMemo(() => {
-                  const groups: Record<string, { products: Product[], totalQty: number }> = {};
-                  loadedContainer.assignedProducts.forEach(p => {
-                    const key = `${p.name}-${p.formFactorId}`;
-                    if (!groups[key]) groups[key] = { products: [], totalQty: 0 };
-                    groups[key].products.push(p);
-                    groups[key].totalQty += p.quantity;
-                  });
-                  return Object.values(groups);
-                }, [loadedContainer.assignedProducts]);
+                const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
+                loadedContainer.assignedProducts.forEach(p => {
+                  const key = `${p.name}-${p.formFactorId}`;
+                  if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
+                  productGroups[key].products.push(p);
+                  productGroups[key].totalQty += p.quantity;
+                });
+                const groupedProducts = Object.values(productGroups);
 
                 return (
                   <div

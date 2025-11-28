@@ -83,9 +83,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return (country && countryCosts[country]?.[loadedContainer.container.id]) ?? loadedContainer.container.cost;
   };
 
-  const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewQuantities, setPreviewQuantities] = useState<Record<string, number>>({});
+  const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
 
   // Handler to unassign all units of a product from a container
   const handleUnassignProduct = (productId: string, containerId: string) => {
@@ -110,14 +110,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     onDropWrapper(mockEvent, 'unassigned');
   };
 
-  // Toggle product selection
-  const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => {
-      const next = new Set(prev);
-      if (next.has(productId)) {
-        next.delete(productId);
+  // Handle quantity change for preview
+  const handleQuantityChange = (groupKey: string, quantity: number, maxQty: number) => {
+    setPreviewQuantities(prev => {
+      const next = { ...prev };
+      if (quantity <= 0) {
+        delete next[groupKey];
       } else {
-        next.add(productId);
+        next[groupKey] = Math.min(quantity, maxQty);
       }
       return next;
     });
@@ -138,40 +138,48 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   // Calculate utilization preview for selected products
   const utilizationPreview = React.useMemo(() => {
     const result = results ? results[activePriority] : null;
-    if (!result || selectedProducts.size === 0) return null;
+    if (!result || Object.keys(previewQuantities).length === 0) return null;
 
-    // Use groupedUnassigned to find selected items
-    const selectedItems: Product[] = [];
-    selectedProducts.forEach(key => {
+    // Use groupedUnassigned to find selected items with specific quantities
+    const selectedItems: { product: Product, quantity: number }[] = [];
+    Object.entries(previewQuantities).forEach(([key, qty]) => {
       const group = groupedUnassigned[key];
-      if (group) {
-        selectedItems.push(...group.products);
+      if (group && group.products.length > 0) {
+        // Use the first product as representative for form factor/restrictions
+        selectedItems.push({
+          product: group.products[0],
+          quantity: Number(qty)
+        });
       }
     });
 
     if (selectedItems.length === 0) return null;
 
     // Filter by matching destination - only include products with same destination as first selected
-    const firstDestination = selectedItems[0]?.country;
-    const filteredItems = selectedItems.filter(p => p.country === firstDestination);
+    const firstDestination = selectedItems[0]?.product.country;
+    const filteredItems = selectedItems.filter(item => item.product.country === firstDestination);
 
     if (filteredItems.length === 0) return null;
 
     // Group selected items by form factor
-    const itemsByFormFactor = filteredItems.reduce((acc, p) => {
-      if (!acc[p.formFactorId]) acc[p.formFactorId] = 0;
-      acc[p.formFactorId] += p.quantity;
+    const itemsByFormFactor = filteredItems.reduce((acc: Record<string, number>, item: { product: Product, quantity: number }) => {
+      const p = item.product;
+      const formFactorId = p.formFactorId;
+      if (typeof acc[formFactorId] !== 'number') {
+        acc[formFactorId] = 0;
+      }
+      acc[formFactorId] = (acc[formFactorId] || 0) + Number(item.quantity);
       return acc;
     }, {} as Record<string, number>);
 
     // Collect all unique restrictions from selected items
     const productRestrictions = new Set<string>();
-    filteredItems.forEach(p => {
-      p.restrictions?.forEach(r => productRestrictions.add(r));
+    filteredItems.forEach(item => {
+      item.product.restrictions?.forEach(r => productRestrictions.add(r));
     });
 
     // Check if items can be grouped together (same destination)
-    const destinations = new Set(filteredItems.map(p => p.country));
+    const destinations = new Set(filteredItems.map(item => item.product.country));
     const canGroup = destinations.size === 1;
 
     // Calculate utilization for each container
@@ -221,7 +229,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       excludedCount: selectedItems.length - filteredItems.length,
       filterDestination: firstDestination
     };
-  }, [results, activePriority, selectedProducts, containers]);
+  }, [results, activePriority, previewQuantities, containers]);
 
   const toggleDestination = (dest: string) => {
     setCollapsedDestinations(prev => {
@@ -579,7 +587,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     }
 
                     // Filter by destination if any product is selected
-                    if (selectedProducts.size > 0 && utilizationPreview) {
+                    if (Object.keys(previewQuantities).length > 0 && utilizationPreview) {
                       // Only show products matching the destination of selected items
                       if (p.country !== utilizationPreview.filterDestination) {
                         return false;
@@ -591,19 +599,35 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   .map(([groupKey, group]: [string, { products: Product[], totalQty: number }], idx) => {
                     const p = group.products[0];
                     if (!p) return null;
-                    const isSelected = selectedProducts.has(groupKey);
+                    const previewQty = previewQuantities[groupKey] || 0;
+                    const isPreviewing = previewQty > 0;
+
                     return (
                       <div
                         key={groupKey}
-                        className={`bg-slate-800 p-1.5 rounded border flex items-center gap-1.5 transition-colors text-xs ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
+                        className={`bg-slate-800 p-1.5 rounded border flex items-center gap-1.5 transition-colors text-xs ${isPreviewing ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
                           }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleProductSelection(groupKey)}
-                          className="w-3 h-3 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer flex-shrink-0"
-                        />
+                        <div className="flex flex-col items-center gap-0.5">
+                          <input
+                            type="number"
+                            min="0"
+                            max={group.totalQty}
+                            value={previewQty || ''}
+                            placeholder="0"
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              handleQuantityChange(groupKey, val, group.totalQty);
+                            }}
+                            className="w-10 h-5 bg-slate-900 border border-slate-600 rounded text-center text-[10px] text-white focus:border-blue-500 outline-none"
+                          />
+                          <button
+                            onClick={() => handleQuantityChange(groupKey, group.totalQty, group.totalQty)}
+                            className="text-[8px] text-slate-500 hover:text-blue-400 uppercase tracking-wider"
+                          >
+                            Max
+                          </button>
+                        </div>
                         <div
                           draggable
                           onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
@@ -625,7 +649,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           {utilizationPreview && (
             <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
               <h4 className="text-[10px] font-semibold text-white mb-1.5">
-                Selected: {selectedProducts.size} items
+                Previewing: {Object.values(previewQuantities).reduce((a: number, b: number) => a + b, 0)} units
                 {utilizationPreview.filterDestination && (
                   <span className="text-blue-400 ml-1">
                     ({utilizationPreview.filterDestination})

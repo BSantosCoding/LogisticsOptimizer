@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2 } from 'lucide-react';
+import { validateLoadedContainer } from '@/services/logisticsEngine';
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -956,6 +957,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleUnassignProduct(p.id, loadedContainer.container.id);
+                                          const revalidated = validateLoadedContainer(loadedContainer.container, loadedContainer.assignedProducts)
+                                          Object.assign(loadedContainer, revalidated)
                                         }}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300"
                                         title="Unassign all units"

@@ -111,7 +111,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   };
 
   // Calculate utilization preview for selected products
-  const calculateUtilizationPreview = () => {
+  const utilizationPreview = React.useMemo(() => {
+    const result = results ? results[activePriority] : null;
     if (!result || selectedProducts.size === 0) return null;
 
     const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(p.id));
@@ -146,9 +147,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       hasTemperatureControl,
       containerPreviews
     };
-  };
-
-  const utilizationPreview = calculateUtilizationPreview();
+  }, [results, activePriority, selectedProducts, containers]);
 
   const toggleDestination = (dest: string) => {
     setCollapsedDestinations(prev => {
@@ -522,8 +521,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     <div
                       key={preview.container.id}
                       className={`p-2 rounded text-xs ${preview.fits
-                          ? 'bg-green-500/10 border border-green-500/30'
-                          : 'bg-red-500/10 border border-red-500/30'
+                        ? 'bg-green-500/10 border border-green-500/30'
+                        : 'bg-red-500/10 border border-red-500/30'
                         }`}
                     >
                       <div className="flex justify-between items-center">

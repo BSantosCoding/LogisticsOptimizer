@@ -161,7 +161,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         meetsRequirements,
         fits: fits && meetsRequirements && maxUtilization <= 100
       };
-    }).filter(p => p.meetsRequirements);
+    }); // Removed filter - show all containers
 
     return {
       itemsByFormFactor,
@@ -540,27 +540,48 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 )}
 
                 <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-hide">
-                  {utilizationPreview.containerPreviews.map((preview) => (
-                    <div
-                      key={preview.container.id}
-                      className={`p-2 rounded text-xs ${preview.fits
-                        ? 'bg-green-500/10 border border-green-500/30'
-                        : 'bg-red-500/10 border border-red-500/30'
-                        }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className={preview.fits ? 'text-green-400' : 'text-red-400'}>
-                          {preview.container.name}
-                        </span>
-                        <span className={`font-bold ${preview.fits ? 'text-green-400' : 'text-red-400'}`}>
-                          {preview.utilization.toFixed(1)}%
-                        </span>
+                  {utilizationPreview.containerPreviews.map((preview) => {
+                    // Determine color scheme based on compatibility and fit
+                    let bgColor, borderColor, textColor;
+                    if (!preview.meetsRequirements) {
+                      // Gray for incompatible (missing capabilities)
+                      bgColor = 'bg-slate-700/30';
+                      borderColor = 'border-slate-600';
+                      textColor = 'text-slate-500';
+                    } else if (preview.fits) {
+                      // Green for compatible and fits
+                      bgColor = 'bg-green-500/10';
+                      borderColor = 'border-green-500/30';
+                      textColor = 'text-green-400';
+                    } else {
+                      // Red/Yellow for compatible but doesn't fit
+                      bgColor = 'bg-red-500/10';
+                      borderColor = 'border-red-500/30';
+                      textColor = 'text-red-400';
+                    }
+
+                    return (
+                      <div
+                        key={preview.container.id}
+                        className={`p-2 rounded text-xs ${bgColor} border ${borderColor}`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className={textColor}>
+                            {preview.container.name}
+                          </span>
+                          <span className={`font-bold ${textColor}`}>
+                            {preview.utilization.toFixed(1)}%
+                          </span>
+                        </div>
+                        {!preview.meetsRequirements && (
+                          <div className="text-slate-500 text-[10px] mt-0.5">Missing capabilities</div>
+                        )}
+                        {preview.meetsRequirements && !preview.fits && preview.utilization > 100 && (
+                          <div className="text-red-300 text-[10px] mt-0.5">Too large</div>
+                        )}
                       </div>
-                      {!preview.fits && preview.utilization > 100 && (
-                        <div className="text-red-300 text-[10px] mt-0.5">Too large</div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

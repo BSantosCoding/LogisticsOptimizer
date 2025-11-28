@@ -1259,7 +1259,12 @@ const App: React.FC = () => {
         if (sourceContainerIndex !== -1) {
           const sourceContainer = newAssignments[sourceContainerIndex];
           const updatedProducts = processList(sourceContainer.assignedProducts);
-          const revalidatedSource = validateLoadedContainer(sourceContainer.container, updatedProducts);
+          // Update container destination to match remaining products
+          const updatedContainer = {
+            ...sourceContainer.container,
+            destination: updatedProducts.length > 0 ? updatedProducts[0].destination : sourceContainer.container.destination
+          };
+          const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts);
           newAssignments[sourceContainerIndex] = revalidatedSource;
         }
       }

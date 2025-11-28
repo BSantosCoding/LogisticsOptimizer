@@ -125,15 +125,23 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       return acc;
     }, {} as Record<string, number>);
 
-    // Check if items can be grouped together (same destination, compatible requirements)
+    // Collect all unique restrictions from selected items
+    const productRestrictions = new Set<string>();
+    selectedItems.forEach(p => {
+      p.restrictions?.forEach(r => productRestrictions.add(r));
+    });
+
+    // Check if items can be grouped together (same destination)
     const destinations = new Set(selectedItems.map(p => p.country));
-    const hasTemperatureControl = selectedItems.some(p => p.restrictions?.includes('Temperature Control'));
     const canGroup = destinations.size === 1;
 
     // Calculate utilization for each container
     const containerPreviews = containers.map(container => {
-      // Check if container meets requirements - use 'restrictions' not 'capabilities'
-      const meetsRequirements = !hasTemperatureControl || container.restrictions?.includes('Temperature Control');
+      // Check if container capabilities meet ALL product requirements
+      const containerCapabilities = new Set(container.restrictions || []);
+      const meetsRequirements = Array.from(productRestrictions).every(req =>
+        containerCapabilities.has(req)
+      );
 
       // Calculate utilization based on capacities
       let maxUtilization = 0;
@@ -167,7 +175,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       itemsByFormFactor,
       canGroup,
       destinations: Array.from(destinations),
-      hasTemperatureControl,
+      productRestrictions: Array.from(productRestrictions),
       containerPreviews
     };
   }, [results, activePriority, selectedProducts, containers]);
@@ -535,9 +543,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   </div>
                 )}
 
-                {utilizationPreview.hasTemperatureControl && (
+                {utilizationPreview.productRestrictions.length > 0 && (
                   <div className="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-400">
-                    ❄️ Requires Temperature Control
+                    Requirements: {utilizationPreview.productRestrictions.join(', ')}
                   </div>
                 )}
 

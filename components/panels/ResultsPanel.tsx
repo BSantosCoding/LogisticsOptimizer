@@ -10,7 +10,7 @@ interface ResultsPanelProps {
   countries: any[];
   handleDragStart: (e: React.DragEvent, productId: string, sourceId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
-  handleDrop: (e: React.DragEvent, targetId: string) => void;
+  handleDrop: (e: React.DragEvent, targetId: string, quantity?: number) => void;
   draggedProductId: string | null;
   onClose: () => void;
   onSaveShipment: (name: string, result: OptimizationResult) => void;
@@ -33,6 +33,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [shipmentName, setShipmentName] = useState('');
+
+  // Move Quantity Modal State
+  const [moveModal, setMoveModal] = useState<{
+    sourceId: string;
+    targetId: string;
+    productId: string;
+    maxQty: number;
+    productName: string;
+  } | null>(null);
+  const [moveQty, setMoveQty] = useState(1);
+
   // Transform countries data into countryCosts map
   const countryCosts = React.useMemo(() => {
     const costs: Record<string, Record<string, number>> = {};
@@ -60,6 +71,78 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     });
   };
 
+  // Internal Drop Handler to intercept and check for quantity
+  const onDropWrapper = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const productId = e.dataTransfer.getData("productId");
+    const sourceId = e.dataTransfer.getData("sourceId");
+
+    if (sourceId === targetId || !results) return;
+
+    const currentResult = results[activePriority];
+
+    // Find Source Container and Product Group
+    let productsInSource: Product[] = [];
+    if (sourceId === 'unassigned') {
+      productsInSource = currentResult.unassignedProducts;
+    } else {
+      const sourceContainer = currentResult.assignments.find(a => a.container.id === sourceId);
+      if (sourceContainer) {
+        productsInSource = sourceContainer.assignedProducts;
+      }
+    }
+
+    // Find the specific product to get details
+    const templateProd = productsInSource.find(p => p.id === productId);
+    if (!templateProd) return;
+
+    // Calculate total quantity of identical items in source
+    const identicalProducts = productsInSource.filter(p =>
+      p.id === productId ||
+      (p.name === templateProd.name && p.formFactorId === templateProd.formFactorId)
+    );
+
+    const totalQty = identicalProducts.reduce((sum, p) => sum + p.quantity, 0);
+
+    if (totalQty > 1) {
+      setMoveModal({
+        sourceId,
+        targetId,
+        productId,
+        maxQty: totalQty,
+        productName: templateProd.name
+      });
+      setMoveQty(totalQty); // Default to moving all
+    } else {
+      handleDrop(e, targetId);
+    }
+  };
+
+  const confirmMove = () => {
+    if (!moveModal) return;
+    // Create a synthetic event or just call the handler if we modify it to not need event
+    // Since handleDrop expects event, we can mock it or better yet, update handleDrop signature in App.tsx to be more flexible?
+    // But for now, let's just call it with the params we added.
+    // We need to pass a mock event object because handleDrop uses e.dataTransfer to get IDs.
+    // Wait, handleDrop in App.tsx reads dataTransfer. We can't easily mock that synchronously here without a real drag event.
+    // Actually, we can just modify handleDrop in App.tsx to accept optional IDs if event is not provided?
+    // OR: We construct a mock event.
+
+    const mockEvent = {
+      preventDefault: () => { },
+      dataTransfer: {
+        getData: (key: string) => {
+          if (key === "productId") return moveModal.productId;
+          if (key === "sourceId") return moveModal.sourceId;
+          return "";
+        }
+      }
+    } as unknown as React.DragEvent;
+
+    handleDrop(mockEvent, moveModal.targetId, moveQty);
+    setMoveModal(null);
+  };
+
   if (!results) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
@@ -82,8 +165,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return groups;
   }, [result]);
 
+  // Group unassigned products
+  const groupedUnassigned = React.useMemo(() => {
+    return result.unassignedProducts.reduce((acc, p) => {
+      const key = `${p.name}-${p.formFactorId}`;
+      if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
+      acc[key].products.push(p);
+      acc[key].totalQty += p.quantity;
+      return acc;
+    }, {} as Record<string, { products: Product[], totalQty: number }>);
+  }, [result.unassignedProducts]);
+
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <div className="h-full overflow-y-auto p-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
@@ -99,6 +193,57 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Move Quantity Modal */}
+      {moveModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-80 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">Move Items</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              How many units of <span className="text-white font-medium">{moveModal.productName}</span> do you want to move?
+            </p>
+
+            <div className="flex items-center gap-4 mb-6">
+              <button
+                onClick={() => setMoveQty(Math.max(1, moveQty - 1))}
+                className="w-8 h-8 rounded bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600"
+              >
+                -
+              </button>
+              <div className="flex-1 text-center">
+                <input
+                  type="number"
+                  value={moveQty}
+                  onChange={(e) => setMoveQty(Math.max(1, Math.min(moveModal.maxQty, parseInt(e.target.value) || 1)))}
+                  className="w-full bg-transparent text-center text-2xl font-bold text-blue-400 outline-none"
+                />
+                <div className="text-xs text-slate-500">of {moveModal.maxQty} available</div>
+              </div>
+              <button
+                onClick={() => setMoveQty(Math.min(moveModal.maxQty, moveQty + 1))}
+                className="w-8 h-8 rounded bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setMoveModal(null)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmMove}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium"
+              >
+                Move {moveQty} Units
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Save Modal */}
       {isSaving && (
@@ -257,11 +402,23 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
                 const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
 
+                // Group products for display
+                const groupedProducts = React.useMemo(() => {
+                  const groups: Record<string, { products: Product[], totalQty: number }> = {};
+                  loadedContainer.assignedProducts.forEach(p => {
+                    const key = `${p.name}-${p.formFactorId}`;
+                    if (!groups[key]) groups[key] = { products: [], totalQty: 0 };
+                    groups[key].products.push(p);
+                    groups[key].totalQty += p.quantity;
+                  });
+                  return Object.values(groups);
+                }, [loadedContainer.assignedProducts]);
+
                 return (
                   <div
                     key={loadedContainer.container.id}
                     onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, loadedContainer.container.id)}
+                    onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
                     className={`bg-slate-800 rounded-lg border transition-all duration-200 
                     ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
                   `}
@@ -306,24 +463,27 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                       {loadedContainer.assignedProducts.length === 0 ? (
                         <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
                       ) : (
-                        loadedContainer.assignedProducts.map((p, idx) => (
-                          <div
-                            key={`${p.id}-${idx}`}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
-                            className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
-                          >
-                            <div className="flex items-center gap-2 overflow-hidden">
-                              <Box size={14} className="text-blue-400 shrink-0" />
-                              <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                        groupedProducts.map((group, idx) => {
+                          const p = group.products[0]; // Representative product
+                          return (
+                            <div
+                              key={`${p.id}-${idx}`}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
+                              className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
+                            >
+                              <div className="flex items-center gap-2 overflow-hidden">
+                                <Box size={14} className="text-blue-400 shrink-0" />
+                                <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
+                                  {group.totalQty} units
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
-                                {p.quantity} units
-                              </span>
-                            </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
 
                       {/* Validation Issues */}
@@ -359,12 +519,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </h3>
           <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
             <div className="grid grid-cols-1 gap-2">
-              {result.unassignedProducts.map((p) => (
-                <div key={p.id} className="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
-                  <div className="font-medium text-slate-300">{p.name}</div>
-                  <div className="text-red-400 font-bold">{p.quantity} left</div>
-                </div>
-              ))}
+              {/* Group unassigned products */}
+              {Object.values(groupedUnassigned).map((group: { products: Product[], totalQty: number }, idx) => {
+                const p = group.products[0];
+                if (!p) return null;
+                return (
+                  <div
+                    key={`${p.id}-${idx}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
+                    className="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center cursor-grab active:cursor-grabbing hover:border-slate-500 transition-colors"
+                  >
+                    <div className="font-medium text-slate-300">{p.name}</div>
+                    <div className="text-red-400 font-bold">{group.totalQty} left</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

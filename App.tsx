@@ -1141,12 +1141,11 @@ const App: React.FC = () => {
     e.dataTransfer.setData("sourceId", sourceId);
     setDraggedProductId(productId);
   };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
+  const handleDrop = (e: React.DragEvent, targetId: string, quantity?: number) => {
     e.preventDefault();
     if (!results) return;
 
@@ -1164,37 +1163,129 @@ const App: React.FC = () => {
     }));
     let newUnassigned = [...currentResult.unassignedProducts];
 
-    // Find Product
-    let product: Product | undefined;
+    // Helper to find and remove product(s)
+    const moveProducts = (qtyToMove: number) => {
+      const movedProducts: Product[] = [];
+      let remainingQty = qtyToMove;
 
-    if (sourceId === 'unassigned') {
-      product = newUnassigned.find(p => p.id === productId);
-      newUnassigned = newUnassigned.filter(p => p.id !== productId);
+      // Helper to process a list of products
+      const processList = (list: Product[]) => {
+        // Find the primary product first
+        let primaryIndex = list.findIndex(p => p.id === productId);
+
+        // If not found (or exhausted), find identical products
+        if (primaryIndex === -1) {
+          // We need a way to identify "identical" products. 
+          // Assuming we can find the original product details from somewhere, 
+          // but since we don't have the product object here easily if it's already gone,
+          // we rely on the caller (ResultsPanel) to ensure we only request valid moves.
+          // However, for robustness, we should look for products with same name/formFactor.
+          // For now, let's assume the productId passed is valid and exists, 
+          // and if we need more, we look for same name.
+          return list;
+        }
+
+        const templateProd = list[primaryIndex];
+
+        // Strategy: Filter list for identical items (same name, formFactor, restrictions)
+        // We'll prioritize the specific productId, then others.
+        const candidates = list.map((p, idx) => ({ p, idx })).filter(item =>
+          item.p.id === productId ||
+          (item.p.name === templateProd.name && item.p.formFactorId === templateProd.formFactorId)
+        );
+
+        // Sort: primary ID first
+        candidates.sort((a, b) => (a.p.id === productId ? -1 : 1));
+
+        const indicesToRemove: number[] = [];
+        const productsToAdd: Product[] = [];
+
+        for (const candidate of candidates) {
+          if (remainingQty <= 0) break;
+
+          if (candidate.p.quantity <= remainingQty) {
+            // Take whole product
+            movedProducts.push(candidate.p);
+            indicesToRemove.push(candidate.idx);
+            remainingQty -= candidate.p.quantity;
+          } else {
+            // Split product
+            const newProduct = { ...candidate.p, id: crypto.randomUUID(), quantity: remainingQty };
+            movedProducts.push(newProduct);
+
+            // Update original product in place (in the copy of the list we'll make)
+            // We can't mutate 'list' directly if we want to be clean, but we are returning a new list.
+            // Actually, we need to modify the product in the list.
+            candidate.p.quantity -= remainingQty;
+            remainingQty = 0;
+          }
+        }
+
+        // Return new list without removed items
+        // Sort indices descending to remove safely
+        indicesToRemove.sort((a, b) => b - a);
+        const newList = [...list];
+        indicesToRemove.forEach(idx => newList.splice(idx, 1));
+        return newList;
+      };
+
+      if (sourceId === 'unassigned') {
+        newUnassigned = processList(newUnassigned);
+      } else {
+        const sourceContainer = newAssignments.find((a: { container: { id: any; }; }) => a.container.id === sourceId);
+        if (sourceContainer) {
+          sourceContainer.assignedProducts = processList(sourceContainer.assignedProducts);
+          const revalidatedSource = validateLoadedContainer(sourceContainer.container, sourceContainer.assignedProducts);
+          Object.assign(sourceContainer, revalidatedSource);
+        }
+      }
+
+      return movedProducts;
+    };
+
+    // Execute Move
+    // If quantity is not specified, we assume moving the SINGLE product ID dragged (legacy behavior)
+    // But wait, if we want to support "Move All" of a group, we might need to know.
+    // Let's assume if quantity is passed, we use the logic above.
+    // If NOT passed, we just move the specific product ID (all of it).
+
+    let productsToInsert: Product[] = [];
+
+    if (quantity !== undefined) {
+      productsToInsert = moveProducts(quantity);
     } else {
-      const sourceContainer = newAssignments.find((a: { container: { id: any; }; }) => a.container.id === sourceId);
-      if (sourceContainer) {
-        product = sourceContainer.assignedProducts.find((p: { id: any; }) => p.id === productId);
-        sourceContainer.assignedProducts = sourceContainer.assignedProducts.filter((p: { id: any; }) => p.id !== productId);
-        const revalidatedSource = validateLoadedContainer(sourceContainer.container, sourceContainer.assignedProducts);
-        Object.assign(sourceContainer, revalidatedSource);
+      // Legacy/Simple Move (Whole specific product)
+      // We can reuse moveProducts but we need to know its quantity.
+      // Let's just find it.
+      let p: Product | undefined;
+      if (sourceId === 'unassigned') {
+        p = newUnassigned.find(x => x.id === productId);
+      } else {
+        const sc = newAssignments.find((a: { container: { id: string; }; }) => a.container.id === sourceId);
+        p = sc?.assignedProducts.find((x: { id: string; }) => x.id === productId);
+      }
+
+      if (p) {
+        productsToInsert = moveProducts(p.quantity);
       }
     }
 
-    if (!product) return;
+    if (productsToInsert.length === 0) return;
 
+    // Add to Target
     if (targetId === 'unassigned') {
-      newUnassigned.push(product);
+      newUnassigned.push(...productsToInsert);
     } else {
       const targetContainer = newAssignments.find((a: { container: { id: string; }; }) => a.container.id === targetId);
 
       if (!targetContainer) {
         const freshContainer = containers.find((d: { id: string; }) => d.id === targetId);
         if (freshContainer) {
-          const newLoadedContainer = validateLoadedContainer(freshContainer, [product]);
+          const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert);
           newAssignments.push(newLoadedContainer);
         }
       } else {
-        targetContainer.assignedProducts.push(product);
+        targetContainer.assignedProducts.push(...productsToInsert);
         const revalidatedTarget = validateLoadedContainer(targetContainer.container, targetContainer.assignedProducts);
         Object.assign(targetContainer, revalidatedTarget);
       }

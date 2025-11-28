@@ -153,19 +153,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     setMoveModal(null);
   };
 
-  if (!results) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
-        <Box size={48} className="mb-4 opacity-50" />
-        <p>Add products and containers, then click Run Optimization.</p>
-      </div>
-    );
-  }
-
-  const result = results[activePriority];
+  const result = results ? results[activePriority] : null;
 
   // Group assignments by destination
   const groupedAssignments = React.useMemo(() => {
+    if (!result) return {};
     const groups: Record<string, LoadedContainer[]> = {};
     result.assignments.forEach(a => {
       const dest = a.container.destination || 'Unspecified Destination';
@@ -177,6 +169,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   // Group unassigned products
   const groupedUnassigned = React.useMemo(() => {
+    if (!result) return {};
     return result.unassignedProducts.reduce((acc, p) => {
       const key = `${p.name}-${p.formFactorId}`;
       if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
@@ -184,7 +177,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       acc[key].totalQty += p.quantity;
       return acc;
     }, {} as Record<string, { products: Product[], totalQty: number }>);
-  }, [result.unassignedProducts]);
+  }, [result?.unassignedProducts]);
+
+  if (!results || !result) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
+        <Box size={48} className="mb-4 opacity-50" />
+        <p>Add products and containers, then click Run Optimization or switch to Manual mode.</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="h-full overflow-y-auto p-6 relative">

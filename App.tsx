@@ -1012,6 +1012,26 @@ const App: React.FC = () => {
     }, 100);
   };
 
+  // Initialize Manual Mode (if no results yet)
+  useEffect(() => {
+    if (!results) {
+      setResults({
+        [OptimizationPriority.UTILIZATION]: {
+          assignments: [],
+          unassignedProducts: [],
+          totalCost: 0,
+          reasoning: ''
+        },
+        [OptimizationPriority.MANUAL]: {
+          assignments: [],
+          unassignedProducts: [...products],
+          totalCost: 0,
+          reasoning: 'Manual planning mode'
+        }
+      });
+    }
+  }, [products, results]);
+
   const toggleProductSelection = (id: string) => {
     setSelectedProductIds((prev: Iterable<unknown>) => {
       const next = new Set(prev);

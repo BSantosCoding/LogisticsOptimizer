@@ -431,23 +431,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <div className="text-slate-400 text-xs uppercase font-bold">Containers Used</div>
-          <div className="text-2xl font-bold text-blue-400">{result.assignments.filter(a => a.assignedProducts.length > 0).length}</div>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+          <div className="text-[10px] text-slate-400 mb-0.5">Total Containers</div>
+          <div className="text-xl font-bold text-white">{result.assignments.length}</div>
         </div>
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <div className="text-slate-400 text-xs uppercase font-bold">Avg Utilization</div>
-          <div className="text-2xl font-bold text-purple-400">{result.assignments.length > 0 ? (result.assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / result.assignments.length).toFixed(1) : 0}%</div>
+        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+          <div className="text-[10px] text-slate-400 mb-0.5">Total Cost</div>
+          <div className="text-xl font-bold text-green-400">${result.totalCost.toLocaleString()}</div>
         </div>
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <div className="text-slate-400 text-xs uppercase font-bold">Total Cost</div>
-          <div className="text-2xl font-bold text-green-400">${result.assignments.reduce((sum, a) => sum + getContainerCost(a), 0).toLocaleString()}</div>
-        </div>
-        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <div className="text-slate-400 text-xs uppercase font-bold">Unassigned</div>
-          <div className="text-2xl font-bold text-red-400">{result.unassignedProducts.length}</div>
+        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+          <div className="text-[10px] text-slate-400 mb-0.5">Unassigned Items</div>
+          <div className="text-xl font-bold text-red-400">{result.unassignedProducts.length}</div>
         </div>
       </div>
 

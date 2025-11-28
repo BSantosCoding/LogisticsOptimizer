@@ -1182,11 +1182,7 @@ const App: React.FC = () => {
 
     const newAssignments = currentResult.assignments.map((a: LoadedContainer) => ({
       ...a,
-      container: {
-        ...a.container,
-        destination: a.assignedProducts[0]?.destination,
-      },
-      assignedProducts: [...a.assignedProducts]
+      assignedProducts: [...a.assignedProducts],
     }));
     let newUnassigned = [...currentResult.unassignedProducts];
 
@@ -1309,6 +1305,7 @@ const App: React.FC = () => {
         const freshContainer = containers.find((d: { id: string; }) => d.id === targetId);
         if (freshContainer) {
           const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert);
+          newLoadedContainer.container.destination = productsToInsert[0].destination;
           newAssignments.push(newLoadedContainer);
         }
       } else {

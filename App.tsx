@@ -32,9 +32,9 @@ import ShipmentPanel from './components/panels/ShipmentPanel';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';
-import ImportConfirmModal from './components/ImportConfirmModal';
-import ImportSummaryModal from './components/ImportSummaryModal';
-import ConfirmModal from './components/ConfirmModal';
+import ImportConfirmModal from './components/modals/ImportConfirmModal';
+import ImportSummaryModal from './components/modals/ImportSummaryModal';
+import ConfirmModal from './components/modals/ConfirmModal';
 import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment, LoadedContainer } from './types';
 
 // Default options

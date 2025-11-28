@@ -148,7 +148,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         }
         // Explicitly convert to number to satisfy TypeScript
         const capacityNum = Number(capacity);
-        const utilization = (quantity / capacityNum) * 100;
+        const utilization = (Number(quantity) / capacityNum) * 100;
         maxUtilization = Math.max(maxUtilization, utilization);
         if (utilization > 100) {
           fits = false;

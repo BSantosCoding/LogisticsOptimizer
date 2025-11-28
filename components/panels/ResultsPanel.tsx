@@ -585,15 +585,34 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       </div>
 
       {/* Unassigned Products */}
-      {result.unassignedProducts.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <AlertTriangle size={20} className="text-red-400" /> Unassigned Products
-          </h3>
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-            <div className="grid grid-cols-1 gap-2">
-              {/* Group unassigned products */}
-              {Object.values(groupedUnassigned).map((group: { products: Product[], totalQty: number }, idx) => {
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <AlertTriangle size={20} className="text-red-400" /> Unassigned Products
+        </h3>
+        <div
+          className="bg-slate-800/50 rounded-xl border border-slate-700 p-4 min-h-[100px] transition-colors"
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('bg-slate-800');
+            e.currentTarget.classList.add('border-blue-500');
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.classList.remove('bg-slate-800');
+            e.currentTarget.classList.remove('border-blue-500');
+          }}
+          onDrop={(e) => {
+            e.currentTarget.classList.remove('bg-slate-800');
+            e.currentTarget.classList.remove('border-blue-500');
+            onDropWrapper(e, 'unassigned');
+          }}
+        >
+          <div className="grid grid-cols-1 gap-2">
+            {result.unassignedProducts.length === 0 ? (
+              <div className="text-center text-slate-500 py-8 italic">
+                Drag items here to unassign them from containers
+              </div>
+            ) : (
+              Object.values(groupedUnassigned).map((group: { products: Product[], totalQty: number }, idx) => {
                 const p = group.products[0];
                 if (!p) return null;
                 return (
@@ -607,11 +626,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     <div className="text-red-400 font-bold">{group.totalQty} left</div>
                   </div>
                 );
-              })}
-            </div>
+              })
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

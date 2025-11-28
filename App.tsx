@@ -107,7 +107,7 @@ const App: React.FC = () => {
 
   // Settings
   const [results, setResults] = useState<Record<OptimizationPriority, OptimizationResult> | null>(null);
-  const [activePriority, setActivePriority] = useState<OptimizationPriority>(OptimizationPriority.BALANCE);
+  const [activePriority, setActivePriority] = useState<OptimizationPriority>(OptimizationPriority.MANUAL);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
@@ -989,35 +989,18 @@ const App: React.FC = () => {
         ? assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignments.length
         : 0;
 
+      const utilizationResult: OptimizationResult = {
+        assignments,
+        unassignedProducts: unassigned,
+        totalCost,
+        reasoning: `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.`
+      };
+
       const newResults: Record<OptimizationPriority, OptimizationResult> = {
-        [OptimizationPriority.UTILIZATION]: {
-          assignments,
-          unassignedProducts: unassigned,
-          totalCost,
-          reasoning: `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.`
-        },
-        // Dummy entries for other priorities (not used)
-        [OptimizationPriority.COST]: {
+        [OptimizationPriority.UTILIZATION]: utilizationResult,
+        [OptimizationPriority.MANUAL]: results?.[OptimizationPriority.MANUAL] || {
           assignments: [],
-          unassignedProducts: [],
-          totalCost: 0,
-          reasoning: ''
-        },
-        [OptimizationPriority.TIME]: {
-          assignments: [],
-          unassignedProducts: [],
-          totalCost: 0,
-          reasoning: ''
-        },
-        [OptimizationPriority.BALANCE]: {
-          assignments: [],
-          unassignedProducts: [],
-          totalCost: 0,
-          reasoning: ''
-        },
-        [OptimizationPriority.MANUAL]: {
-          assignments: [],
-          unassignedProducts: [...products], // Start with all products unassigned
+          unassignedProducts: [...products],
           totalCost: 0,
           reasoning: 'Manual planning mode'
         }

@@ -1184,7 +1184,7 @@ const App: React.FC = () => {
       ...a,
       container: {
         ...a.container,
-        destination: a.assignedProducts[0].destination,
+        destination: a.assignedProducts[0]?.destination,
       },
       assignedProducts: [...a.assignedProducts]
     }));

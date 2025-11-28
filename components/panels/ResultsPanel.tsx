@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save } from 'lucide-react';
+import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2 } from 'lucide-react';
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -70,7 +70,85 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     const country = loadedContainer.assignedProducts[0]?.country;
     return (country && countryCosts[country]?.[loadedContainer.container.id]) ?? loadedContainer.container.cost;
   };
+
   const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+
+  // Handler to unassign all units of a product from a container
+  const handleUnassignProduct = (productId: string, containerId: string) => {
+    // Create a mock drag event to trigger the existing drop handler
+    const mockEvent = {
+      preventDefault: () => { },
+      dataTransfer: {
+        getData: (key: string) => {
+          if (key === "productId") return productId;
+          if (key === "sourceId") return containerId;
+          return "";
+        }
+      },
+      currentTarget: {
+        classList: {
+          add: () => { },
+          remove: () => { }
+        }
+      }
+    } as unknown as React.DragEvent;
+
+    onDropWrapper(mockEvent, 'unassigned');
+  };
+
+  // Toggle product selection
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
+  // Calculate utilization preview for selected products
+  const calculateUtilizationPreview = () => {
+    if (!result || selectedProducts.size === 0) return null;
+
+    const selectedItems = result.unassignedProducts.filter(p => selectedProducts.has(p.id));
+    if (selectedItems.length === 0) return null;
+
+    // Calculate total volume of selected items
+    const totalVolume = selectedItems.reduce((sum, p) => sum + (p.volume * p.quantity), 0);
+
+    // Check if items can be grouped together (same destination, compatible requirements)
+    const destinations = new Set(selectedItems.map(p => p.country));
+    const hasTemperatureControl = selectedItems.some(p => p.requiresTemperatureControl);
+    const canGroup = destinations.size === 1;
+
+    // Calculate utilization for each container
+    const containerPreviews = containers.map(container => {
+      // Check if container meets requirements
+      const meetsRequirements = !hasTemperatureControl || container.capabilities?.includes('Temperature Control');
+      const utilization = (totalVolume / container.capacity) * 100;
+
+      return {
+        container,
+        utilization: Math.min(utilization, 100),
+        meetsRequirements,
+        fits: utilization <= 100 && meetsRequirements
+      };
+    }).filter(p => p.meetsRequirements);
+
+    return {
+      totalVolume,
+      canGroup,
+      destinations: Array.from(destinations),
+      hasTemperatureControl,
+      containerPreviews
+    };
+  };
+
+  const utilizationPreview = calculateUtilizationPreview();
 
   const toggleDestination = (dest: string) => {
     setCollapsedDestinations(prev => {
@@ -392,21 +470,78 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   Object.values(groupedUnassigned).map((group: { products: Product[], totalQty: number }, idx) => {
                     const p = group.products[0];
                     if (!p) return null;
+                    const isSelected = selectedProducts.has(p.id);
                     return (
                       <div
                         key={`${p.id}-${idx}`}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
-                        className="bg-slate-800 p-2 rounded-lg border border-slate-700 flex justify-between items-center cursor-grab active:cursor-grabbing hover:border-slate-500 transition-colors text-sm"
+                        className={`bg-slate-800 p-2 rounded-lg border flex items-center gap-2 transition-colors text-sm ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 hover:border-slate-500'
+                          }`}
                       >
-                        <div className="font-medium text-slate-300 truncate">{p.name}</div>
-                        <div className="text-red-400 font-bold text-xs ml-2">{group.totalQty}</div>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleProductSelection(p.id)}
+                          className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer"
+                        />
+                        <div
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, p.id, 'unassigned')}
+                          className="flex-1 flex justify-between items-center cursor-grab active:cursor-grabbing"
+                        >
+                          <div className="font-medium text-slate-300 truncate">{p.name}</div>
+                          <div className="text-red-400 font-bold text-xs ml-2">{group.totalQty}</div>
+                        </div>
                       </div>
                     );
                   })
                 )}
               </div>
             </div>
+
+            {/* Utilization Preview */}
+            {utilizationPreview && (
+              <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                <h4 className="text-xs font-semibold text-white mb-2">
+                  Selected: {selectedProducts.size} items
+                </h4>
+
+                {!utilizationPreview.canGroup && (
+                  <div className="mb-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs text-yellow-400">
+                    ⚠️ Items from different destinations
+                  </div>
+                )}
+
+                {utilizationPreview.hasTemperatureControl && (
+                  <div className="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs text-blue-400">
+                    ❄️ Requires Temperature Control
+                  </div>
+                )}
+
+                <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-hide">
+                  {utilizationPreview.containerPreviews.map((preview) => (
+                    <div
+                      key={preview.container.id}
+                      className={`p-2 rounded text-xs ${preview.fits
+                          ? 'bg-green-500/10 border border-green-500/30'
+                          : 'bg-red-500/10 border border-red-500/30'
+                        }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className={preview.fits ? 'text-green-400' : 'text-red-400'}>
+                          {preview.container.name}
+                        </span>
+                        <span className={`font-bold ${preview.fits ? 'text-green-400' : 'text-red-400'}`}>
+                          {preview.utilization.toFixed(1)}%
+                        </span>
+                      </div>
+                      {!preview.fits && preview.utilization > 100 && (
+                        <div className="text-red-300 text-[10px] mt-0.5">Too large</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -612,10 +747,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                       <Box size={14} className="text-blue-400 shrink-0" />
                                       <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 shrink-0">
+                                    <div className="flex items-center gap-2 shrink-0">
                                       <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
                                         {group.totalQty} units
                                       </span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleUnassignProduct(p.id, loadedContainer.container.id);
+                                        }}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300"
+                                        title="Unassign all units"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
                                     </div>
                                   </div>
                                 );

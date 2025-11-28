@@ -29,6 +29,7 @@ import CountryPanel from './components/panels/CountryPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
 import ShipmentPanel from './components/panels/ShipmentPanel';
+import SuperAdminPanel from './components/panels/SuperAdminPanel';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';
@@ -49,7 +50,7 @@ const App: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('');
   const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
-  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'standard' | null>(null);
+  const [userRole, setUserRole] = useState<'super_admin' | 'admin' | 'manager' | 'standard' | null>(null);
 
   // --- Onboarding State ---
   const [isSetupRequired, setIsSetupRequired] = useState(false);
@@ -61,7 +62,7 @@ const App: React.FC = () => {
   const [setupError, setSetupError] = useState<string | null>(null);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
 
   // Data
@@ -182,19 +183,38 @@ const App: React.FC = () => {
         return;
       }
 
+
       const status = profile.status || 'active';
       const role = profile.role || 'standard';
 
       setApprovalStatus(status as 'active' | 'pending');
-      setUserRole(role as 'admin' | 'manager' | 'standard');
+      setUserRole(role as 'super_admin' | 'admin' | 'manager' | 'standard');
+
+      // Super admins don't have a company - they manage all companies
+      if (role === 'super_admin') {
+        setCompanyName('Super Admin');
+        setIsSetupRequired(false);
+        setIsDataLoading(false);
+        return;
+      }
 
       const { data: company } = await supabase
         .from('companies')
-        .select('name')
+        .select('name, approval_status')
         .eq('id', profile.company_id)
         .single();
 
-      if (company) setCompanyName(company.name);
+      if (company) {
+        setCompanyName(company.name);
+
+        // Check if company is approved
+        if (company.approval_status !== 'approved') {
+          setApprovalStatus('pending'); // Treat unapproved company as pending user
+          setIsSetupRequired(false);
+          setIsDataLoading(false);
+          return; // Stop loading data if company not approved
+        }
+      }
 
       if (status === 'pending') {
         setIsSetupRequired(false);
@@ -202,7 +222,7 @@ const App: React.FC = () => {
         return; // Stop loading data if pending
       }
 
-      // Valid active profile exists, load data
+      // Valid active profile exists with approved company, load data
       setCompanyId(profile.company_id);
       setIsSetupRequired(false);
 
@@ -289,17 +309,20 @@ const App: React.FC = () => {
 
       if (setupMode === 'create') {
         if (!setupCompanyName) return;
-        // Create Company
+        // Create Company with pending approval status
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
-          .insert([{ name: setupCompanyName }])
+          .insert([{
+            name: setupCompanyName,
+            approval_status: 'pending' // New companies need super admin approval
+          }])
           .select()
           .single();
 
         if (companyError) throw companyError;
         targetCompanyId = companyData.id;
-        initialStatus = 'active'; // Creator is always active
-        initialRole = 'admin';    // Creator is Admin
+        initialStatus = 'pending'; // Creator waits for company approval
+        initialRole = 'admin';    // Creator will be Admin once approved
       } else {
         if (!selectedCompanyId) return;
         initialStatus = 'pending'; // Joiners must be approved
@@ -1353,6 +1376,8 @@ const App: React.FC = () => {
 
   // --- VIEW: PENDING APPROVAL ---
   if (approvalStatus === 'pending') {
+    const isPendingCompanyApproval = companyName && companyName !== 'Super Admin';
+
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md text-center">
@@ -1361,10 +1386,21 @@ const App: React.FC = () => {
               <Clock className="text-orange-400" size={48} />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Access Pending</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {isPendingCompanyApproval ? 'Company Awaiting Approval' : 'Access Pending'}
+          </h2>
           <p className="text-slate-400 mb-6">
-            Your request to join <strong>{companyName}</strong> has been sent. <br />
-            An administrator must approve your account.
+            {isPendingCompanyApproval ? (
+              <>
+                Your company <strong>{companyName}</strong> is awaiting approval from a Super Admin. <br />
+                You'll be able to access the platform once approved.
+              </>
+            ) : (
+              <>
+                Your request to join <strong>{companyName}</strong> has been sent. <br />
+                An administrator must approve your account.
+              </>
+            )}
           </p>
           <div className="space-y-3">
             <Button onClick={handleCheckStatus} isLoading={isDataLoading} className="w-full">
@@ -1380,7 +1416,7 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div >
     );
   }
 
@@ -1588,6 +1624,20 @@ const App: React.FC = () => {
         </nav>
 
         <div className="mt-auto flex flex-col gap-4">
+          {/* Super Admin Button - Only visible to super admins */}
+          {userRole === 'super_admin' && (
+            <button
+              onClick={() => setInputMode('super_admin')}
+              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin'
+                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20'
+                : 'text-slate-500 hover:text-purple-400 hover:bg-slate-900'
+                }`}
+              title="Super Admin Panel"
+            >
+              <Building2 size={20} />
+              <span className="text-[10px] font-medium">Admin</span>
+            </button>
+          )}
           <button onClick={handleLogout} className="text-slate-600 hover:text-red-400 transition-colors p-2">
             <LogOut size={20} />
           </button>
@@ -1804,6 +1854,12 @@ const App: React.FC = () => {
                     viewMode="list"
                     currentUserId={session?.user?.id || ''}
                   />
+                </div>
+              )}
+
+              {inputMode === 'super_admin' && userRole === 'super_admin' && (
+                <div className="flex-1 overflow-hidden">
+                  <SuperAdminPanel onRefresh={loadUserData} />
                 </div>
               )}
             </div>

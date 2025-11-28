@@ -62,10 +62,17 @@ export enum OptimizationPriority {
   MANUAL = 'Manual'
 }
 
+export interface Company {
+  id: string;
+  name: string;
+  created_at: string;
+  approval_status: 'pending' | 'approved' | 'rejected';
+}
+
 export interface UserProfile {
   id: string;
   email: string;
   company_id: string;
   status: 'active' | 'pending';
-  role: 'admin' | 'manager' | 'standard';
+  role: 'super_admin' | 'admin' | 'manager' | 'standard';
 }

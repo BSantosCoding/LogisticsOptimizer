@@ -351,242 +351,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Split Content Area */}
       <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Main Content - Containers */}
-        <div className="flex-1 overflow-y-auto pr-2">
-          {/* Assignments Visualizer */}
-          <div className="space-y-8">
-            <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
-                    setCollapsedDestinations(new Set());
-                  } else {
-                    setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
-                  }
-                }}
-                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-              >
-                {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
-              </button>
-            </div>
-
-            {/* Add Container Modal */}
-            {addContainerModal && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl max-h-[80vh] overflow-y-auto">
-                  <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
-                  <div className="space-y-2">
-                    {containers.map((container) => (
-                      <button
-                        key={container.id}
-                        onClick={() => handleAddContainer(container)}
-                        className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600 transition-colors flex justify-between items-center group"
-                      >
-                        <div>
-                          <div className="font-medium text-slate-200">{container.name}</div>
-                          <div className="text-xs text-slate-400 mt-1">
-                            {container.destination || 'No Destination'} • ${container.cost.toLocaleString()}
-                          </div>
-                        </div>
-                        <ChevronRight size={16} className="text-slate-500 group-hover:text-white" />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      onClick={() => setAddContainerModal(false)}
-                      className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {Object.entries(groupedAssignments).map(([destination, assignments]: [string, LoadedContainer[]]) => {
-              const isCollapsed = collapsedDestinations.has(destination);
-
-              // Check for issues in this group
-              const hasIssues = assignments.some(a => a.validationIssues && a.validationIssues.length > 0);
-              const hasUtilizationWarning = assignments.some(a => {
-                const util = a.totalUtilization;
-                // Use passed optimal range or default
-                const minUtil = optimalRange?.min || 85;
-                const maxUtil = optimalRange?.max || 100;
-                return util < minUtil || util > maxUtil + 0.1; // +0.1 for tolerance
-              });
-
-              const headerColorClass = hasIssues
-                ? 'text-red-400'
-                : hasUtilizationWarning
-                  ? 'text-yellow-400'
-                  : 'text-slate-200';
-
-              const borderColorClass = hasIssues
-                ? 'border-red-900/50'
-                : hasUtilizationWarning
-                  ? 'border-yellow-900/50'
-                  : 'border-slate-700';
-
-              return (
-                <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''}`}>
-                  <div
-                    className="flex items-center gap-2 cursor-pointer group"
-                    onClick={() => toggleDestination(destination)}
-                  >
-                    {isCollapsed ? <ChevronRight size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
-                    <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
-                      <MapPin size={18} />
-                      {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
-                      {assignments[0]?.assignedProducts[0]?.shipToName && (
-                        <span className="text-sm font-normal text-slate-400 ml-1">
-                          - {assignments[0].assignedProducts[0].shipToName}
-                        </span>
-                      )}
-                      {assignments[0]?.assignedProducts[0]?.country && (
-                        <span className="text-sm font-normal text-slate-400 ml-1">
-                          ({assignments[0].assignedProducts[0].country})
-                        </span>
-                      )}
-                      <span className="text-sm font-normal text-slate-500 ml-2">
-                        ({assignments.length} Containers)
-                      </span>
-                      <span className="text-sm font-normal text-green-400 ml-2">
-                        ${assignments.reduce((sum, a) => sum + getContainerCost(a), 0).toLocaleString()}
-                      </span>
-                      {isCollapsed && hasIssues && (
-                        <span className="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded flex items-center gap-1">
-                          <AlertTriangle size={12} /> Issues
-                        </span>
-                      )}
-                      {isCollapsed && !hasIssues && hasUtilizationWarning && (
-                        <span className="text-xs bg-yellow-900/30 text-yellow-400 px-2 py-0.5 rounded flex items-center gap-1">
-                          <AlertTriangle size={12} /> Utilization
-                        </span>
-                      )}
-                    </h3>
-                    <div className="h-px bg-slate-700 flex-1 ml-4 group-hover:bg-slate-600 transition-colors" />
-                  </div>
-
-                  {!isCollapsed && assignments.map((loadedContainer) => {
-                    // Extract instance number from ID (format: templateId-instance-N)
-                    const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
-                    const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
-
-                    const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
-                    const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
-
-                    // Group products for display
-                    const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
-                    loadedContainer.assignedProducts.forEach(p => {
-                      const key = `${p.name}-${p.formFactorId}`;
-                      if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
-                      productGroups[key].products.push(p);
-                      productGroups[key].totalQty += p.quantity;
-                    });
-                    const groupedProducts = Object.values(productGroups);
-
-                    return (
-                      <div
-                        key={loadedContainer.container.id}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
-                        className={`bg-slate-800 rounded-lg border transition-all duration-200 
-                    ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
-                  `}
-                      >
-                        <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
-                          }`}>
-                          <div>
-                            <div className="font-semibold text-white flex items-center gap-2">
-                              {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
-                              {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
-                                <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">
-                                  <AlertTriangle size={12} /> Issues Found
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-slate-400 mt-0.5 flex gap-3">
-                              <span>{loadedContainer.container.destination || 'No Dest'}</span>
-                              <span>•</span>
-                              <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
-                              <span>•</span>
-                              <span className="text-green-400">${getContainerCost(loadedContainer).toLocaleString()}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
-                              {loadedContainer.totalUtilization.toFixed(1)}%
-                            </div>
-                            <div className="text-xs text-slate-500">Utilization</div>
-                          </div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="h-2 bg-slate-900 w-full">
-                          <div
-                            className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
-                            style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
-                          />
-                        </div>
-
-                        {/* Products List */}
-                        <div className="p-3 space-y-2">
-                          {loadedContainer.assignedProducts.length === 0 ? (
-                            <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
-                          ) : (
-                            groupedProducts.map((group, idx) => {
-                              const p = group.products[0]; // Representative product
-                              return (
-                                <div
-                                  key={`${p.id}-${idx}`}
-                                  draggable
-                                  onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
-                                  className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
-                                >
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                    <Box size={14} className="text-blue-400 shrink-0" />
-                                    <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
-                                      {group.totalQty} units
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-
-                          {/* Validation Issues */}
-                          {loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-slate-700">
-                              <div className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
-                                <AlertTriangle size={14} />
-                                Validation Issues:
-                              </div>
-                              <ul className="space-y-1">
-                                {loadedContainer.validationIssues.map((issue, idx) => (
-                                  <li key={idx} className="text-xs text-red-300 pl-4">
-                                    • {issue}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Sidebar - Unassigned Items & Add Container */}
-        <div className="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+        {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
+        <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
           {/* Add Container Button */}
           <button
             onClick={() => setAddContainerModal(true)}
@@ -596,12 +362,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </button>
 
           {/* Unassigned Products */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-red-400" /> Unassigned Items
             </h3>
             <div
-              className="flex-1 bg-slate-800/50 rounded-xl border border-slate-700 p-3 min-h-[200px] transition-colors"
+              className="flex-1 bg-slate-800/50 rounded-xl border border-slate-700 p-3 min-h-[200px] transition-colors overflow-y-auto scrollbar-hide"
               onDragOver={(e) => {
                 e.preventDefault();
                 e.currentTarget.classList.add('bg-slate-800');
@@ -640,6 +406,245 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   })
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content - Containers (RIGHT, 80%) */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Sticky Collapse All Button */}
+          <div className="flex-shrink-0 pb-3 flex justify-end sticky top-0 bg-slate-900 z-10">
+            <button
+              onClick={() => {
+                if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
+                  setCollapsedDestinations(new Set());
+                } else {
+                  setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
+                }
+              }}
+              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            >
+              {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
+            </button>
+          </div>
+
+          {/* Scrollable Assignments Area */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
+            {/* Assignments Visualizer */}
+            <div className="space-y-8">
+
+              {/* Add Container Modal */}
+              {addContainerModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl max-h-[80vh] overflow-y-auto">
+                    <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
+                    <div className="space-y-2">
+                      {containers.map((container) => (
+                        <button
+                          key={container.id}
+                          onClick={() => handleAddContainer(container)}
+                          className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600 transition-colors flex justify-between items-center group"
+                        >
+                          <div>
+                            <div className="font-medium text-slate-200">{container.name}</div>
+                            <div className="text-xs text-slate-400 mt-1">
+                              {container.destination || 'No Destination'} • ${container.cost.toLocaleString()}
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-slate-500 group-hover:text-white" />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => setAddContainerModal(false)}
+                        className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {Object.entries(groupedAssignments).map(([destination, assignments]: [string, LoadedContainer[]]) => {
+                const isCollapsed = collapsedDestinations.has(destination);
+
+                // Check for issues in this group
+                const hasIssues = assignments.some(a => a.validationIssues && a.validationIssues.length > 0);
+                const hasUtilizationWarning = assignments.some(a => {
+                  const util = a.totalUtilization;
+                  // Use passed optimal range or default
+                  const minUtil = optimalRange?.min || 85;
+                  const maxUtil = optimalRange?.max || 100;
+                  return util < minUtil || util > maxUtil + 0.1; // +0.1 for tolerance
+                });
+
+                const headerColorClass = hasIssues
+                  ? 'text-red-400'
+                  : hasUtilizationWarning
+                    ? 'text-yellow-400'
+                    : 'text-slate-200';
+
+                const borderColorClass = hasIssues
+                  ? 'border-red-900/50'
+                  : hasUtilizationWarning
+                    ? 'border-yellow-900/50'
+                    : 'border-slate-700';
+
+                return (
+                  <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''}`}>
+                    <div
+                      className="flex items-center gap-2 cursor-pointer group"
+                      onClick={() => toggleDestination(destination)}
+                    >
+                      {isCollapsed ? <ChevronRight size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
+                      <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
+                        <MapPin size={18} />
+                        {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
+                        {assignments[0]?.assignedProducts[0]?.shipToName && (
+                          <span className="text-sm font-normal text-slate-400 ml-1">
+                            - {assignments[0].assignedProducts[0].shipToName}
+                          </span>
+                        )}
+                        {assignments[0]?.assignedProducts[0]?.country && (
+                          <span className="text-sm font-normal text-slate-400 ml-1">
+                            ({assignments[0].assignedProducts[0].country})
+                          </span>
+                        )}
+                        <span className="text-sm font-normal text-slate-500 ml-2">
+                          ({assignments.length} Containers)
+                        </span>
+                        <span className="text-sm font-normal text-green-400 ml-2">
+                          ${assignments.reduce((sum, a) => sum + getContainerCost(a), 0).toLocaleString()}
+                        </span>
+                        {isCollapsed && hasIssues && (
+                          <span className="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded flex items-center gap-1">
+                            <AlertTriangle size={12} /> Issues
+                          </span>
+                        )}
+                        {isCollapsed && !hasIssues && hasUtilizationWarning && (
+                          <span className="text-xs bg-yellow-900/30 text-yellow-400 px-2 py-0.5 rounded flex items-center gap-1">
+                            <AlertTriangle size={12} /> Utilization
+                          </span>
+                        )}
+                      </h3>
+                      <div className="h-px bg-slate-700 flex-1 ml-4 group-hover:bg-slate-600 transition-colors" />
+                    </div>
+
+                    {!isCollapsed && assignments.map((loadedContainer) => {
+                      // Extract instance number from ID (format: templateId-instance-N)
+                      const instanceMatch = loadedContainer.container.id.match(/-instance-(\d+)$/);
+                      const instanceNumber = instanceMatch ? `#${instanceMatch[1]}` : '';
+
+                      const isLowUtilization = loadedContainer.totalUtilization < optimalRange.min;
+                      const isOptimal = loadedContainer.totalUtilization >= optimalRange.min && loadedContainer.totalUtilization <= optimalRange.max;
+
+                      // Group products for display
+                      const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
+                      loadedContainer.assignedProducts.forEach(p => {
+                        const key = `${p.name}-${p.formFactorId}`;
+                        if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
+                        productGroups[key].products.push(p);
+                        productGroups[key].totalQty += p.quantity;
+                      });
+                      const groupedProducts = Object.values(productGroups);
+
+                      return (
+                        <div
+                          key={loadedContainer.container.id}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
+                          className={`bg-slate-800 rounded-lg border transition-all duration-200 
+                    ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
+                  `}
+                        >
+                          <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
+                            }`}>
+                            <div>
+                              <div className="font-semibold text-white flex items-center gap-2">
+                                {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
+                                {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
+                                  <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">
+                                    <AlertTriangle size={12} /> Issues Found
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-400 mt-0.5 flex gap-3">
+                                <span>{loadedContainer.container.destination || 'No Dest'}</span>
+                                <span>•</span>
+                                <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
+                                <span>•</span>
+                                <span className="text-green-400">${getContainerCost(loadedContainer).toLocaleString()}</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
+                                {loadedContainer.totalUtilization.toFixed(1)}%
+                              </div>
+                              <div className="text-xs text-slate-500">Utilization</div>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="h-2 bg-slate-900 w-full">
+                            <div
+                              className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
+                              style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
+                            />
+                          </div>
+
+                          {/* Products List */}
+                          <div className="p-3 space-y-2">
+                            {loadedContainer.assignedProducts.length === 0 ? (
+                              <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
+                            ) : (
+                              groupedProducts.map((group, idx) => {
+                                const p = group.products[0]; // Representative product
+                                return (
+                                  <div
+                                    key={`${p.id}-${idx}`}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
+                                    className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
+                                  >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                      <Box size={14} className="text-blue-400 shrink-0" />
+                                      <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                      <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
+                                        {group.totalQty} units
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+
+                            {/* Validation Issues */}
+                            {loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0 && (
+                              <div className="mt-3 pt-3 border-t border-slate-700">
+                                <div className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
+                                  <AlertTriangle size={14} />
+                                  Validation Issues:
+                                </div>
+                                <ul className="space-y-1">
+                                  {loadedContainer.validationIssues.map((issue, idx) => (
+                                    <li key={idx} className="text-xs text-red-300 pl-4">
+                                      • {issue}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

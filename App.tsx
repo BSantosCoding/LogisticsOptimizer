@@ -1180,8 +1180,12 @@ const App: React.FC = () => {
 
     if (sourceId === targetId) return;
 
-    const newAssignments = currentResult.assignments.map((a: { assignedProducts: any; }) => ({
+    const newAssignments = currentResult.assignments.map((a: LoadedContainer) => ({
       ...a,
+      container: {
+        ...a.container,
+        destination: a.assignedProducts[0].destination,
+      },
       assignedProducts: [...a.assignedProducts]
     }));
     let newUnassigned = [...currentResult.unassignedProducts];

@@ -162,10 +162,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
     );
   }
 
-  // LIST VIEW - 3 separate blocks: Templates, Optimal Range, Tags
+  // LIST VIEW - Templates left, Optimal Range + Tags stacked right
   return (
     <div className="flex gap-4 h-full">
-      {/* Product Templates Panel */}
+      {/* Product Templates Panel - Takes most space */}
       <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -263,100 +263,103 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
       </div>
 
-      {/* Optimal Range Panel */}
-      {optimalRange && setOptimalRange && (
-        <div className="w-80 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-700 bg-slate-800/50">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Settings className="text-green-400" size={20} />
-              Optimization
-            </h2>
-          </div>
-
-          <div className="p-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Optimal Utilization Range (%)</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={optimalRange.min}
-                  onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  placeholder="Min"
-                />
-                <span className="text-slate-500">-</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={optimalRange.max}
-                  onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  placeholder="Max"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Target utilization range for containers. Optimization will aim to keep containers within this range.
-              </p>
+      {/* Right Column - Optimal Range + Tags stacked */}
+      <div className="w-80 flex flex-col gap-4">
+        {/* Optimal Range Panel - Compact */}
+        {optimalRange && setOptimalRange && (
+          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-slate-700 bg-slate-800/50">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Settings className="text-green-400" size={20} />
+                Optimization
+              </h2>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Restriction Tags Panel */}
-      <div className="w-80 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <ShieldAlert className="text-purple-400" size={20} />
-            Restriction Tags
-          </h2>
-          <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
-            {restrictionTags.length}
-          </span>
-        </div>
-
-        {/* Tag Creation Form - For Managers and Admins */}
-        {canManageConfig && (
-          <div className="p-4 border-b border-slate-700 bg-slate-800/30">
-            <div className="space-y-3">
+            <div className="p-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Tag Name</label>
-                <input
-                  placeholder="e.g. Fragile"
-                  value={newTag}
-                  onChange={e => setNewTag(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
+                <label className="block text-xs font-medium text-slate-400 mb-1">Optimal Utilization Range (%)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={optimalRange.min}
+                    onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="Min"
+                  />
+                  <span className="text-slate-500">-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={optimalRange.max}
+                    onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    placeholder="Max"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Target utilization range for containers.
+                </p>
               </div>
-              <button
-                onClick={handleAddTag}
-                className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
-              >
-                <Plus size={16} /> Add Tag
-              </button>
             </div>
           </div>
         )}
 
-        {/* Tags List */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {restrictionTags.map(tag => (
-            <div key={tag} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-purple-500/50 transition-colors">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-200">{tag}</span>
-                {!DEFAULT_RESTRICTIONS.includes(tag) && canManageConfig && (
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+        {/* Restriction Tags Panel */}
+        <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <ShieldAlert className="text-purple-400" size={20} />
+              Restriction Tags
+            </h2>
+            <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
+              {restrictionTags.length}
+            </span>
+          </div>
+
+          {/* Tag Creation Form - For Managers and Admins */}
+          {canManageConfig && (
+            <div className="p-4 border-b border-slate-700 bg-slate-800/30">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Tag Name</label>
+                  <input
+                    placeholder="e.g. Fragile"
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleAddTag}
+                  className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} /> Add Tag
+                </button>
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Tags List */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            {restrictionTags.map(tag => (
+              <div key={tag} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-purple-500/50 transition-colors">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-200">{tag}</span>
+                  {!DEFAULT_RESTRICTIONS.includes(tag) && canManageConfig && (
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

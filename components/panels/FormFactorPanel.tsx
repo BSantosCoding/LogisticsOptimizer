@@ -2,20 +2,23 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Box, Pencil, Save, X } from 'lucide-react';
 import Button from '../Button';
 import { ProductFormFactor } from '../../types';
+import { Role, hasRole } from '../../utils/roles';
 
 interface FormFactorPanelProps {
     formFactors: ProductFormFactor[];
     onAdd: (name: string, description: string) => void;
     onRemove: (id: string) => void;
     onEdit: (id: string, name: string, description: string) => void;
+    userRole: Role | null;
 }
 
-const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove, onEdit }) => {
+const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove, onEdit, userRole }) => {
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editDesc, setEditDesc] = useState('');
+    const canManage = hasRole(userRole, 'manager');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,33 +60,35 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                 </span>
             </div>
 
-            <div className="p-4 border-b border-slate-700 bg-slate-800/30">
-                <form onSubmit={handleSubmit} className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
-                        <input
-                            type="text"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder="e.g. OSB, IBC"
-                            className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                        <input
-                            type="text"
-                            value={newDesc}
-                            onChange={(e) => setNewDesc(e.target.value)}
-                            placeholder="Optional description"
-                            className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <Button type="submit" disabled={!newName} className="w-full">
-                        <Plus size={16} className="mr-2" /> Add Form Factor
-                    </Button>
-                </form>
-            </div>
+            {canManage && (
+                <div className="p-4 border-b border-slate-700 bg-slate-800/30">
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-400 mb-1">Name</label>
+                            <input
+                                type="text"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                placeholder="e.g. OSB, IBC"
+                                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-400 mb-1">Description</label>
+                            <input
+                                type="text"
+                                value={newDesc}
+                                onChange={(e) => setNewDesc(e.target.value)}
+                                placeholder="Optional description"
+                                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                        <Button type="submit" disabled={!newName} className="w-full">
+                            <Plus size={16} className="mr-2" /> Add Form Factor
+                        </Button>
+                    </form>
+                </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {formFactors.length === 0 ? (
@@ -129,22 +134,24 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                                         <div className="font-medium text-slate-200">{ff.name}</div>
                                         {ff.description && <div className="text-xs text-slate-500">{ff.description}</div>}
                                     </div>
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => startEdit(ff)}
-                                            className="text-slate-500 hover:text-blue-400 p-1 rounded hover:bg-blue-400/10 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => onRemove(ff.id)}
-                                            className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-red-400/10 transition-colors"
-                                            title="Remove"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                    {canManage && (
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => startEdit(ff)}
+                                                className="text-slate-500 hover:text-blue-400 p-1 rounded hover:bg-blue-400/10 transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => onRemove(ff.id)}
+                                                className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-red-400/10 transition-colors"
+                                                title="Remove"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

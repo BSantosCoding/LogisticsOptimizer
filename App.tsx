@@ -247,7 +247,7 @@ const App: React.FC = () => {
         .eq('company_id', profile.company_id)
         .eq('created_by', session.user.id);
 
-      const { data: dealsData } = await supabase.from('deals').select('*').eq('company_id', profile.company_id);
+      const { data: containersData } = await supabase.from('containers').select('*').eq('company_id', profile.company_id);
       const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', profile.company_id);
       const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', profile.company_id);
       const { data: ffData } = await supabase.from('form_factors').select('*').eq('company_id', profile.company_id);
@@ -264,8 +264,8 @@ const App: React.FC = () => {
         })));
       }
 
-      if (dealsData) {
-        setContainers(dealsData.map((r: any) => ({
+      if (containersData) {
+        setContainers(containersData.map((r: any) => ({
           ...r.data,
           id: r.id,
           name: r.data.carrierName ? `${r.data.carrierName} ${r.data.containerType}` : r.data.name, // Migration fallback
@@ -650,7 +650,7 @@ const App: React.FC = () => {
 
     if (editingContainerId) {
       updatedContainers = containers.map((d: { id: any; }) => d.id === editingContainerId ? { ...containerData, id: editingContainerId } : d);
-      await supabase.from('deals').update({
+      await supabase.from('containers').update({
         data: containerData,
         capacities: containerData.capacities
       }).eq('id', editingContainerId);
@@ -659,7 +659,7 @@ const App: React.FC = () => {
       const newId = `C-${Date.now()}`;
       const newContainerWithId = { ...containerData, id: newId };
       updatedContainers = [...containers, newContainerWithId];
-      await supabase.from('deals').insert([{
+      await supabase.from('containers').insert([{
         id: newId,
         company_id: companyId,
         data: containerData,
@@ -692,7 +692,7 @@ const App: React.FC = () => {
       next.delete(id);
       return next;
     });
-    await supabase.from('deals').delete().eq('id', id);
+    await supabase.from('containers').delete().eq('id', id);
   };
 
   const handleCancelContainerEdit = () => {
@@ -1191,7 +1191,7 @@ const App: React.FC = () => {
     setSelectedContainerIds(new Set());
     setResults(null);
 
-    await supabase.from('deals').delete().eq('company_id', companyId);
+    await supabase.from('containers').delete().eq('company_id', companyId);
   };
 
 
@@ -1852,6 +1852,7 @@ const App: React.FC = () => {
                       onAdd={handleAddFormFactor}
                       onRemove={handleRemoveFormFactor}
                       onEdit={handleEditFormFactor}
+                      userRole={effectiveRole}
                     />
                   </div>
                   <ConfigPanel

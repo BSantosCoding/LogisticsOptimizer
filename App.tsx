@@ -25,7 +25,7 @@ import {
 import Auth from './components/Auth';
 import Button from './components/Button';
 import ProductPanel from './components/panels/ProductPanel';
-import ContainerPanel from './components/panels/DealPanel'; // Renamed component, file kept for now
+import ContainerPanel from './components/panels/ContainerPanel'; // Renamed component, file kept for now
 import ConfigPanel from './components/panels/ConfigPanel';
 import ManagementPanel from './components/panels/ManagementPanel';
 import CountryPanel from './components/panels/CountryPanel';
@@ -1803,26 +1803,28 @@ const App: React.FC = () => {
 
               {inputMode === 'containers' && (
                 <div className="flex-1 flex overflow-hidden">
-                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
-                    <ContainerPanel
-                      viewMode="form"
-                      containers={containers}
-                      newContainer={newContainer}
-                      setNewContainer={setNewContainer}
-                      editingContainerId={editingContainerId}
-                      handleSaveContainer={handleSaveContainer}
-                      handleEditContainer={handleEditContainer}
-                      handleRemoveContainer={handleRemoveContainer}
-                      handleCancelContainerEdit={handleCancelContainerEdit}
-                      restrictionTags={restrictionTags}
-                      selectedContainerIds={selectedContainerIds}
-                      toggleContainerSelection={toggleContainerSelection}
-                      onImport={handleImportDeals}
-                      onClearAll={handleClearDeals}
-                      formFactors={formFactors}
-                      userRole={effectiveRole}
-                    />
-                  </div>
+                  {hasRole(effectiveRole, 'manager') && (
+                    <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                      <ContainerPanel
+                        viewMode="form"
+                        containers={containers}
+                        newContainer={newContainer}
+                        setNewContainer={setNewContainer}
+                        editingContainerId={editingContainerId}
+                        handleSaveContainer={handleSaveContainer}
+                        handleEditContainer={handleEditContainer}
+                        handleRemoveContainer={handleRemoveContainer}
+                        handleCancelContainerEdit={handleCancelContainerEdit}
+                        restrictionTags={restrictionTags}
+                        selectedContainerIds={selectedContainerIds}
+                        toggleContainerSelection={toggleContainerSelection}
+                        onImport={handleImportDeals}
+                        onClearAll={handleClearDeals}
+                        formFactors={formFactors}
+                        userRole={effectiveRole}
+                      />
+                    </div>
+                  )}
                   <div className="flex-1 overflow-hidden p-6">
                     <ContainerPanel
                       viewMode="list"

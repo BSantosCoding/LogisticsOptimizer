@@ -124,28 +124,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     });
   };
 
-  // Group unassigned products by name, formFactorId, destination for easier selection
+  // Group unassigned products by name and form factor
   const groupedUnassigned = React.useMemo(() => {
-    if (!result?.unassignedProducts) return {};
-
-    return result.unassignedProducts
-      .filter(p => {
-        // Filter out products with missing form factors - they can't be assigned
-        if (!p.formFactorId) return false;
-        // Also check if the form factor exists in the available form factors
-        const formFactorExists = containers.some(c => c.capacities[p.formFactorId]);
-        return formFactorExists;
-      })
-      .reduce((acc, product) => {
-        const key = `${product.name}|${product.formFactorId}|${product.destination || 'NONE'}`;
-        if (!acc[key]) {
-          acc[key] = { products: [], totalQty: 0 };
-        }
-        acc[key].products.push(product);
-        acc[key].totalQty += product.quantity;
-        return acc;
-      }, {} as Record<string, { products: Product[], totalQty: number }>);
-  }, [result?.unassignedProducts, containers]);
+    if (!result) return {};
+    return result.unassignedProducts.reduce((acc, p) => {
+      const key = `${p.name} -${p.formFactorId} `;
+      if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
+      acc[key].products.push(p);
+      acc[key].totalQty += p.quantity;
+      return acc;
+    }, {} as Record<string, { products: Product[], totalQty: number }>);
+  }, [result?.unassignedProducts]);
 
   // Calculate utilization preview for selected products
   const utilizationPreview = React.useMemo(() => {
@@ -183,6 +172,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       acc[formFactorId] = (acc[formFactorId] || 0) + Number(item.quantity);
       return acc;
     }, {} as Record<string, number>);
+
+    // Debug logging
+    console.log('Preview Calculation:', {
+      selectedItems: selectedItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
+      filteredItems: filteredItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
+      itemsByFormFactor
+    });
 
     // Calculate total units from filtered items
     const totalUnits = filteredItems.reduce((sum, item) => sum + Number(item.quantity), 0);

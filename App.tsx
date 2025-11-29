@@ -1639,36 +1639,6 @@ const App: React.FC = () => {
 
             </>
           )}
-
-          {/* Super Admin Panel */}
-          {hasRole(effectiveRole, 'super_admin') && (
-            <>
-              <div className="h-px bg-slate-800 w-full my-2"></div>
-              <button
-                onClick={() => setInputMode('super_admin')}
-                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin' ? 'bg-slate-800 text-purple-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-                title="Super Admin"
-              >
-                <ShieldAlert size={20} />
-                <span className="text-[10px] font-medium">Admin</span>
-              </button>
-            </>
-          )}
-
-          {/* Country Config */}
-          {hasRole(effectiveRole, 'admin') && (
-            <>
-              <div className="h-px bg-slate-800 w-full my-2"></div>
-              <button
-                onClick={() => handleTabChange('countries')}
-                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-                title="Countries"
-              >
-                <Globe size={20} />
-                <span className="text-[10px] font-medium">Countries</span>
-              </button>
-            </>
-          )}
         </nav>
 
         <div className="mt-auto flex flex-col gap-4">

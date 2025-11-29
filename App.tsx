@@ -171,11 +171,14 @@ const App: React.FC = () => {
     setIsDataLoading(true);
     try {
       // 1. Get Profile & Company
-      const { data: profile, error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id, status, role')
         .eq('id', session.user.id)
         .maybeSingle();
+
+      // Log for debugging
+      console.log('Profile fetch result:', { profile, profileError });
 
       if (!profile) {
         setIsSetupRequired(true);
@@ -183,20 +186,24 @@ const App: React.FC = () => {
         return;
       }
 
-
       const status = profile.status || 'active';
       const role = profile.role || 'standard';
 
       setApprovalStatus(status as 'active' | 'pending');
       setUserRole(role as 'super_admin' | 'admin' | 'manager' | 'standard');
 
-      // Super admins don't have a company - they manage all companies
-      if (role === 'super_admin') {
+      // Super admins can work with their own company data if they have one
+      // They still get access to the super admin panel, but can also manage their company
+      if (role === 'super_admin' && !profile.company_id) {
+        // Super admin with no company - super admin panel only
         setCompanyName('Super Admin');
         setIsSetupRequired(false);
         setIsDataLoading(false);
+        console.log('Super admin with no company detected');
         return;
       }
+
+      // Continue loading company data (whether super admin or not)
 
       const { data: company } = await supabase
         .from('companies')

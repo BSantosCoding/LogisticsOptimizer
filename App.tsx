@@ -1665,7 +1665,7 @@ const App: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-10">
+        <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-50 relative">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-white tracking-tight">{companyName}</h1>
             <span className="text-xs text-slate-500 font-mono">ID: {companyId?.substring(0, 8)}</span>

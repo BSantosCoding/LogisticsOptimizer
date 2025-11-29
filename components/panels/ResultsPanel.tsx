@@ -638,6 +638,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         >
                           <div className="flex flex-col min-w-0">
                             <div className="font-medium text-slate-300 truncate text-[11px]">{p.name}</div>
+                            {p.destination && (
+                              <div className="flex items-center gap-1 text-[9px] text-slate-500 mt-0.5">
+                                <MapPin size={8} />
+                                <span className="truncate">{p.destination.split('|')[0]}</span>
+                              </div>
+                            )}
                           </div>
                           <div className="text-red-400 font-bold text-[10px] ml-1 flex-shrink-0">{group.totalQty}</div>
                         </div>
@@ -652,10 +658,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           {utilizationPreview && (
             <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
               <h4 className="text-[10px] font-semibold text-white mb-1.5">
-                Previewing: {Object.values(previewQuantities).reduce((a: number, b: number) => a + b, 0)} units
+                Previewing: {utilizationPreview.includedCount} item{utilizationPreview.includedCount !== 1 ? 's' : ''}
                 {utilizationPreview.filterDestination && (
                   <span className="text-blue-400 ml-1">
-                    ({utilizationPreview.filterDestination.split('|')[0]})
+                    → {utilizationPreview.filterDestination.split('|')[0]}
+                  </span>
+                )}
+                {utilizationPreview.excludedCount > 0 && (
+                  <span className="text-orange-400 ml-1">
+                    ({utilizationPreview.excludedCount} item{utilizationPreview.excludedCount !== 1 ? 's' : ''} excluded - different destination)
                   </span>
                 )}
               </h4>

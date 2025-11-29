@@ -30,6 +30,7 @@ import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
 import ShipmentPanel from './components/panels/ShipmentPanel';
 import SuperAdminPanel from './components/panels/SuperAdminPanel';
+import ErrorModal from './components/ErrorModal';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';
@@ -73,6 +74,7 @@ const App: React.FC = () => {
   const [formFactors, setFormFactors] = useState<ProductFormFactor[]>([]);
   const [countries, setCountries] = useState<any[]>([]); // Using any for now, should be Country type
   const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -783,7 +785,7 @@ const App: React.FC = () => {
 
     } catch (error) {
       console.error('Error saving shipment:', error);
-      alert('Failed to save shipment.');
+      setErrorModal({ isOpen: true, message: 'Failed to save shipment.' });
     }
   };
 
@@ -821,7 +823,7 @@ const App: React.FC = () => {
           ));
         } catch (error) {
           console.error('Error unpacking shipment:', error);
-          alert('Failed to unpack shipment.');
+          setErrorModal({ isOpen: true, message: 'Failed to unpack shipment.' });
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -865,7 +867,7 @@ const App: React.FC = () => {
           setInputMode('products');
         } catch (error) {
           console.error('Error loading base plan:', error);
-          alert('Failed to load base plan.');
+          setErrorModal({ isOpen: true, message: 'Failed to load base plan.' });
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -904,7 +906,7 @@ const App: React.FC = () => {
 
         } catch (error) {
           console.error('Error consuming shipment:', error);
-          alert('Failed to consume shipment.');
+          setErrorModal({ isOpen: true, message: 'Failed to consume shipment.' });
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -953,17 +955,17 @@ const App: React.FC = () => {
 
     } catch (error) {
       console.error('Error unpacking item:', error);
-      alert('Failed to unpack item.');
+      setErrorModal({ isOpen: true, message: 'Failed to unpack item.' });
     }
   };
 
   const handleRunOptimization = () => {
     if (products.length === 0) {
-      alert('Add products first!');
+      setErrorModal({ isOpen: true, message: 'Add products first!' });
       return;
     }
     if (containers.length === 0) {
-      alert('Add container templates first!');
+      setErrorModal({ isOpen: true, message: 'Add container templates first!' });
       return;
     }
 
@@ -978,7 +980,7 @@ const App: React.FC = () => {
     );
 
     if (productsToUse.length === 0) {
-      alert('No available products to optimize! Check if items are already shipped.');
+      setErrorModal({ isOpen: true, message: 'No available products to optimize! Check if items are already shipped.' });
       setIsOptimizing(false);
       setViewMode('data');
       return;
@@ -1170,7 +1172,7 @@ const App: React.FC = () => {
 
   const handleImportDeals = async (csvContent: string) => {
     // TODO: Update CSV parser
-    alert("CSV Import needs update for new format");
+    setErrorModal({ isOpen: true, message: 'CSV Import needs update for new format' });
   };
 
   const handleClearDeals = async () => {
@@ -1904,6 +1906,13 @@ const App: React.FC = () => {
           isDestructive={confirmModal.isDestructive}
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        />
+
+        {/* Error Modal */}
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          message={errorModal.message}
+          onClose={() => setErrorModal({ isOpen: false, message: '' })}
         />
       </div>
     </div>

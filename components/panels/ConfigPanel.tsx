@@ -188,22 +188,20 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
           {/* Template Creation Form - For Managers and Admins */}
           {canManageConfig && (
-            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4">
-              <h4 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-                <Plus size={16} className="text-blue-500" /> New Template
-              </h4>
-              <div className="bg-slate-900/50 p-3 rounded border border-slate-700 space-y-3">
-                <div className="flex gap-2">
+            <div className="p-4 border-b border-slate-700 bg-slate-800/30 mb-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Template Name</label>
                   <input
-                    placeholder="Template Name"
+                    placeholder="e.g. Standard Product"
                     value={newTemplate.name}
                     onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                    className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 min-w-0"
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Restrictions</label>
                   <RestrictionSelector
                     availableOptions={restrictionTags}
                     selected={newTemplate.restrictions || []}
@@ -213,9 +211,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
                 <button
                   onClick={handleAddTemplate}
-                  className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
                 >
-                  <Plus size={16} className="mr-2" /> Add Template
+                  <Plus size={16} /> Add Template
                 </button>
               </div>
             </div>
@@ -236,7 +234,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     )}
                   </div>
                   <div className="flex gap-2 mt-2 pt-3 border-t border-slate-700/50">
-                    <button onClick={() => applyTemplate(t)} className="flex-1 text-xs bg-blue-600/20 text-blue-400 py-1.5 rounded border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all text-center">
+                    <button onClick={() => applyTemplate(t)} className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded transition-colors text-center font-medium">
                       Use Template
                     </button>
                     {canManageConfig && (
@@ -257,22 +255,22 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
           {/* Tag Creation Form - For Managers and Admins */}
           {canManageConfig && (
-            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-4">
-              <h4 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-                <Plus size={16} className="text-purple-500" /> New Tag
-              </h4>
-              <div className="flex gap-2 items-center">
-                <input
-                  placeholder="New Tag Name"
-                  value={newTag}
-                  onChange={e => setNewTag(e.target.value)}
-                  className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 text-sm focus:border-blue-500 outline-none text-slate-200 h-9"
-                />
+            <div className="p-4 border-b border-slate-700 bg-slate-800/30 mb-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Tag Name</label>
+                  <input
+                    placeholder="e.g. Fragile"
+                    value={newTag}
+                    onChange={e => setNewTag(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
+                </div>
                 <button
                   onClick={handleAddTag}
-                  className="bg-purple-600 hover:bg-purple-500 text-white px-3 h-9 rounded flex items-center gap-1 shrink-0 transition-colors"
+                  className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
                 >
-                  <Plus size={16} /> Add
+                  <Plus size={16} /> Add Tag
                 </button>
               </div>
             </div>

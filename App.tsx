@@ -13,6 +13,8 @@ import {
   Repeat,
   Layers,
   Database,
+  ChevronDown,
+  Check,
   Zap,
   Box,
   BarChart3,
@@ -55,6 +57,7 @@ const App: React.FC = () => {
   const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [viewAsRole, setViewAsRole] = useState<Role | null>(null);
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   const effectiveRole = viewAsRole || userRole;
 
@@ -1633,37 +1636,7 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-medium">Team</span>
               </button>
 
-              {/* View As Role Selector */}
-              {userRole && getAvailableViewRoles(userRole).length > 0 && (
-                <div className="mt-4 px-2">
-                  <div className="text-[10px] text-slate-500 font-bold uppercase mb-1 text-center">View As</div>
-                  <div className="relative group">
-                    <button className="w-full p-2 bg-slate-900 rounded-lg border border-slate-800 text-xs text-slate-400 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-1">
-                      {viewAsRole ? getRoleLabel(viewAsRole) : 'My Role'}
-                    </button>
 
-                    {/* Dropdown */}
-                    <div className="absolute left-full top-0 ml-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[120px] hidden group-hover:block z-50">
-                      <button
-                        onClick={() => setViewAsRole(null)}
-                        className={`w-full text-left px-3 py-2 rounded text-xs ${!viewAsRole ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-                      >
-                        My Role ({getRoleLabel(userRole)})
-                      </button>
-                      <div className="h-px bg-slate-700 my-1" />
-                      {getAvailableViewRoles(userRole).map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setViewAsRole(role)}
-                          className={`w-full text-left px-3 py-2 rounded text-xs ${viewAsRole === role ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
-                        >
-                          {getRoleLabel(role)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
 
@@ -1728,6 +1701,50 @@ const App: React.FC = () => {
             <span className="text-xs text-slate-500 font-mono">ID: {companyId?.substring(0, 8)}</span>
             {hasRole(effectiveRole, 'admin') && (
               <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
+            )}
+
+            {/* View As Role Selector */}
+            {userRole && hasRole(userRole, 'manager') && getAvailableViewRoles(userRole).length > 0 && (
+              <div className="relative ml-4">
+                <button
+                  onClick={() => setShowRoleMenu(!showRoleMenu)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:text-white hover:border-slate-600 transition-all"
+                >
+                  <span className="text-slate-500">View as:</span>
+                  <span className="font-medium">{viewAsRole ? getRoleLabel(viewAsRole) : 'My Role'}</span>
+                  <ChevronDown size={12} className="text-slate-500" />
+                </button>
+
+                {/* Dropdown */}
+                {showRoleMenu && (
+                  <div className="absolute top-full right-0 mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[160px] z-50">
+                    <button
+                      onClick={() => {
+                        setViewAsRole(null);
+                        setShowRoleMenu(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded text-xs flex items-center justify-between ${!viewAsRole ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                    >
+                      <span>My Role ({getRoleLabel(userRole)})</span>
+                      {!viewAsRole && <Check size={12} />}
+                    </button>
+                    <div className="h-px bg-slate-800 my-1" />
+                    {getAvailableViewRoles(userRole).map(role => (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          setViewAsRole(role);
+                          setShowRoleMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded text-xs flex items-center justify-between ${viewAsRole === role ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                      >
+                        <span>{getRoleLabel(role)}</span>
+                        {viewAsRole === role && <Check size={12} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3">

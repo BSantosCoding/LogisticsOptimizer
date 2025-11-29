@@ -144,6 +144,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     // Use groupedUnassigned to find selected items with specific quantities
     const selectedItems: { product: Product, quantity: number }[] = [];
     Object.entries(previewQuantities).forEach(([key, qty]) => {
+      // Skip items with 0 or negative quantity
+      if (Number(qty) <= 0) return;
+
       const group = groupedUnassigned[key];
       if (group && group.products.length > 0) {
         // Use the first product as representative for form factor/restrictions
@@ -241,7 +244,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       filterDestination: firstDestination,
       totalUnits // Add total units for display
     };
-  }, [results, activePriority, previewQuantities, containers]);
+  }, [results, activePriority, previewQuantities, containers, groupedUnassigned]);
 
   const toggleDestination = (dest: string) => {
     setCollapsedDestinations(prev => {

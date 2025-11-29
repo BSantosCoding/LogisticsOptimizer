@@ -1687,7 +1687,7 @@ const App: React.FC = () => {
 
                 {/* Dropdown */}
                 {showRoleMenu && (
-                  <div className="absolute top-full right-0 mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[160px] z-50">
+                  <div className="absolute top-full right-0 mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[160px] z-[9999]">
                     <button
                       onClick={() => {
                         setViewAsRole(null);
@@ -1820,6 +1820,7 @@ const App: React.FC = () => {
                       onImport={handleImportDeals}
                       onClearAll={handleClearDeals}
                       formFactors={formFactors}
+                      userRole={effectiveRole}
                     />
                   </div>
                   <div className="flex-1 overflow-hidden p-6">
@@ -1839,6 +1840,7 @@ const App: React.FC = () => {
                       onImport={handleImportDeals}
                       onClearAll={handleClearDeals}
                       formFactors={formFactors}
+                      userRole={effectiveRole}
                     />
                   </div>
                 </div>

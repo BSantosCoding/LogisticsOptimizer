@@ -115,8 +115,13 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     );
 
     if (viewMode === 'form') {
+        // Only show form to managers and above
+        if (!canManage) {
+            return null;
+        }
+
         return (
-            <div className="p-4 border-b border-slate-700 bg-slate-800">
+            <div className="p-4 border-b border-slate-700 bg-slate-800/30">
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
                         <Plus size={16} className="text-blue-500" /> Add Country

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Container, ProductFormFactor } from '../../types';
 import { Plus, Save, Pencil, Trash2, X, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown, Container as ContainerIcon } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
+import { Role, hasRole } from '../../utils/roles';
 
 interface ContainerPanelProps {
   viewMode: 'form' | 'list';
@@ -19,6 +20,7 @@ interface ContainerPanelProps {
   onImport: (csv: string) => void;
   onClearAll: () => void;
   formFactors: ProductFormFactor[];
+  userRole: Role | null;
 }
 
 const ContainerPanel: React.FC<ContainerPanelProps> = ({
@@ -36,11 +38,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   toggleContainerSelection,
   onImport,
   onClearAll,
-  formFactors
+  formFactors,
+  userRole
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canManage = hasRole(userRole, 'manager');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,6 +77,11 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   };
 
   if (viewMode === 'form') {
+    // Only show form to managers and above
+    if (!canManage) {
+      return null;
+    }
+
     return (
       <div className={`p-4 border-b border-slate-700 z-10 ${editingContainerId ? 'bg-blue-900/10' : 'bg-slate-800'}`}>
         <div className="space-y-3">
@@ -188,14 +197,18 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           <span className="text-sm font-normal text-slate-500 ml-2">{filteredContainers.length} units</span>
         </h2>
         <div className="flex gap-2">
-          <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
-          <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
-            Import CSV
-          </button>
-          {containers.length > 0 && (
-            <button onClick={onClearAll} className="text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
-              Clear All
-            </button>
+          {canManage && (
+            <>
+              <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
+              <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
+                Import CSV
+              </button>
+              {containers.length > 0 && (
+                <button onClick={onClearAll} className="text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
+                  Clear All
+                </button>
+              )}
+            </>
           )}
         </div>
         <div className="flex-1 flex gap-2">
@@ -292,14 +305,16 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                   </div>
                 )}
 
-                <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-xl z-20">
-                  <button onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }} className="p-1.5 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }} className="p-1.5 hover:bg-red-600 hover:text-white text-slate-400 rounded transition-colors">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {canManage && (
+                  <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-xl z-20">
+                    <button onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }} className="p-1.5 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }} className="p-1.5 hover:bg-red-600 hover:text-white text-slate-400 rounded transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

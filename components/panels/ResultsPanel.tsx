@@ -225,23 +225,6 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       };
     }); // Removed filter - show all containers
 
-    // Debug logging - AFTER containerPreviews is calculated
-    console.log('Preview Calculation:', {
-      selectedItems: selectedItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
-      filteredItems: filteredItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
-      itemsByFormFactor,
-      formFactorsInUse: Object.keys(itemsByFormFactor),
-      containerPreviewsCalculated: containerPreviews.slice(0, 4).map(cp => ({
-        name: cp.container.name,
-        utilization: cp.utilization,
-        formFactorCapacities: Object.keys(itemsByFormFactor).map(ffId => ({
-          ffId,
-          capacity: cp.container.capacities[ffId] || 'MISSING',
-          quantityNeeded: itemsByFormFactor[ffId]
-        }))
-      }))
-    });
-
     return {
       itemsByFormFactor,
       canGroup,

@@ -176,13 +176,6 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       return acc;
     }, {} as Record<string, number>);
 
-    // Debug logging
-    console.log('Preview Calculation:', {
-      selectedItems: selectedItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
-      filteredItems: filteredItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
-      itemsByFormFactor
-    });
-
     // Calculate total units from filtered items
     const totalUnits = filteredItems.reduce((sum, item) => sum + Number(item.quantity), 0);
 
@@ -231,6 +224,18 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         fits: fits && meetsRequirements && maxUtilization <= 100
       };
     }); // Removed filter - show all containers
+
+    // Debug logging - AFTER containerPreviews is calculated
+    console.log('Preview Calculation:', {
+      selectedItems: selectedItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
+      filteredItems: filteredItems.map(i => ({ name: i.product.name, qty: i.quantity, formFactor: i.product.formFactorId })),
+      itemsByFormFactor,
+      containerPreviewsCalculated: containerPreviews.slice(0, 3).map(cp => ({
+        name: cp.container.name,
+        utilization: cp.utilization,
+        capacities: cp.container.capacities
+      }))
+    });
 
     return {
       itemsByFormFactor,

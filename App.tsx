@@ -1882,20 +1882,10 @@ const App: React.FC = () => {
 
               {inputMode === 'countries' && (
                 <div className="flex-1 flex overflow-hidden">
-                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
-                    <CountryPanel
-                      viewMode="form"
-                      countries={countries}
-                      setCountries={setCountries}
-                      containerTemplates={containers}
-                      userRole={effectiveRole}
-                      companyId={companyId}
-                    />
-                  </div>
-                  {hasRole(effectiveRole, 'admin') && (
-                    <div className="flex-1 p-6 overflow-y-auto">
+                  {hasRole(effectiveRole, 'manager') && (
+                    <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
                       <CountryPanel
-                        viewMode="list"
+                        viewMode="form"
                         countries={countries}
                         setCountries={setCountries}
                         containerTemplates={containers}
@@ -1904,6 +1894,16 @@ const App: React.FC = () => {
                       />
                     </div>
                   )}
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    <CountryPanel
+                      viewMode="list"
+                      countries={countries}
+                      setCountries={setCountries}
+                      containerTemplates={containers}
+                      userRole={effectiveRole}
+                      companyId={companyId}
+                    />
+                  </div>
                 </div>
               )}
 

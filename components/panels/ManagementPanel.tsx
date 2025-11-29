@@ -2,14 +2,17 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabase';
 import { UserProfile } from '../../types';
+import { Role } from '../../utils/roles';
 import { Check, X, Shield, User, Trash2, Briefcase, Loader2, Users } from 'lucide-react';
 
 interface ManagementPanelProps {
-    viewMode: 'summary' | 'list';
+    viewMode?: 'summary' | 'list';
+    companyId: string | null;
+    currentUserRole: Role | null;
     currentUserId: string;
 }
 
-const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode, currentUserId }) => {
+const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', companyId, currentUserRole, currentUserId }) => {
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);

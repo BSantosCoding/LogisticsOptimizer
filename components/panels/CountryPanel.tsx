@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Container, ProductFormFactor } from '../../types';
+import { Role, hasRole } from '../../utils/roles';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ErrorModal from '../modals/ErrorModal';
@@ -16,7 +17,7 @@ interface CountryPanelProps {
     countries: Country[];
     setCountries: (countries: Country[]) => void;
     containerTemplates: Container[];
-    userRole: 'admin' | 'manager' | 'standard' | null;
+    userRole: Role | null;
     companyId?: string | null;
 }
 
@@ -37,7 +38,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     });
     const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
-    const canManage = userRole === 'admin' || userRole === 'manager';
+    const canManage = hasRole(userRole, 'admin') || userRole === 'manager';
 
     const handleAddCountry = async () => {
         if (!newCountry.code || !newCountry.name || !companyId) return;

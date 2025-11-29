@@ -17,7 +17,8 @@ import {
   Box,
   BarChart3,
   PenLine,
-  Globe
+  Globe,
+  ShieldAlert
 } from 'lucide-react';
 import Auth from './components/Auth';
 import Button from './components/Button';
@@ -38,6 +39,7 @@ import ImportConfirmModal from './components/modals/ImportConfirmModal';
 import ImportSummaryModal from './components/modals/ImportSummaryModal';
 import ConfirmModal from './components/modals/ConfirmModal';
 import { Product, Container, OptimizationPriority, OptimizationResult, ProductFormFactor, Shipment, LoadedContainer } from './types';
+import { Role, hasRole, getAvailableViewRoles, getRoleLabel } from './utils/roles';
 
 // Default options
 const DEFAULT_RESTRICTIONS = [
@@ -51,7 +53,10 @@ const App: React.FC = () => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('');
   const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
-  const [userRole, setUserRole] = useState<'super_admin' | 'admin' | 'manager' | 'standard' | null>(null);
+  const [userRole, setUserRole] = useState<Role | null>(null);
+  const [viewAsRole, setViewAsRole] = useState<Role | null>(null);
+
+  const effectiveRole = viewAsRole || userRole;
 
   // --- Onboarding State ---
   const [isSetupRequired, setIsSetupRequired] = useState(false);
@@ -1617,21 +1622,85 @@ const App: React.FC = () => {
             <Settings size={20} />
             <span className="text-[10px] font-medium">Config</span>
           </button>
-          {(userRole === 'admin' || userRole === 'manager') && (
-            <button
-              onClick={() => handleTabChange('management')}
-              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-              title="User Management"
-            >
-              <Users size={20} />
-              <span className="text-[10px] font-medium">Users</span>
-            </button>
+          {hasRole(effectiveRole, 'manager') && (
+            <>
+              <button
+                onClick={() => handleTabChange('management')}
+                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+                title="Management"
+              >
+                <Users size={20} />
+                <span className="text-[10px] font-medium">Team</span>
+              </button>
+
+              {/* View As Role Selector */}
+              {userRole && getAvailableViewRoles(userRole).length > 0 && (
+                <div className="mt-4 px-2">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase mb-1 text-center">View As</div>
+                  <div className="relative group">
+                    <button className="w-full p-2 bg-slate-900 rounded-lg border border-slate-800 text-xs text-slate-400 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-1">
+                      {viewAsRole ? getRoleLabel(viewAsRole) : 'My Role'}
+                    </button>
+
+                    {/* Dropdown */}
+                    <div className="absolute left-full top-0 ml-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[120px] hidden group-hover:block z-50">
+                      <button
+                        onClick={() => setViewAsRole(null)}
+                        className={`w-full text-left px-3 py-2 rounded text-xs ${!viewAsRole ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+                      >
+                        My Role ({getRoleLabel(userRole)})
+                      </button>
+                      <div className="h-px bg-slate-700 my-1" />
+                      {getAvailableViewRoles(userRole).map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setViewAsRole(role)}
+                          className={`w-full text-left px-3 py-2 rounded text-xs ${viewAsRole === role ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}
+                        >
+                          {getRoleLabel(role)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Super Admin Panel */}
+          {hasRole(effectiveRole, 'super_admin') && (
+            <>
+              <div className="h-px bg-slate-800 w-full my-2"></div>
+              <button
+                onClick={() => setInputMode('super_admin')}
+                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin' ? 'bg-slate-800 text-purple-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+                title="Super Admin"
+              >
+                <ShieldAlert size={20} />
+                <span className="text-[10px] font-medium">Admin</span>
+              </button>
+            </>
+          )}
+
+          {/* Country Config */}
+          {hasRole(effectiveRole, 'admin') && (
+            <>
+              <div className="h-px bg-slate-800 w-full my-2"></div>
+              <button
+                onClick={() => handleTabChange('countries')}
+                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+                title="Countries"
+              >
+                <Globe size={20} />
+                <span className="text-[10px] font-medium">Countries</span>
+              </button>
+            </>
           )}
         </nav>
 
         <div className="mt-auto flex flex-col gap-4">
           {/* Super Admin Button - Only visible to super admins */}
-          {userRole === 'super_admin' && (
+          {hasRole(effectiveRole, 'super_admin') && (
             <button
               onClick={() => setInputMode('super_admin')}
               className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin'
@@ -1657,7 +1726,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-white tracking-tight">{companyName}</h1>
             <span className="text-xs text-slate-500 font-mono">ID: {companyId?.substring(0, 8)}</span>
-            {userRole === 'admin' && (
+            {hasRole(effectiveRole, 'admin') && (
               <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
             )}
           </div>
@@ -1799,25 +1868,26 @@ const App: React.FC = () => {
                     />
                   </div>
                   <ConfigPanel
-                    viewMode="form"
+                    viewMode="list"
                     templates={templates}
                     newTemplate={newTemplate}
                     setNewTemplate={setNewTemplate}
                     handleAddTemplate={handleAddTemplate}
                     handleRemoveTemplate={handleRemoveTemplate}
                     applyTemplate={applyTemplate}
-                    optimalRange={optimalUtilizationRange}
-                    setOptimalRange={setOptimalUtilizationRange}
                     restrictionTags={restrictionTags}
                     newTag={newTag}
                     setNewTag={setNewTag}
                     handleAddTag={handleAddTag}
                     handleRemoveTag={handleRemoveTag}
                     DEFAULT_RESTRICTIONS={DEFAULT_RESTRICTIONS}
-                    userRole={userRole}
+                    userRole={effectiveRole}
+                    optimalRange={optimalUtilizationRange}
+                    setOptimalRange={setOptimalUtilizationRange}
                   />
                 </div>
               )}
+
               {inputMode === 'countries' && (
                 <div className="flex-1 flex overflow-hidden">
                   <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
@@ -1826,22 +1896,25 @@ const App: React.FC = () => {
                       countries={countries}
                       setCountries={setCountries}
                       containerTemplates={containers}
-                      userRole={userRole}
+                      userRole={effectiveRole}
                       companyId={companyId}
                     />
                   </div>
-                  <div className="flex-1 p-6 overflow-y-auto">
-                    <CountryPanel
-                      viewMode="list"
-                      countries={countries}
-                      setCountries={setCountries}
-                      containerTemplates={containers}
-                      userRole={userRole}
-                      companyId={companyId}
-                    />
-                  </div>
+                  {hasRole(effectiveRole, 'admin') && (
+                    <div className="flex-1 p-6 overflow-y-auto">
+                      <CountryPanel
+                        viewMode="list"
+                        countries={countries}
+                        setCountries={setCountries}
+                        containerTemplates={containers}
+                        userRole={effectiveRole}
+                        companyId={companyId}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
+
               {inputMode === 'shipments' && (
                 <div className="flex-1 overflow-hidden">
                   <ShipmentPanel
@@ -1854,16 +1927,15 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {inputMode === 'management' && (userRole === 'admin' || userRole === 'manager') && (
-                <div className="flex-1 overflow-hidden">
-                  <ManagementPanel
-                    viewMode="list"
-                    currentUserId={session?.user?.id || ''}
-                  />
-                </div>
+              {inputMode === 'management' && hasRole(effectiveRole, 'manager') && (
+                <ManagementPanel
+                  companyId={companyId}
+                  currentUserRole={effectiveRole}
+                  currentUserId={session?.user?.id || ''}
+                />
               )}
 
-              {inputMode === 'super_admin' && userRole === 'super_admin' && (
+              {inputMode === 'super_admin' && hasRole(effectiveRole, 'super_admin') && (
                 <div className="flex-1 overflow-hidden">
                   <SuperAdminPanel onRefresh={loadUserData} />
                 </div>
@@ -1871,9 +1943,11 @@ const App: React.FC = () => {
             </div>
           )}
         </main>
+      </div>
 
-        {/* Import Confirmation Modal */}
-        {showImportModal && pendingImportData && (
+      {/* Import Confirmation Modal */}
+      {
+        showImportModal && pendingImportData && (
           <ImportConfirmModal
             productCount={pendingImportData.products.length}
             onConfirm={confirmImport}
@@ -1882,10 +1956,12 @@ const App: React.FC = () => {
               setPendingImportData(null);
             }}
           />
-        )}
+        )
+      }
 
-        {/* Import Summary Modal */}
-        {showImportSummary && importSummaryData && (
+      {/* Import Summary Modal */}
+      {
+        showImportSummary && importSummaryData && (
           <ImportSummaryModal
             totalImported={importSummaryData.total}
             savedToDb={importSummaryData.savedToDb}
@@ -1895,27 +1971,27 @@ const App: React.FC = () => {
               setImportSummaryData(null);
             }}
           />
-        )}
+        )
+      }
 
-        {/* Confirm Modal */}
-        <ConfirmModal
-          isOpen={confirmModal.isOpen}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          confirmText={confirmModal.confirmText}
-          isDestructive={confirmModal.isDestructive}
-          onConfirm={confirmModal.onConfirm}
-          onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        />
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        isDestructive={confirmModal.isDestructive}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
 
-        {/* Error Modal */}
-        <ErrorModal
-          isOpen={errorModal.isOpen}
-          message={errorModal.message}
-          onClose={() => setErrorModal({ isOpen: false, message: '' })}
-        />
-      </div>
-    </div>
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ isOpen: false, message: '' })}
+      />
+    </div >
   );
 };
 

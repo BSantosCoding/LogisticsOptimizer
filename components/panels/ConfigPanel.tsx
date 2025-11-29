@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product } from '../../types';
+import { Role, hasRole } from '../../utils/roles';
 import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter, ChevronDown, Settings } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
@@ -18,7 +19,7 @@ interface ConfigPanelProps {
   handleAddTag: () => void;
   handleRemoveTag: (t: string) => void;
   DEFAULT_RESTRICTIONS: string[];
-  userRole: 'admin' | 'manager' | 'standard' | null;
+  userRole: Role | null;
   optimalRange?: { min: number; max: number };
   setOptimalRange?: (range: { min: number; max: number }) => void;
 }
@@ -43,7 +44,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
-  const canManageConfig = userRole === 'admin' || userRole === 'manager';
+  const canManageConfig = hasRole(userRole, 'manager');
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());

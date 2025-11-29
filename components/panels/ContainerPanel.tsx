@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Container, ProductFormFactor } from '../../types';
+import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { Plus, Save, Pencil, Trash2, X, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown, Container as ContainerIcon } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { Role, hasRole } from '../../utils/roles';
@@ -21,6 +21,7 @@ interface ContainerPanelProps {
   onClearAll: () => void;
   formFactors: ProductFormFactor[];
   userRole: Role | null;
+  userProfile: UserProfile | null;
 }
 
 const ContainerPanel: React.FC<ContainerPanelProps> = ({
@@ -39,12 +40,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   onImport,
   onClearAll,
   formFactors,
-  userRole
+  userRole,
+  userProfile
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canManage = hasRole(userRole, 'manager');
+  const canManage = hasRole(userRole, 'manager') || userProfile?.can_edit_containers;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

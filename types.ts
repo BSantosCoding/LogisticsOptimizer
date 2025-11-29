@@ -75,4 +75,9 @@ export interface UserProfile {
   company_id: string;
   status: 'active' | 'pending';
   role: 'super_admin' | 'admin' | 'manager' | 'standard';
+  can_edit_countries?: boolean;
+  can_edit_form_factors?: boolean;
+  can_edit_containers?: boolean;
+  can_edit_templates?: boolean;
+  can_edit_tags?: boolean;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, ProductFormFactor } from '../../types';
+import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
 import { supabase } from '../../services/supabase';
@@ -18,6 +18,7 @@ interface CountryPanelProps {
     setCountries: (countries: Country[]) => void;
     containerTemplates: Container[];
     userRole: Role | null;
+    userProfile: UserProfile | null;
     companyId?: string | null;
 }
 
@@ -27,6 +28,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     setCountries,
     containerTemplates,
     userRole,
+    userProfile,
     companyId
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +40,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     });
     const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
-    const canManage = hasRole(userRole, 'admin') || userRole === 'manager';
+    const canManage = hasRole(userRole, 'admin') || userRole === 'manager' || userProfile?.can_edit_countries;
 
     const handleAddCountry = async () => {
         if (!newCountry.code || !newCountry.name || !companyId) return;

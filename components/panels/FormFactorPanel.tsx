@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Box, Pencil, Save, X } from 'lucide-react';
 import Button from '../Button';
-import { ProductFormFactor } from '../../types';
+import { ProductFormFactor, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
 
 interface FormFactorPanelProps {
@@ -10,15 +10,16 @@ interface FormFactorPanelProps {
     onRemove: (id: string) => void;
     onEdit: (id: string, name: string, description: string) => void;
     userRole: Role | null;
+    userProfile: UserProfile | null;
 }
 
-const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove, onEdit, userRole }) => {
+const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, onRemove, onEdit, userRole, userProfile }) => {
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editDesc, setEditDesc] = useState('');
-    const canManage = hasRole(userRole, 'manager');
+    const canManage = hasRole(userRole, 'manager') || userProfile?.can_edit_form_factors;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

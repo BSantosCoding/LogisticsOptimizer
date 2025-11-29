@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Product } from '../../types';
+import { Product, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
 import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter, ChevronDown, Settings } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
@@ -20,6 +20,7 @@ interface ConfigPanelProps {
   handleRemoveTag: (t: string) => void;
   DEFAULT_RESTRICTIONS: string[];
   userRole: Role | null;
+  userProfile: UserProfile | null;
   optimalRange?: { min: number; max: number };
   setOptimalRange?: (range: { min: number; max: number }) => void;
 }
@@ -39,12 +40,16 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   handleRemoveTag,
   DEFAULT_RESTRICTIONS,
   userRole,
+  userProfile,
   optimalRange,
   setOptimalRange
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
-  const canManageConfig = hasRole(userRole, 'manager');
+
+  const canManageTemplates = hasRole(userRole, 'manager') || userProfile?.can_edit_templates;
+  const canManageTags = hasRole(userRole, 'manager') || userProfile?.can_edit_tags;
+  const canManageConfig = canManageTemplates || canManageTags; // Fallback for general UI, but specific actions should check specific flags
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -248,7 +253,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   >
                     Use Template
                   </button>
-                  {canManageConfig && (
+                  {canManageTemplates && (
                     <button
                       onClick={() => handleRemoveTemplate(t.id)}
                       className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
@@ -320,7 +325,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           </div>
 
           {/* Tag Creation Form - For Managers and Admins */}
-          {canManageConfig && (
+          {canManageTags && (
             <div className="p-4 border-b border-slate-700 bg-slate-800/30">
               <div className="space-y-3">
                 <div>
@@ -348,7 +353,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               <div key={tag} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-purple-500/50 transition-colors">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-200">{tag}</span>
-                  {!DEFAULT_RESTRICTIONS.includes(tag) && canManageConfig && (
+                  {!DEFAULT_RESTRICTIONS.includes(tag) && canManageTags && (
                     <button
                       onClick={() => handleRemoveTag(tag)}
                       className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"

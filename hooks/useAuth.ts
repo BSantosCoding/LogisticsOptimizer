@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Role } from '../utils/roles';
+import { UserProfile } from '../types';
 
 export interface AuthState {
     session: any;
@@ -9,6 +10,7 @@ export interface AuthState {
     companyName: string;
     approvalStatus: 'active' | 'pending' | null;
     userRole: Role | null;
+    userProfile: UserProfile | null;
     viewAsRole: Role | null;
     setViewAsRole: (role: Role | null) => void;
     isSetupRequired: boolean;
@@ -24,6 +26,7 @@ export const useAuth = (): AuthState => {
     const [companyName, setCompanyName] = useState<string>('');
     const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
     const [userRole, setUserRole] = useState<Role | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [viewAsRole, setViewAsRole] = useState<Role | null>(null);
     const [isSetupRequired, setIsSetupRequired] = useState(false);
 
@@ -49,7 +52,7 @@ export const useAuth = (): AuthState => {
             // 1. Get Profile & Company
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('company_id, status, role')
+                .select('*')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
@@ -63,6 +66,7 @@ export const useAuth = (): AuthState => {
 
             setApprovalStatus(status as 'active' | 'pending');
             setUserRole(role as 'super_admin' | 'admin' | 'manager' | 'standard');
+            setUserProfile(profile as UserProfile);
 
             // Super admins can work with their own company data if they have one
             // They still get access to the super admin panel, but can also manage their company
@@ -115,6 +119,7 @@ export const useAuth = (): AuthState => {
             setCompanyName('');
             setApprovalStatus(null);
             setUserRole(null);
+            setUserProfile(null);
             setIsSetupRequired(false);
         }
     }, [session]);
@@ -131,6 +136,7 @@ export const useAuth = (): AuthState => {
         companyName,
         approvalStatus,
         userRole,
+        userProfile,
         viewAsRole,
         setViewAsRole,
         isSetupRequired,

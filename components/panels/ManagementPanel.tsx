@@ -30,11 +30,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
         fetchMembers();
     }, []);
 
-    const handleUpdateStatus = async (userId: string, status: 'active' | 'pending', role?: 'admin' | 'manager' | 'standard') => {
+    const handleUpdateProfile = async (userId: string, updates: Partial<UserProfile>) => {
         setActionLoading(userId);
-        const updates: any = { status };
-        if (role) updates.role = role;
-
         await supabase.from('profiles').update(updates).eq('id', userId);
         await fetchMembers();
         setActionLoading(null);
@@ -115,7 +112,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                         <div className="flex gap-2">
                                             <button
                                                 disabled={!!actionLoading}
-                                                onClick={() => handleUpdateStatus(member.id, 'active', 'standard')}
+                                                onClick={() => handleUpdateProfile(member.id, { status: 'active', role: 'standard' })}
                                                 className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded text-xs font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
                                             >
                                                 {actionLoading === member.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
@@ -166,26 +163,58 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                         </div>
 
                                         {!isMe && (
-                                            <div className="flex items-center gap-2 pt-3 border-t border-slate-700/50">
-                                                <select
-                                                    disabled={!!actionLoading}
-                                                    value={member.role}
-                                                    onChange={(e) => handleUpdateStatus(member.id, 'active', e.target.value as 'admin' | 'manager' | 'standard')}
-                                                    className="flex-1 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer hover:border-slate-600 transition-colors"
-                                                >
-                                                    <option value="standard">Standard</option>
-                                                    <option value="manager">Manager</option>
-                                                    <option value="admin">Admin</option>
-                                                </select>
+                                            <div className="flex flex-col gap-3 pt-3 border-t border-slate-700/50">
+                                                <div className="flex items-center gap-2">
+                                                    <select
+                                                        disabled={!!actionLoading}
+                                                        value={member.role}
+                                                        onChange={(e) => handleUpdateProfile(member.id, { role: e.target.value as any })}
+                                                        className="flex-1 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer hover:border-slate-600 transition-colors"
+                                                    >
+                                                        <option value="standard">Standard</option>
+                                                        <option value="manager">Manager</option>
+                                                        <option value="admin">Admin</option>
+                                                    </select>
 
-                                                <button
-                                                    disabled={!!actionLoading}
-                                                    onClick={() => handleRemoveUser(member.id)}
-                                                    className="text-slate-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-700/50 transition-colors"
-                                                    title="Remove User"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                    <button
+                                                        disabled={!!actionLoading}
+                                                        onClick={() => handleRemoveUser(member.id)}
+                                                        className="text-slate-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-700/50 transition-colors"
+                                                        title="Remove User"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+
+                                                {member.role === 'standard' && (
+                                                    <div className="bg-slate-900/50 rounded p-2 border border-slate-700/50">
+                                                        <div className="text-[10px] uppercase font-bold text-slate-500 mb-2">Edit Permissions</div>
+                                                        <div className="grid grid-cols-1 gap-1.5">
+                                                            {[
+                                                                { key: 'can_edit_countries', label: 'Countries' },
+                                                                { key: 'can_edit_form_factors', label: 'Form Factors' },
+                                                                { key: 'can_edit_containers', label: 'Containers' },
+                                                                { key: 'can_edit_templates', label: 'Templates' },
+                                                                { key: 'can_edit_tags', label: 'Tags' },
+                                                            ].map(perm => (
+                                                                <label key={perm.key} className="flex items-center gap-2 cursor-pointer group">
+                                                                    <div className="relative flex items-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="peer sr-only"
+                                                                            checked={!!(member as any)[perm.key]}
+                                                                            onChange={(e) => handleUpdateProfile(member.id, { [perm.key]: e.target.checked })}
+                                                                            disabled={!!actionLoading}
+                                                                        />
+                                                                        <div className="w-6 h-3 bg-slate-700 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+                                                                        <div className="absolute left-0.5 top-0.5 w-2 h-2 bg-slate-400 rounded-full transition-transform peer-checked:translate-x-3 peer-checked:bg-white"></div>
+                                                                    </div>
+                                                                    <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{perm.label}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>

@@ -49,6 +49,7 @@ const App: React.FC = () => {
     companyName,
     approvalStatus,
     userRole,
+    userProfile,
     viewAsRole,
     setViewAsRole,
     isSetupRequired,
@@ -997,6 +998,7 @@ const App: React.FC = () => {
                         onClearAll={handleClearDeals}
                         formFactors={formFactors}
                         userRole={effectiveRole}
+                        userProfile={userProfile}
                       />
                     </div>
                   )}
@@ -1049,6 +1051,7 @@ const App: React.FC = () => {
                     handleRemoveTag={handleRemoveTag}
                     DEFAULT_RESTRICTIONS={["Temperature Control"]}
                     userRole={effectiveRole}
+                    userProfile={userProfile}
                     optimalRange={optimalUtilizationRange}
                     setOptimalRange={setOptimalUtilizationRange}
                   />
@@ -1065,6 +1068,7 @@ const App: React.FC = () => {
                         setCountries={setCountries}
                         containerTemplates={containers}
                         userRole={effectiveRole}
+                        userProfile={userProfile}
                         companyId={companyId}
                       />
                     </div>
@@ -1076,6 +1080,7 @@ const App: React.FC = () => {
                       setCountries={setCountries}
                       containerTemplates={containers}
                       userRole={effectiveRole}
+                      userProfile={userProfile}
                       companyId={companyId}
                     />
                   </div>

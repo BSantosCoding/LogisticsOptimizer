@@ -124,17 +124,28 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     });
   };
 
-  // Group unassigned products by name and form factor
+  // Group unassigned products by name, formFactorId, destination for easier selection
   const groupedUnassigned = React.useMemo(() => {
-    if (!result) return {};
-    return result.unassignedProducts.reduce((acc, p) => {
-      const key = `${p.name} -${p.formFactorId} `;
-      if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
-      acc[key].products.push(p);
-      acc[key].totalQty += p.quantity;
-      return acc;
-    }, {} as Record<string, { products: Product[], totalQty: number }>);
-  }, [result?.unassignedProducts]);
+    if (!result?.unassignedProducts) return {};
+
+    return result.unassignedProducts
+      .filter(p => {
+        // Filter out products with missing form factors - they can't be assigned
+        if (!p.formFactorId) return false;
+        // Also check if the form factor exists in the available form factors
+        const formFactorExists = containers.some(c => c.capacities[p.formFactorId]);
+        return formFactorExists;
+      })
+      .reduce((acc, product) => {
+        const key = `${product.name}|${product.formFactorId}|${product.destination || 'NONE'}`;
+        if (!acc[key]) {
+          acc[key] = { products: [], totalQty: 0 };
+        }
+        acc[key].products.push(product);
+        acc[key].totalQty += product.quantity;
+        return acc;
+      }, {} as Record<string, { products: Product[], totalQty: number }>);
+  }, [result?.unassignedProducts, containers]);
 
   // Calculate utilization preview for selected products
   const utilizationPreview = React.useMemo(() => {
@@ -172,6 +183,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       acc[formFactorId] = (acc[formFactorId] || 0) + Number(item.quantity);
       return acc;
     }, {} as Record<string, number>);
+
+    // Calculate total units from filtered items
+    const totalUnits = filteredItems.reduce((sum, item) => sum + Number(item.quantity), 0);
 
     // Collect all unique restrictions from selected items
     const productRestrictions = new Set<string>();
@@ -228,7 +242,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       selectedCount: selectedItems.length,
       includedCount: filteredItems.length,
       excludedCount: selectedItems.length - filteredItems.length,
-      filterDestination: firstDestination
+      filterDestination: firstDestination,
+      totalUnits // Add total units for display
     };
   }, [results, activePriority, previewQuantities, containers]);
 
@@ -658,7 +673,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           {utilizationPreview && (
             <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
               <h4 className="text-[10px] font-semibold text-white mb-1.5">
-                Previewing: {utilizationPreview.includedCount} item{utilizationPreview.includedCount !== 1 ? 's' : ''}
+                Previewing: {utilizationPreview.totalUnits} unit{utilizationPreview.totalUnits !== 1 ? 's' : ''}
                 {utilizationPreview.filterDestination && (
                   <span className="text-blue-400 ml-1">
                     → {utilizationPreview.filterDestination.split('|')[0]}
@@ -666,7 +681,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 )}
                 {utilizationPreview.excludedCount > 0 && (
                   <span className="text-orange-400 ml-1">
-                    ({utilizationPreview.excludedCount} item{utilizationPreview.excludedCount !== 1 ? 's' : ''} excluded - different destination)
+                    ({utilizationPreview.excludedCount} group{utilizationPreview.excludedCount !== 1 ? 's' : ''} excluded - different destination)
                   </span>
                 )}
               </h4>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, ProductFormFactor } from '../../types';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import ErrorModal from '../modals/ErrorModal';
 
 interface Country {
     id: string;
@@ -34,6 +35,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
         name: '',
         containerCosts: {}
     });
+    const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
     const canManage = userRole === 'admin' || userRole === 'manager';
 
@@ -64,7 +66,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setNewCountry({ code: '', name: '', containerCosts: {} });
         } catch (error) {
             console.error('Error adding country:', error);
-            alert('Failed to add country');
+            setErrorModal({ isOpen: true, message: 'Failed to add country' });
         }
     };
 
@@ -84,7 +86,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setCountries(countries.map(c => c.id === id ? { ...c, ...updates } : c));
         } catch (error) {
             console.error('Error updating country:', error);
-            alert('Failed to update country');
+            setErrorModal({ isOpen: true, message: 'Failed to update country' });
         }
     };
 
@@ -102,7 +104,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setCountries(countries.filter(c => c.id !== id));
         } catch (error) {
             console.error('Error deleting country:', error);
-            alert('Failed to delete country');
+            setErrorModal({ isOpen: true, message: 'Failed to delete country' });
         }
     };
 
@@ -148,7 +150,12 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                         <Plus size={16} className="mr-2" /> Add Country
                     </button>
                 </div>
-            </div>
+                <ErrorModal
+                    isOpen={errorModal.isOpen}
+                    message={errorModal.message}
+                    onClose={() => setErrorModal({ isOpen: false, message: '' })}
+                />
+            </div >
         );
     }
 
@@ -235,7 +242,12 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+            <ErrorModal
+                isOpen={errorModal.isOpen}
+                message={errorModal.message}
+                onClose={() => setErrorModal({ isOpen: false, message: '' })}
+            />
+        </div >
     );
 };
 

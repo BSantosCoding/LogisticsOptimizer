@@ -30,7 +30,7 @@ import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
 import ShipmentPanel from './components/panels/ShipmentPanel';
 import SuperAdminPanel from './components/panels/SuperAdminPanel';
-import ErrorModal from './components/ErrorModal';
+import ErrorModal from './components/modals/ErrorModal';
 
 import { validateLoadedContainer, calculatePacking } from './services/logisticsEngine';
 import { supabase } from './services/supabase';

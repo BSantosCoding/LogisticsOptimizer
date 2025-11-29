@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Company } from '../../types';
 import { supabase } from '../../services/supabase';
 import { Building2, Check, X, Clock, AlertCircle, RefreshCw, Filter } from 'lucide-react';
+import ErrorModal from '../modals/ErrorModal';
 
 interface SuperAdminPanelProps {
     onRefresh?: () => void;
@@ -12,6 +13,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
     const loadCompanies = async () => {
         setLoading(true);
@@ -47,7 +49,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error('Error approving company:', error);
-            alert('Failed to approve company');
+            setErrorModal({ isOpen: true, message: 'Failed to approve company' });
         } finally {
             setProcessingId(null);
         }
@@ -70,7 +72,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error('Error rejecting company:', error);
-            alert('Failed to reject company');
+            setErrorModal({ isOpen: true, message: 'Failed to reject company' });
         } finally {
             setProcessingId(null);
         }
@@ -134,8 +136,8 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${filter === f
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
                                     }`}
                             >
                                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -182,8 +184,8 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className={`p-3 rounded-lg ${isPending ? 'bg-orange-900/30 text-orange-400' :
-                                                    isApproved ? 'bg-green-900/30 text-green-400' :
-                                                        'bg-red-900/30 text-red-400'
+                                                isApproved ? 'bg-green-900/30 text-green-400' :
+                                                    'bg-red-900/30 text-red-400'
                                                 }`}>
                                                 <Building2 size={24} />
                                             </div>
@@ -203,8 +205,8 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                         <div className="flex items-center gap-3">
                                             {/* Status Badge */}
                                             <div className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${isPending ? 'bg-orange-900/30 text-orange-400 border border-orange-700/30' :
-                                                    isApproved ? 'bg-green-900/30 text-green-400 border border-green-700/30' :
-                                                        'bg-red-900/30 text-red-400 border border-red-700/30'
+                                                isApproved ? 'bg-green-900/30 text-green-400 border border-green-700/30' :
+                                                    'bg-red-900/30 text-red-400 border border-red-700/30'
                                                 }`}>
                                                 {company.approval_status}
                                             </div>
@@ -260,7 +262,12 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     </div>
                 )}
             </div>
-        </div>
+            <ErrorModal
+                isOpen={errorModal.isOpen}
+                message={errorModal.message}
+                onClose={() => setErrorModal({ isOpen: false, message: '' })}
+            />
+        </div >
     );
 };
 

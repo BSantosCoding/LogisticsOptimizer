@@ -177,9 +177,6 @@ const App: React.FC = () => {
         .eq('id', session.user.id)
         .maybeSingle();
 
-      // Log for debugging
-      console.log('Profile fetch result:', { profile, profileError });
-
       if (!profile) {
         setIsSetupRequired(true);
         setIsDataLoading(false);

@@ -103,7 +103,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
             <Copy size={16} className="text-blue-500" /> New Template
           </h3>
-          {canManageConfig ? (
+          {canManageTemplates ? (
             <div className="bg-slate-900/50 p-3 rounded border border-slate-700 space-y-3">
               <div className="flex gap-2">
                 <input
@@ -142,7 +142,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
             <ShieldAlert size={16} className="text-purple-500" /> New Tag
           </h3>
-          {canManageConfig ? (
+          {canManageTags ? (
             <div className="flex gap-2 items-center">
               <input
                 placeholder="New Tag Name"

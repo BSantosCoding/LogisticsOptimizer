@@ -1064,7 +1064,7 @@ const App: React.FC = () => {
                       onImport={handleImportDeals}
                       onClearAll={handleClearDeals}
                       formFactors={formFactors}
-                      userRole={effectiveRole}
+                      userProfile={userProfile}
                     />
                   </div>
                 </div>
@@ -1079,6 +1079,7 @@ const App: React.FC = () => {
                       onRemove={handleRemoveFormFactor}
                       onEdit={handleEditFormFactor}
                       userRole={effectiveRole}
+                      userProfile={userProfile}
                     />
                   </div>
                   <ConfigPanel

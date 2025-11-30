@@ -25,7 +25,6 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             const { data: productsData } = await supabase
                 .from('products')
                 .select('*')
-                .eq('company_id', companyId)
                 .eq('created_by', userId);
 
             const { data: containersData } = await supabase.from('containers').select('*').eq('company_id', companyId);
@@ -71,7 +70,11 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             }
 
             // Load Shipments
-            const { data: shipmentsData } = await supabase.from('shipments').select('*').eq('company_id', companyId).order('created_at', { ascending: false });
+            const { data: shipmentsData } = await supabase
+                .from('shipments')
+                .select('*')
+                .eq('created_by', userId)
+                .order('created_at', { ascending: false });
             if (shipmentsData) {
                 setShipments(shipmentsData.map((r: any) => ({
                     id: r.id,

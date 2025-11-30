@@ -378,6 +378,7 @@ const App: React.FC = () => {
         .from('shipments')
         .insert([{
           company_id: companyId,
+          created_by: session.user.id,
           name,
           status: 'finalized',
           total_cost: totalCost,
@@ -680,7 +681,7 @@ const App: React.FC = () => {
     setSelectedProductIds(new Set());
     setResults(null);
 
-    await supabase.from('products').delete().eq('company_id', companyId);
+    await supabase.from('products').delete().eq('created_by', session.user.id);
   };
 
   const handleImportDeals = async (csvContent: string) => {

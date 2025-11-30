@@ -115,7 +115,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                 <div className="p-4 space-y-6">
                     {/* Pending Requests */}
                     {pendingMembers.length > 0 && (
-                        <div className="w-full md:w-1/2 bg-orange-900/10 rounded-lg border border-orange-500/30 overflow-hidden">
+                        <div className="bg-orange-900/10 rounded-lg border border-orange-500/30 overflow-hidden">
                             <div className="bg-orange-900/20 px-4 py-3 border-b border-orange-500/30 flex justify-between items-center">
                                 <h3 className="text-orange-200 font-bold text-sm uppercase flex items-center gap-2">
                                     <User size={16} /> Pending Requests
@@ -153,12 +153,9 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
 
                     {/* Active Team */}
                     <div>
-                        <div className="flex items-center gap-4 mb-3">
-                            <h3 className="text-slate-400 font-bold text-sm uppercase flex items-center gap-2">
-                                <Shield size={16} className="text-blue-500" /> Active Members
-                            </h3>
-                            <div className="h-px bg-slate-700 flex-1 max-w-[200px]"></div>
-                        </div>
+                        <h3 className="text-slate-400 font-bold text-sm uppercase mb-3 flex items-center gap-2">
+                            <Shield size={16} className="text-blue-500" /> Active Members
+                        </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {activeMembers.map(member => {
                                 const isMe = member.id === currentUserId;

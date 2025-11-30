@@ -162,20 +162,20 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                             </div>
                                         </div>
 
-                                        {!isMe && (
-                                            <div className="flex flex-col gap-3 pt-3 border-t border-slate-700/50">
-                                                <div className="flex items-center gap-2">
-                                                    <select
-                                                        disabled={!!actionLoading}
-                                                        value={member.role}
-                                                        onChange={(e) => handleUpdateProfile(member.id, { role: e.target.value as any })}
-                                                        className="flex-1 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer hover:border-slate-600 transition-colors"
-                                                    >
-                                                        <option value="standard">Standard</option>
-                                                        <option value="manager">Manager</option>
-                                                        <option value="admin">Admin</option>
-                                                    </select>
+                                        <div className="flex flex-col gap-3 pt-3 border-t border-slate-700/50">
+                                            <div className="flex items-center gap-2">
+                                                <select
+                                                    disabled={isMe || !!actionLoading}
+                                                    value={member.role}
+                                                    onChange={(e) => handleUpdateProfile(member.id, { role: e.target.value as any })}
+                                                    className="flex-1 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 outline-none focus:border-blue-500 cursor-pointer hover:border-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <option value="standard">Standard</option>
+                                                    <option value="manager">Manager</option>
+                                                    <option value="admin">Admin</option>
+                                                </select>
 
+                                                {!isMe && (
                                                     <button
                                                         disabled={!!actionLoading}
                                                         onClick={() => handleRemoveUser(member.id)}
@@ -184,39 +184,41 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
-                                                </div>
-
-                                                {member.role === 'standard' && (
-                                                    <div className="bg-slate-900/50 rounded p-2 border border-slate-700/50">
-                                                        <div className="text-[10px] uppercase font-bold text-slate-500 mb-2">Edit Permissions</div>
-                                                        <div className="grid grid-cols-1 gap-1.5">
-                                                            {[
-                                                                { key: 'can_edit_countries', label: 'Countries' },
-                                                                { key: 'can_edit_form_factors', label: 'Form Factors' },
-                                                                { key: 'can_edit_containers', label: 'Containers' },
-                                                                { key: 'can_edit_templates', label: 'Templates' },
-                                                                { key: 'can_edit_tags', label: 'Tags' },
-                                                            ].map(perm => (
-                                                                <label key={perm.key} className="flex items-center gap-2 cursor-pointer group">
-                                                                    <div className="relative flex items-center">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            className="peer sr-only"
-                                                                            checked={!!(member as any)[perm.key]}
-                                                                            onChange={(e) => handleUpdateProfile(member.id, { [perm.key]: e.target.checked })}
-                                                                            disabled={!!actionLoading}
-                                                                        />
-                                                                        <div className="w-6 h-3 bg-slate-700 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
-                                                                        <div className="absolute left-0.5 top-0.5 w-2 h-2 bg-slate-400 rounded-full transition-transform peer-checked:translate-x-3 peer-checked:bg-white"></div>
-                                                                    </div>
-                                                                    <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{perm.label}</span>
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    </div>
                                                 )}
                                             </div>
-                                        )}
+
+                                            {member.role === 'standard' && (
+                                                <div className={`rounded p-3 border ${isMe ? 'bg-slate-900/30 border-slate-700/30' : 'bg-slate-900/50 border-slate-700/50'}`}>
+                                                    <div className="text-[10px] uppercase font-bold text-slate-500 mb-2 flex items-center gap-2">
+                                                        <Shield size={10} /> Permissions
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-2">
+                                                        {[
+                                                            { key: 'can_edit_countries', label: 'Countries' },
+                                                            { key: 'can_edit_form_factors', label: 'Form Factors' },
+                                                            { key: 'can_edit_containers', label: 'Containers' },
+                                                            { key: 'can_edit_templates', label: 'Templates' },
+                                                            { key: 'can_edit_tags', label: 'Tags' },
+                                                        ].map(perm => (
+                                                            <label key={perm.key} className={`flex items-center gap-2 ${isMe ? 'cursor-default' : 'cursor-pointer group'}`}>
+                                                                <div className="relative flex items-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="peer sr-only"
+                                                                        checked={!!(member as any)[perm.key]}
+                                                                        onChange={(e) => handleUpdateProfile(member.id, { [perm.key]: e.target.checked })}
+                                                                        disabled={isMe || !!actionLoading}
+                                                                    />
+                                                                    <div className="w-7 h-3.5 bg-slate-700 rounded-full peer-checked:bg-blue-600 transition-colors peer-disabled:opacity-50"></div>
+                                                                    <div className="absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-slate-400 rounded-full transition-transform peer-checked:translate-x-3.5 peer-checked:bg-white peer-disabled:bg-slate-300"></div>
+                                                                </div>
+                                                                <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{perm.label}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}

@@ -80,7 +80,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
 
     // LIST VIEW
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full w-full flex flex-col">
             <div className="flex-1 overflow-y-auto">
                 {/* Header */}
                 <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 p-4 z-10 flex justify-between items-center">

@@ -96,7 +96,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                 <div className="p-4 space-y-6">
                     {/* Pending Requests */}
                     {pendingMembers.length > 0 && (
-                        <div className="bg-orange-900/10 rounded-lg border border-orange-500/30 overflow-hidden">
+                        <div className="w-full md:w-1/2 bg-orange-900/10 rounded-lg border border-orange-500/30 overflow-hidden">
                             <div className="bg-orange-900/20 px-4 py-3 border-b border-orange-500/30 flex justify-between items-center">
                                 <h3 className="text-orange-200 font-bold text-sm uppercase flex items-center gap-2">
                                     <User size={16} /> Pending Requests
@@ -134,19 +134,23 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
 
                     {/* Active Team */}
                     <div>
-                        <h3 className="text-slate-400 font-bold text-sm uppercase mb-3 flex items-center gap-2">
-                            <Shield size={16} className="text-blue-500" /> Active Members
-                        </h3>
+                        <div className="flex items-center gap-4 mb-3">
+                            <h3 className="text-slate-400 font-bold text-sm uppercase flex items-center gap-2">
+                                <Shield size={16} className="text-blue-500" /> Active Members
+                            </h3>
+                            <div className="h-px bg-slate-700 flex-1 max-w-[200px]"></div>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {activeMembers.map(member => {
                                 const isMe = member.id === currentUserId;
+                                const isSuperAdmin = member.role === 'super_admin';
                                 const isAdmin = member.role === 'admin';
                                 const isManager = member.role === 'manager';
 
                                 return (
                                     <div key={member.id} className="p-4 bg-slate-800 rounded-xl border border-slate-700 flex flex-col gap-3 shadow-sm hover:border-slate-600 transition-colors">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isAdmin ? 'bg-blue-600 text-white' : isManager ? 'bg-purple-600 text-white' : 'bg-slate-600 text-slate-300'}`}>
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${isSuperAdmin ? 'bg-indigo-600 text-white' : isAdmin ? 'bg-blue-600 text-white' : isManager ? 'bg-purple-600 text-white' : 'bg-slate-600 text-slate-300'}`}>
                                                 {member.email.substring(0, 2).toUpperCase()}
                                             </div>
                                             <div className="min-w-0 flex-1">
@@ -155,8 +159,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-1">
                                                     {isMe && <span className="text-[9px] bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold mr-1">You</span>}
-                                                    <span className={isAdmin ? 'text-blue-400' : isManager ? 'text-purple-400' : ''}>
-                                                        {isAdmin ? 'Admin' : isManager ? 'Manager' : 'Standard'}
+                                                    <span className={isSuperAdmin ? 'text-indigo-400' : isAdmin ? 'text-blue-400' : isManager ? 'text-purple-400' : ''}>
+                                                        {isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : isManager ? 'Manager' : 'Standard'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -173,6 +177,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                     <option value="standard">Standard</option>
                                                     <option value="manager">Manager</option>
                                                     <option value="admin">Admin</option>
+                                                    {isSuperAdmin && <option value="super_admin">Super Admin</option>}
                                                 </select>
 
                                                 {!isMe && (

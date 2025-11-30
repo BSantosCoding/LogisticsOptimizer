@@ -195,7 +195,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
 
         {/* Template Creation Form - For Managers and Admins */}
-        {canManageConfig && (
+        {canManageTemplates && (
           <div className="p-4 border-b border-slate-700 bg-slate-800/30">
             <div className="space-y-3">
               <div>

@@ -1024,7 +1024,7 @@ const App: React.FC = () => {
 
               {inputMode === 'containers' && (
                 <div className="flex-1 flex overflow-hidden">
-                  {hasRole(effectiveRole, 'manager') && (
+                  {(hasRole(effectiveRole, 'manager') || userProfile?.can_edit_containers) && (
                     <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
                       <ContainerPanel
                         viewMode="form"
@@ -1106,7 +1106,7 @@ const App: React.FC = () => {
 
               {inputMode === 'countries' && (
                 <div className="flex-1 flex overflow-hidden">
-                  {hasRole(effectiveRole, 'manager') && (
+                  {(hasRole(effectiveRole, 'manager') || userProfile?.can_edit_countries) && (
                     <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
                       <CountryPanel
                         viewMode="form"

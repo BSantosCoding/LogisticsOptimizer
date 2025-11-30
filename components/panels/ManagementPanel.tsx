@@ -217,11 +217,11 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                     </div>
                                                     <div className="grid grid-cols-1 gap-2">
                                                         {[
-                                                            { key: 'can_edit_countries', label: 'Countries' },
-                                                            { key: 'can_edit_form_factors', label: 'Form Factors' },
-                                                            { key: 'can_edit_containers', label: 'Containers' },
-                                                            { key: 'can_edit_templates', label: 'Templates' },
-                                                            { key: 'can_edit_tags', label: 'Tags' },
+                                                            { key: 'can_edit_countries', label: t('team.permCountries') },
+                                                            { key: 'can_edit_form_factors', label: t('team.permFormFactors') },
+                                                            { key: 'can_edit_containers', label: t('team.permContainers') },
+                                                            { key: 'can_edit_templates', label: t('team.permTemplates') },
+                                                            { key: 'can_edit_tags', label: t('team.permTags') },
                                                         ].map(perm => (
                                                             <label key={perm.key} className={`flex items-center gap-2 ${isMe ? 'cursor-default' : 'cursor-pointer group'}`}>
                                                                 <div className="relative flex items-center">

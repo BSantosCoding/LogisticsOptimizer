@@ -875,7 +875,7 @@ const App: React.FC = () => {
         <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-50 relative">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold text-white tracking-tight">{companyName}</h1>
-            <span className="text-xs text-slate-500 font-mono">ID: {companyId?.substring(0, 8)}</span>
+            <span className="text-xs text-slate-500 font-mono flex items-center">ID: {companyId?.substring(0, 8)}</span>
             {hasRole(effectiveRole, 'admin') && (
               <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
             )}

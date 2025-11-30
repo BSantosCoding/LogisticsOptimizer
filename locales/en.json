@@ -87,7 +87,12 @@
         "reject": "Reject",
         "you": "You",
         "permissions": "Permissions",
-        "confirmRemove": "Are you sure you want to remove this user from the workspace?"
+        "confirmRemove": "Are you sure you want to remove this user from the workspace?",
+        "permCountries": "Countries",
+        "permFormFactors": "Form Factors",
+        "permContainers": "Containers",
+        "permTemplates": "Templates",
+        "permTags": "Tags"
     },
     "countries": {
         "addCountry": "Add Country",

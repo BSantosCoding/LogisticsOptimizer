@@ -87,7 +87,12 @@
         "reject": "Rejeitar",
         "you": "Você",
         "permissions": "Permissões",
-        "confirmRemove": "Tem a certeza de que pretende remover este utilizador do espaço de trabalho?"
+        "confirmRemove": "Tem a certeza de que pretende remover este utilizador do espaço de trabalho?",
+        "permCountries": "Países",
+        "permFormFactors": "Formatos",
+        "permContainers": "Contentores",
+        "permTemplates": "Modelos",
+        "permTags": "Etiquetas"
     },
     "countries": {
         "addCountry": "Adicionar País",

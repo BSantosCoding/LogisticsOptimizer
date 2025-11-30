@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Container, ProductFormFactor, UserProfile } from '../../types';
-import { Plus, Save, Pencil, Trash2, X, Box, DollarSign, Clock, MapPin, ShieldAlert, Search, Filter, ChevronDown, Container as ContainerIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Save, Pencil, Trash2, X, Container as ContainerIcon, Search, Filter, Calendar, DollarSign, Clock, Box, AlertTriangle, MapPin, ShieldAlert } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { Role, hasRole } from '../../utils/roles';
 
@@ -43,6 +44,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   userRole,
   userProfile
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,13 +91,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
         <div className="space-y-3">
           {editingContainerId && (
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> Editing Container</span>
-              <button onClick={handleCancelContainerEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> Cancel</button>
+              <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> {t('containers.editing')}</span>
+              <button onClick={handleCancelContainerEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> {t('common.cancel')}</button>
             </div>
           )}
 
           <input
-            placeholder="Container Name (e.g. Maersk 40ft)"
+            placeholder={t('containers.namePlaceholder')}
             value={newContainer.name}
             onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
             className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
@@ -103,11 +105,11 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Destination</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('containers.destination')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-                <MapPin size={14} className="text-slate-500 mr-2" />
+                <ContainerIcon size={14} className="text-slate-500 mr-2" />
                 <input
-                  placeholder="Destination"
+                  placeholder={t('containers.destinationPlaceholder')}
                   value={newContainer.destination}
                   onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })}
                   className="bg-transparent text-sm text-slate-200 outline-none w-full"
@@ -117,13 +119,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           </div>
 
           <div className="flex gap-2">
-            <div className="w-1/2">
-              <label className="block text-xs text-slate-400 mb-1">Cost</label>
+            <div className="flex-1">
+              <label className="block text-xs text-slate-400 mb-1">{t('containers.cost')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
                 <DollarSign size={14} className="text-slate-500 mr-2" />
                 <input
                   type="number"
-                  placeholder="Cost"
+                  placeholder={t('containers.costPlaceholder')}
                   min="0"
                   value={newContainer.cost}
                   onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
@@ -131,13 +133,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                 />
               </div>
             </div>
-            <div className="w-1/2">
-              <label className="block text-xs text-slate-400 mb-1">Transit Time (days)</label>
+            <div className="flex-1">
+              <label className="block text-xs text-slate-400 mb-1">{t('containers.transitTime')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
                 <Clock size={14} className="text-slate-500 mr-2" />
                 <input
                   type="number"
-                  placeholder="Transit Time"
+                  placeholder={t('containers.transitTimePlaceholder')}
                   min="0"
                   value={newContainer.transitTimeDays}
                   onChange={e => setNewContainer({ ...newContainer, transitTimeDays: parseInt(e.target.value) || 0 })}
@@ -147,10 +149,23 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             </div>
           </div>
 
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">{t('containers.availableFrom')}</label>
+            <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
+              <Calendar size={14} className="text-slate-500 mr-2" />
+              <input
+                type="date"
+                value={newContainer.availableFrom}
+                onChange={e => setNewContainer({ ...newContainer, availableFrom: e.target.value })}
+                className="bg-transparent text-sm text-slate-200 outline-none w-full"
+              />
+            </div>
+          </div>
+
           <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
-            <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">Capacities (Max Units)</span>
+            <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
             {formFactors.length === 0 ? (
-              <div className="text-xs text-red-400">No Form Factors defined. Please add them in the Config panel.</div>
+              <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>
             ) : (
               <div className="space-y-2">
                 {formFactors.map(ff => (
@@ -171,7 +186,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           </div>
 
           <div>
-            <span className="text-xs text-slate-500 uppercase font-bold">Capabilities</span>
+            <span className="text-xs text-slate-500 uppercase font-bold">{t('containers.capabilities')}</span>
             <RestrictionSelector
               availableOptions={restrictionTags}
               selected={newContainer.restrictions}
@@ -183,7 +198,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             onClick={handleSaveContainer}
             className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingContainerId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
           >
-            {editingContainerId ? <><Save size={16} className="mr-2" /> Update Container</> : <><Plus size={16} className="mr-2" /> Add Container</>}
+            {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
           </button>
         </div>
       </div>
@@ -195,19 +210,19 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
     <div className="h-full flex flex-col">
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <ContainerIcon className="text-blue-500" /> Logistics Containers
-          <span className="text-sm font-normal text-slate-500 ml-2">{filteredContainers.length} units</span>
+          <ContainerIcon className="text-blue-500" /> {t('containers.logisticsContainers')}
+          <span className="text-sm font-normal text-slate-500 ml-2">{filteredContainers.length} {t('common.units')}</span>
         </h2>
         <div className="flex gap-2">
           {canManage && (
             <>
               <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
-              <button onClick={() => fileInputRef.current?.click()} className="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
-                Import CSV
+              <button onClick={() => fileInputRef.current?.click()} className="h-9 text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
+                {t('products.importCsv')}
               </button>
               {containers.length > 0 && (
-                <button onClick={onClearAll} className="text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 py-1 rounded flex items-center gap-1">
-                  Clear All
+                <button onClick={onClearAll} className="h-9 text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
+                  {t('common.clearAll')}
                 </button>
               )}
             </>
@@ -218,7 +233,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input
               type="text"
-              placeholder="Search containers..."
+              placeholder={t('common.search') + "..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 text-sm text-slate-200 focus:border-blue-500 outline-none h-10 transition-colors focus:bg-slate-800/80"
@@ -231,10 +246,10 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
               onChange={e => setSelectedTagFilter(e.target.value)}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 pr-8 text-sm text-slate-200 focus:border-blue-500 outline-none appearance-none h-10 cursor-pointer hover:bg-slate-700/50 transition-colors"
             >
-              <option value="">All Caps</option>
+              <option value="">{t('common.allCaps')}</option>
               {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+            <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
           </div>
         </div>
       </div>
@@ -243,12 +258,12 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
         {containers.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
             <ContainerIcon size={48} className="mb-2 opacity-50" />
-            <p>No containers added yet.</p>
-            <p className="text-sm">Use the form on the left to add containers.</p>
+            <p>{t('containers.noContainers')}</p>
+            <p className="text-sm">{t('products.useForm')}</p>
           </div>
         )}
 
-        {containers.length > 0 && filteredContainers.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">No containers match your search.</div>}
+        {containers.length > 0 && filteredContainers.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">{t('products.noMatches')}</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredContainers.map(c => {

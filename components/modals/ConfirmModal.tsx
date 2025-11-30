@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -16,12 +17,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     isOpen,
     title,
     message,
-    confirmText = 'Confirm',
-    cancelText = 'Cancel',
+    confirmText,
+    cancelText,
     isDestructive = false,
     onConfirm,
     onCancel
 }) => {
+    const { t } = useTranslation();
+    const effectiveConfirmText = confirmText || t('modals.confirm');
+    const effectiveCancelText = cancelText || t('modals.cancel');
+
     if (!isOpen) return null;
 
     return (
@@ -41,16 +46,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                         onClick={onCancel}
                         className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
                     >
-                        {cancelText}
+                        {effectiveCancelText}
                     </button>
                     <button
                         onClick={onConfirm}
                         className={`px-4 py-2 rounded text-sm font-medium transition-colors ${isDestructive
-                                ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
-                                : 'bg-blue-600 text-white hover:bg-blue-500'
+                            ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
+                            : 'bg-blue-600 text-white hover:bg-blue-500'
                             }`}
                     >
-                        {confirmText}
+                        {effectiveConfirmText}
                     </button>
                 </div>
             </div>

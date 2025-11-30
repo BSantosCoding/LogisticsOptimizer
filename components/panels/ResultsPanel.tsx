@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { validateLoadedContainer } from '@/services/logisticsEngine';
@@ -47,6 +48,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   selectedProductIds,
   formFactors
 }) => {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const result = results ? results[activePriority] : null;
   const [shipmentName, setShipmentName] = useState('');
@@ -350,17 +352,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
         <Box size={48} className="mb-4 opacity-50" />
-        <p className="mb-6">Add products and containers, then click Run Optimization.</p>
+        <p className="mb-6">{t('results.noResults')}</p>
         <button
           onClick={onRunOptimization}
           disabled={products.length === 0 || containers.length === 0 || isOptimizing}
-          className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
-            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-            }`}
+          className={`px - 6 py - 3 rounded - lg font - medium flex items - center gap - 2 transition - all shadow - lg ${products.length > 0 && containers.length > 0
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            } `}
         >
           {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-          {isOptimizing ? 'Optimizing...' : 'Run Optimization'}
+          {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
         </button>
       </div>
     );
@@ -372,9 +374,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const hasNoContainers = containers.length === 0;
   // Check for products with missing form factors if needed, but for now just general warnings
   const warnings = [];
-  if (hasNoProducts) warnings.push("No products available");
-  if (hasNoContainers) warnings.push("No container templates");
-  if (selectedProductIds.size === 0 && products.length > 0) warnings.push("All products selected (default)");
+  if (hasNoProducts) warnings.push(t('products.noProducts'));
+  if (hasNoContainers) warnings.push(t('containers.noContainers'));
+  if (selectedProductIds.size === 0 && products.length > 0) warnings.push(t('products.allSelectedDefault'));
 
 
 
@@ -385,13 +387,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
+            <h2 className="text-2xl font-bold text-white">{t('results.title')}</h2>
             <div className="flex items-center gap-3">
               {/* Warnings / Info */}
               <div className="flex flex-col items-end mr-2">
                 <div className="text-xs text-slate-400 flex items-center gap-1">
                   <Box size={12} />
-                  <span>{selectedCount} products selected</span>
+                  <span>{t('results.productsSelected', { count: selectedCount })}</span>
                 </div>
                 {warnings.length > 0 && (
                   <div className="text-[10px] text-orange-400 flex items-center gap-1">
@@ -405,13 +407,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               <button
                 onClick={onRunOptimization}
                 disabled={hasNoProducts || hasNoContainers || isOptimizing}
-                className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg text-sm ${!hasNoProducts && !hasNoContainers
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  }`}
+                className={`px - 3 py - 1.5 rounded - lg font - medium flex items - center gap - 2 transition - all shadow - lg ${!hasNoProducts && !hasNoContainers
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  } `}
               >
                 {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
-                {isOptimizing ? 'Running...' : 'Run Optimization'}
+                {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
               </button>
 
               <div className="h-6 w-px bg-slate-700 mx-1"></div>
@@ -420,7 +422,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 onClick={() => setIsSaving(true)}
                 className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded flex items-center gap-2 text-sm font-medium transition-colors border border-slate-700"
               >
-                <Save size={16} /> Save
+                <Save size={16} /> {t('common.save')}
               </button>
               <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
                 <X size={24} />
@@ -434,9 +436,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               <button
                 key={priority}
                 onClick={() => setActivePriority(priority)}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${activePriority === priority
-                  ? 'text-blue-400 bg-slate-800 border-t border-x border-slate-700'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                className={`px - 4 py - 2 text - sm font - medium rounded - t - lg transition - colors relative ${activePriority === priority
+                    ? 'text-blue-400 bg-slate-800 border-t border-x border-slate-700'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   } `}
               >
                 {priority}
@@ -453,9 +455,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {moveModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-80 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-2">Move Items</h3>
+            <h3 className="text-lg font-bold text-white mb-2">{t('results.moveItems')}</h3>
             <p className="text-sm text-slate-400 mb-4">
-              How many units of <span className="text-white font-medium">{moveModal.productName}</span> do you want to move?
+              {t('results.moveItemsDescription', { productName: moveModal.productName })}
             </p>
 
             <div className="flex items-center gap-4 mb-6">
@@ -472,7 +474,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   onChange={(e) => setMoveQty(Math.max(1, Math.min(moveModal.maxQty, parseInt(e.target.value) || 1)))}
                   className="w-full bg-transparent text-center text-2xl font-bold text-blue-400 outline-none"
                 />
-                <div className="text-xs text-slate-500">of {moveModal.maxQty} available</div>
+                <div className="text-xs text-slate-500">{t('results.ofAvailable', { maxQty: moveModal.maxQty })}</div>
               </div>
               <button
                 onClick={() => setMoveQty(Math.min(moveModal.maxQty, moveQty + 1))}
@@ -487,13 +489,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 onClick={() => setMoveModal(null)}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={confirmMove}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium"
               >
-                Move {moveQty} Units
+                {t('results.moveUnits', { count: moveQty })}
               </button>
             </div>
           </div>
@@ -506,10 +508,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
               <Trash2 size={20} className="text-red-400" />
-              Delete Container
+              {t('containers.deleteTitle')}
             </h3>
             <p className="text-sm text-slate-400 mb-6">
-              Are you sure you want to delete this container? All items will be moved back to unassigned.
+              {t('containers.deleteConfirmation')}
             </p>
 
             <div className="flex justify-end gap-2">
@@ -517,14 +519,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 onClick={() => setDeleteContainerModal(null)}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => handleDeleteContainer(deleteContainerModal)}
                 className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2"
               >
                 <Trash2 size={16} />
-                Delete Container
+                {t('containers.deleteTitle')}
               </button>
             </div>
           </div>
@@ -535,15 +537,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {isSaving && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-4">Save Shipment</h3>
+            <h3 className="text-lg font-bold text-white mb-4">{t('results.saveShipment')}</h3>
             <div className="mb-4">
-              <label className="block text-xs text-slate-400 mb-1">Shipment Name</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('results.shipmentName')}</label>
               <input
                 autoFocus
                 type="text"
                 value={shipmentName}
                 onChange={(e) => setShipmentName(e.target.value)}
-                placeholder="e.g., PO-12345"
+                placeholder={t('results.shipmentNamePlaceholder')}
                 className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
               />
             </div>
@@ -552,7 +554,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 onClick={() => setIsSaving(false)}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => {
@@ -565,7 +567,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 disabled={!shipmentName.trim()}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Shipment
+                {t('results.saveShipment')}
               </button>
             </div>
           </div>
@@ -575,15 +577,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">Total Containers</div>
+          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.totalContainers')}</div>
           <div className="text-xl font-bold text-white">{result.assignments.length}</div>
         </div>
         <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">Total Cost</div>
+          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.totalCost')}</div>
           <div className="text-xl font-bold text-green-400">${result.totalCost.toLocaleString()}</div>
         </div>
         <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">Unassigned Items</div>
+          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.unassignedItems')}</div>
           <div className="text-xl font-bold text-red-400">{result.unassignedProducts.length}</div>
         </div>
       </div>
@@ -676,8 +678,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     return (
                       <div
                         key={groupKey}
-                        className={`bg-slate-800 p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]' : 'border-slate-700 hover:border-slate-600'
-                          }`}
+                        className={`bg - slate - 800 p - 2 rounded - lg border flex items - center gap - 3 transition - all ${isPreviewing ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]' : 'border-slate-700 hover:border-slate-600'
+                          } `}
                       >
                         <div className="flex flex-col items-center gap-1">
                           <input
@@ -766,13 +768,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   return (
                     <div
                       key={preview.container.id}
-                      className={`p-1.5 rounded text-[10px] ${bgColor} border ${borderColor}`}
+                      className={`p - 1.5 rounded text - [10px] ${bgColor} border ${borderColor} `}
                     >
                       <div className="flex justify-between items-center">
                         <span className={`${textColor} truncate`}>
                           {preview.container.name}
                         </span>
-                        <span className={`font-bold ${textColor} ml-1`}>
+                        <span className={`font - bold ${textColor} ml - 1`}>
                           {preview.utilization.toFixed(1)}%
                         </span>
                       </div>
@@ -900,13 +902,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     : 'border-slate-700';
 
                 return (
-                  <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''}`}>
+                  <div key={destination} className={`space - y - 4 rounded - xl border p - 4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''} `}>
                     <div
                       className="flex items-center gap-2 cursor-pointer group"
                       onClick={() => toggleDestination(destination)}
                     >
                       {isCollapsed ? <ChevronRight size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
-                      <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
+                      <h3 className={`text - lg font - bold flex items - center gap - 2 ${headerColorClass} `}>
                         <MapPin size={18} />
                         {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
                         {assignments[0]?.assignedProducts[0]?.shipToName && (
@@ -950,7 +952,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                       // Group products for display
                       const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
                       loadedContainer.assignedProducts.forEach(p => {
-                        const key = `${p.name}-${p.formFactorId}`;
+                        const key = `${p.name} -${p.formFactorId} `;
                         if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
                         productGroups[key].products.push(p);
                         productGroups[key].totalQty += p.quantity;
@@ -962,11 +964,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           key={loadedContainer.container.id}
                           onDragOver={handleDragOver}
                           onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
-                          className={`bg-slate-800 rounded-lg border transition-all duration-200 
+                          className={`bg - slate - 800 rounded - lg border transition - all duration - 200 
                     ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
 `}
                         >
-                          <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
+                          <div className={`p - 3 border - b border - slate - 700 flex justify - between items - center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
                             } `}>
                             <div>
                               <div className="font-semibold text-white flex items-center gap-2">
@@ -994,7 +996,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                 <Trash2 size={16} />
                               </button>
                               <div>
-                                <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
+                                <div className={`text - 2xl font - bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'} `}>
                                   {loadedContainer.totalUtilization.toFixed(1)}%
                                 </div>
                                 <div className="text-xs text-slate-500">Utilization</div>
@@ -1005,8 +1007,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           {/* Progress Bar */}
                           <div className="h-2 bg-slate-900 w-full">
                             <div
-                              className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
-                              style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
+                              className={`h - full transition - all duration - 500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'} `}
+                              style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}% ` }}
                             />
                           </div>
 
@@ -1019,7 +1021,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                 const p = group.products[0]; // Representative product
                                 return (
                                   <div
-                                    key={`${p.id}-${idx}`}
+                                    key={`${p.id} -${idx} `}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
                                     className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"

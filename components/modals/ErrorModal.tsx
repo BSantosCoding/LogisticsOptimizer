@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, AlertCircle } from 'lucide-react';
 
 interface ErrorModalProps {
@@ -8,6 +9,7 @@ interface ErrorModalProps {
 }
 
 const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, message, onClose }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     return (
@@ -18,7 +20,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, message, onClose }) => 
                         <AlertCircle className="text-red-400" size={24} />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white mb-2">Error</h3>
+                        <h3 className="text-lg font-bold text-white mb-2">{t('modals.errorTitle')}</h3>
                         <p className="text-slate-300 text-sm">{message}</p>
                     </div>
                     <button
@@ -33,7 +35,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, message, onClose }) => 
                         onClick={onClose}
                         className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
                     >
-                        Close
+                        {t('modals.close')}
                     </button>
                 </div>
             </div>

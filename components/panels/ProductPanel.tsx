@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Product, ProductFormFactor } from '../../types';
+import { useTranslation } from 'react-i18next';
 import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash, AlertTriangle } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
@@ -42,6 +43,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   onSelectAll,
   allSelected
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
   const [shipmentFilter, setShipmentFilter] = useState<'available' | 'shipped' | 'all'>('available');
@@ -93,14 +95,14 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
         <div className="space-y-3">
           {editingProductId && (
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> Editing Product</span>
-              <button onClick={handleCancelProductEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> Cancel</button>
+              <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> {t('products.editing')}</span>
+              <button onClick={handleCancelProductEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> {t('common.cancel')}</button>
             </div>
           )}
 
           <div className="flex gap-2">
             <input
-              placeholder="Product Name / Request ID"
+              placeholder={t('products.namePlaceholder')}
               value={newProduct.name}
               onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
               className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
@@ -109,11 +111,11 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Destination</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('products.destination')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
                 <MapPin size={14} className="text-slate-500 mr-2" />
                 <input
-                  placeholder="Destination"
+                  placeholder={t('products.destination')}
                   value={newProduct.destination || ''}
                   onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
                   className="bg-transparent text-sm text-slate-200 outline-none w-full"
@@ -121,10 +123,10 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               </div>
             </div>
             <div className="w-1/3">
-              <label className="block text-xs text-slate-400 mb-1">Country</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('products.country')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
                 <input
-                  placeholder="Country (e.g. CN)"
+                  placeholder={t('products.country') + " (e.g. CN)"}
                   value={newProduct.country || ''}
                   onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
                   className="bg-transparent text-sm text-slate-200 outline-none w-full"
@@ -135,20 +137,20 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Form Factor</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('products.formFactor')}</label>
               <select
                 value={newProduct.formFactorId || ''}
                 onChange={e => setNewProduct({ ...newProduct, formFactorId: e.target.value })}
                 className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
               >
-                <option value="" disabled>Select Form Factor...</option>
+                <option value="" disabled>{t('products.selectFormFactor')}</option>
                 {formFactors.map(ff => (
                   <option key={ff.id} value={ff.id}>{ff.name}</option>
                 ))}
               </select>
             </div>
             <div className="w-1/3">
-              <label className="block text-xs text-slate-400 mb-1">Units</label>
+              <label className="block text-xs text-slate-400 mb-1">{t('common.units')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2 h-[38px]">
                 <input
                   type="number"
@@ -163,7 +165,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           </div>
 
           <div>
-            <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
+            <span className="text-xs text-slate-500 uppercase font-bold">{t('products.restrictions')}</span>
             <RestrictionSelector
               availableOptions={restrictionTags}
               selected={newProduct.restrictions}
@@ -175,7 +177,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             onClick={handleSaveProduct}
             className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingProductId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
           >
-            {editingProductId ? <><Save size={16} className="mr-2" /> Update Product</> : <><Plus size={16} className="mr-2" /> Add Product</>}
+            {editingProductId ? <><Save size={16} className="mr-2" /> {t('products.updateProduct')}</> : <><Plus size={16} className="mr-2" /> {t('products.addProduct')}</>}
           </button>
         </div>
       </div>
@@ -194,8 +196,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 <Box className="text-blue-400" size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">Product Inventory</h2>
-                <p className="text-xs text-slate-500">{products.length} items</p>
+                <h2 className="text-lg font-bold text-white">{t('products.title')}</h2>
+                <p className="text-xs text-slate-500">{products.length} {t('products.items')}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -207,11 +209,11 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 className="hidden"
               />
               <button onClick={() => fileInputRef.current?.click()} className="h-9 text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
-                Import CSV
+                {t('products.importCsv')}
               </button>
               {products.length > 0 && (
                 <button onClick={onClearAll} className="h-9 text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
-                  Clear All
+                  {t('common.clearAll')}
                 </button>
               )}
             </div>
@@ -223,7 +225,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t('common.search') + "..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
@@ -260,7 +262,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               title="Show only products with warnings (missing form factors)"
             >
               <AlertTriangle size={14} />
-              <span className="hidden sm:inline">Warnings</span>
+              <span className="hidden sm:inline">{t('common.warnings')}</span>
             </button>
 
             {onSelectAll && (
@@ -268,7 +270,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 onClick={onSelectAll}
                 className="px-3 h-9 rounded text-xs font-medium bg-slate-800 text-slate-400 border border-slate-600 hover:border-blue-500 hover:text-blue-400 transition-colors shrink-0"
               >
-                {allSelected ? 'Deselect All' : 'Select All'}
+                {allSelected ? t('common.deselectAll') : t('common.selectAll')}
               </button>
             )}
           </div>
@@ -278,13 +280,13 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           {products.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
               <Box size={48} className="mb-2 opacity-50" />
-              <p>No products added yet.</p>
-              <p className="text-sm">Use the form on the left to add items.</p>
+              <p>{t('products.noProducts')}</p>
+              <p className="text-sm">{t('products.useForm')}</p>
             </div>
           )}
 
           {products.length > 0 && filteredProducts.length === 0 && (
-            <div className="text-center text-slate-500 mt-10 text-sm">No products match your search.</div>
+            <div className="text-center text-slate-500 mt-10 text-sm">{t('products.noMatches')}</div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -306,7 +308,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   {hasMissingFF && (
                     <div className="absolute top-2 right-2 bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1 border border-yellow-500/30">
                       <AlertTriangle size={10} />
-                      NO FORM FACTOR
+                      {t('products.noFormFactor')}
                     </div>
                   )}
 
@@ -325,17 +327,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     </div>
                     <div className="flex items-center gap-1">
                       <Box size={12} />
-                      {ff?.name || <span className="text-yellow-500 font-bold">Unknown</span>}
+                      {ff?.name || <span className="text-yellow-500 font-bold">{t('products.unknown')}</span>}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
-                    <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} units</div>
+                    <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} {t('common.units')}</div>
                   </div>
 
                   {(p.readyDate) && (
                     <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 space-y-1">
-                      {p.readyDate && <div className="flex items-center gap-1.5">Ready: {p.readyDate}</div>}
+                      {p.readyDate && <div className="flex items-center gap-1.5">{t('products.ready')}: {p.readyDate}</div>}
                     </div>
                   )}
 

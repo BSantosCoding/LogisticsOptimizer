@@ -31,7 +31,7 @@ import ConfirmModal from './components/modals/ConfirmModal';
 import SetupWizard from './components/SetupWizard';
 import PendingApproval from './components/PendingApproval';
 
-import { Product, Container, OptimizationPriority, Shipment } from './types';
+import { Container, Product, ProductFormFactor, Shipment, UserProfile } from './types';
 import { hasRole, getAvailableViewRoles, getRoleLabel } from './utils/roles';
 import { supabase } from './services/supabase';
 import { validateLoadedContainer } from './services/logisticsEngine';
@@ -863,7 +863,7 @@ const App: React.FC = () => {
 
                 {/* Dropdown */}
                 {showRoleMenu && (
-                  <div className="absolute top-full right-0 mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[160px] z-[9999]">
+                  <div className="absolute top-full right-0 mt-1 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-1 min-w-[220px] z-[9999]">
                     <button
                       onClick={() => {
                         setViewAsRole(null);
@@ -876,17 +876,62 @@ const App: React.FC = () => {
                     </button>
                     <div className="h-px bg-slate-800 my-1" />
                     {getAvailableViewRoles(userRole).map(role => (
-                      <button
-                        key={role}
-                        onClick={() => {
-                          setViewAsRole(role);
-                          setShowRoleMenu(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded text-xs flex items-center justify-between ${viewAsRole === role ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
-                      >
-                        <span>{getRoleLabel(role)}</span>
-                        {viewAsRole === role && <Check size={12} />}
-                      </button>
+                      <div key={role}>
+                        <button
+                          onClick={() => {
+                            if (role === 'standard') {
+                              // Default standard user has no extra permissions
+                              setViewAsRole(role, {
+                                can_edit_countries: false,
+                                can_edit_form_factors: false,
+                                can_edit_containers: false,
+                                can_edit_templates: false,
+                                can_edit_tags: false
+                              });
+                            } else {
+                              setViewAsRole(role);
+                            }
+                            if (role !== 'standard') setShowRoleMenu(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded text-xs flex items-center justify-between ${viewAsRole === role ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                        >
+                          <span>{getRoleLabel(role)}</span>
+                          {viewAsRole === role && <Check size={12} />}
+                        </button>
+
+                        {/* Permission Toggles for Standard Role */}
+                        {role === 'standard' && viewAsRole === 'standard' && (
+                          <div className="px-3 py-2 space-y-2 bg-slate-950/50 border-t border-slate-800 mt-1">
+                            <div className="text-[10px] text-slate-500 font-bold uppercase">Simulated Permissions</div>
+                            {[
+                              { key: 'can_edit_countries', label: 'Edit Countries' },
+                              { key: 'can_edit_form_factors', label: 'Edit Form Factors' },
+                              { key: 'can_edit_containers', label: 'Edit Containers' },
+                              { key: 'can_edit_templates', label: 'Edit Templates' },
+                              { key: 'can_edit_tags', label: 'Edit Tags' }
+                            ].map(perm => (
+                              <label key={perm.key} className="flex items-center gap-2 cursor-pointer group">
+                                <div className={`w-3 h-3 rounded border flex items-center justify-center transition-colors ${userProfile?.[perm.key as keyof UserProfile] ? 'bg-blue-600 border-blue-500' : 'border-slate-600 bg-slate-900'}`}>
+                                  {userProfile?.[perm.key as keyof UserProfile] && <Check size={8} className="text-white" />}
+                                </div>
+                                <input
+                                  type="checkbox"
+                                  className="hidden"
+                                  checked={!!userProfile?.[perm.key as keyof UserProfile]}
+                                  onChange={(e) => {
+                                    const newPerms = {
+                                      ...userProfile,
+                                      [perm.key]: e.target.checked
+                                    };
+                                    setViewAsRole('standard', newPerms);
+                                  }}
+                                />
+                                <span className="text-xs text-slate-400 group-hover:text-slate-300">{perm.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

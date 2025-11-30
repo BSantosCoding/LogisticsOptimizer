@@ -12,7 +12,8 @@ export interface AuthState {
     userRole: Role | null;
     userProfile: UserProfile | null;
     viewAsRole: Role | null;
-    setViewAsRole: (role: Role | null) => void;
+    viewAsPermissions: Partial<UserProfile> | null;
+    setViewAsRole: (role: Role | null, permissions?: Partial<UserProfile>) => void;
     isSetupRequired: boolean;
     setIsSetupRequired: (required: boolean) => void;
     logout: () => Promise<void>;
@@ -27,8 +28,21 @@ export const useAuth = (): AuthState => {
     const [approvalStatus, setApprovalStatus] = useState<'active' | 'pending' | null>(null);
     const [userRole, setUserRole] = useState<Role | null>(null);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [viewAsRole, setViewAsRole] = useState<Role | null>(null);
+    const [viewAsRole, setViewAsRoleState] = useState<Role | null>(null);
+    const [viewAsPermissions, setViewAsPermissions] = useState<Partial<UserProfile> | null>(null);
     const [isSetupRequired, setIsSetupRequired] = useState(false);
+
+    const setViewAsRole = (role: Role | null, permissions?: Partial<UserProfile>) => {
+        setViewAsRoleState(role);
+        setViewAsPermissions(permissions || null);
+    };
+
+    // Calculate effective profile based on viewAsRole
+    const effectiveProfile = userProfile ? {
+        ...userProfile,
+        role: viewAsRole || userProfile.role,
+        ...(viewAsRole === 'standard' && viewAsPermissions ? viewAsPermissions : {})
+    } : null;
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -136,8 +150,9 @@ export const useAuth = (): AuthState => {
         companyName,
         approvalStatus,
         userRole,
-        userProfile,
+        userProfile: effectiveProfile, // Return the effective profile
         viewAsRole,
+        viewAsPermissions,
         setViewAsRole,
         isSetupRequired,
         setIsSetupRequired,

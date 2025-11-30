@@ -127,7 +127,8 @@ export const useOptimization = (
                 containersToUse,
                 priority,
                 optimalUtilizationRange.min,
-                countryCosts
+                countryCosts,
+                optimalUtilizationRange.max
             );
 
             // Calculate total cost using country-specific costs when available

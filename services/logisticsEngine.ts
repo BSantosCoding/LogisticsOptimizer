@@ -131,7 +131,8 @@ const canFit = (products: Product[], container: Container): boolean => {
 // Returns a list of raw container instances (unvalidated)
 const packItems = (
   products: Product[],
-  templates: Container[]
+  templates: Container[],
+  maxUtilization: number = 100
 ): Array<{ template: Container; assigned: Product[] }> => {
 
   if (templates.length === 0) return [];
@@ -158,7 +159,7 @@ const packItems = (
       // Standard products will usually be compatible with Specialized containers (e.g. Reefer)
       // so this allows mixed packing.
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
-        const spacePercent = 100.1 - currentInstance.currentUtil;
+        const spacePercent = (maxUtilization + 0.1) - currentInstance.currentUtil;
         const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
 
         if (maxQtyThatFits > 0) {
@@ -211,7 +212,8 @@ export const calculatePacking = (
   containers: Container[],
   priority: OptimizationPriority,
   minUtilization: number = 70,
-  countryCosts: Record<string, Record<string, number>> = {} // countryCode -> containerTemplateId -> cost
+  countryCosts: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> cost
+  maxUtilization: number = 100
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
   // 1. Group Products by Destination ONLY
@@ -290,7 +292,7 @@ export const calculatePacking = (
     const sortedProducts = [...restrictedProducts, ...standardProducts];
 
     // 5. Phase 1: Greedy Packing
-    let packedInstances = packItems(sortedProducts, sortedTemplates);
+    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
@@ -335,7 +337,7 @@ export const calculatePacking = (
         if (smallerTemplates.length > 0) {
           // Re-run packing logic on the combined items with restricted templates
           // Note: The combined items maintain their relative order (Restricted -> Standard) from the previous sort
-          const alternativePacking = packItems(combinedItems, smallerTemplates);
+          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization);
 
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);

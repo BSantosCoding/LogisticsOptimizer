@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Package,
   Container as ContainerIcon,
@@ -99,7 +99,23 @@ const App: React.FC = () => {
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [selectedContainerIds, setSelectedContainerIds] = useState<Set<string>>(new Set());
-  const [optimalUtilizationRange, setOptimalUtilizationRange] = useState<{ min: number; max: number }>({ min: 85, max: 100 });
+  // Load optimal range from localStorage, fallback to default values
+  const [optimalUtilizationRange, setOptimalUtilizationRange] = useState<{ min: number; max: number }>(() => {
+    const saved = localStorage.getItem('optimalUtilizationRange');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved optimal range:', e);
+      }
+    }
+    return { min: 85, max: 100 };
+  });
+
+  // Save optimal range to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('optimalUtilizationRange', JSON.stringify(optimalUtilizationRange));
+  }, [optimalUtilizationRange]);
 
   // Optimization Hook
   const {

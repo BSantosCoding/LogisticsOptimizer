@@ -236,12 +236,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               {t('config.noTemplates')}
             </div>
           ) : (
-            filteredTemplates.map(t => (
-              <div key={t.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-slate-600 transition-colors">
-                <div className="font-semibold text-slate-200 mb-2">{t.name}</div>
-                {t.restrictions.length > 0 && (
+            filteredTemplates.map(template => (
+              <div key={template.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-slate-600 transition-colors">
+                <div className="font-semibold text-slate-200 mb-2">{template.name}</div>
+                {template.restrictions.length > 0 && (
                   <div className="flex gap-1 flex-wrap mb-3">
-                    {t.restrictions.map(r => (
+                    {template.restrictions.map(r => (
                       <span key={r} className="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-700">
                         {r}
                       </span>
@@ -250,14 +250,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 )}
                 <div className="flex gap-2 mt-2 pt-3 border-t border-slate-700/50">
                   <button
-                    onClick={() => applyTemplate(t)}
+                    onClick={() => applyTemplate(template)}
                     className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded transition-colors text-center font-medium"
                   >
                     {t('config.useTemplate')}
                   </button>
                   {canManageTemplates && (
                     <button
-                      onClick={() => handleRemoveTemplate(t.id)}
+                      onClick={() => handleRemoveTemplate(template.id)}
                       className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
                     >
                       <Trash2 size={16} />

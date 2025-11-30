@@ -101,20 +101,30 @@ const App: React.FC = () => {
   const [selectedContainerIds, setSelectedContainerIds] = useState<Set<string>>(new Set());
   // Load optimal range from localStorage, fallback to default values
   const [optimalUtilizationRange, setOptimalUtilizationRange] = useState<{ min: number; max: number }>(() => {
-    const saved = localStorage.getItem('optimalUtilizationRange');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved optimal range:', e);
+    try {
+      const saved = localStorage.getItem('optimalUtilizationRange');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Validate the parsed data has the correct structure
+        if (parsed && typeof parsed.min === 'number' && typeof parsed.max === 'number') {
+          return parsed;
+        }
       }
+    } catch (e) {
+      console.error('Failed to parse saved optimal range:', e);
+      // Clear corrupted data
+      localStorage.removeItem('optimalUtilizationRange');
     }
     return { min: 85, max: 100 };
   });
 
   // Save optimal range to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('optimalUtilizationRange', JSON.stringify(optimalUtilizationRange));
+    try {
+      localStorage.setItem('optimalUtilizationRange', JSON.stringify(optimalUtilizationRange));
+    } catch (e) {
+      console.error('Failed to save optimal range to localStorage:', e);
+    }
   }, [optimalUtilizationRange]);
 
   // Optimization Hook

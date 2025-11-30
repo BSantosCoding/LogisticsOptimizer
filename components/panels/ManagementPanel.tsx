@@ -16,6 +16,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const fetchMembers = async () => {
         setLoading(true);
@@ -47,7 +48,9 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     };
 
     const pendingMembers = members.filter(m => m.status === 'pending');
-    const activeMembers = members.filter(m => m.status === 'active');
+    const activeMembers = members
+        .filter(m => m.status === 'active')
+        .filter(m => m.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
     if (loading) return <div className="p-8 text-center text-slate-500 flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={20} /></div>;
 
@@ -80,7 +83,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
         <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto">
                 {/* Header */}
-                <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 p-4 z-10">
+                <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 p-4 z-10 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="bg-blue-600/10 p-2 rounded-lg border border-blue-500/20">
                             <Users className="text-blue-400" size={20} />
@@ -89,6 +92,22 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                             <h2 className="text-lg font-bold text-white">User Management</h2>
                             <p className="text-xs text-slate-500">{activeMembers.length} active members</p>
                         </div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="relative w-64">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            className="block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-lg leading-5 bg-slate-800 text-slate-300 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-blue-500 sm:text-sm transition-colors"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 

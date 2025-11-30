@@ -1,0 +1,21 @@
+{
+    "nav": {
+        "results": "Ergebnisse",
+        "shipments": "Sendungen",
+        "items": "Artikel",
+        "containers": "Container",
+        "countries": "Länder",
+        "config": "Konfig",
+        "team": "Team",
+        "admin": "Admin"
+    },
+    "header": {
+        "viewAs": "Ansicht als",
+        "myRole": "Meine Rolle",
+        "runOptimization": "Optimierung starten",
+        "optimizing": "Optimiere..."
+    },
+    "common": {
+        "loading": "Laden..."
+    }
+}

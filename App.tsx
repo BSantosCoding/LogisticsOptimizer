@@ -39,8 +39,11 @@ import { useAuth } from './hooks/useAuth';
 import { useAppData } from './hooks/useAppData';
 import { useOptimization } from './hooks/useOptimization';
 import { parseProductsCSV } from './services/importService';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   // --- Hooks ---
   const {
     session,
@@ -757,7 +760,7 @@ const App: React.FC = () => {
             title={results ? "View optimization results" : "Run an optimization to see results"}
           >
             <BarChart3 size={20} />
-            <span className="text-[10px] font-medium">Results</span>
+            <span className="text-[10px] font-medium">{t('nav.results')}</span>
           </button>
 
           {/* Divider */}
@@ -770,7 +773,7 @@ const App: React.FC = () => {
             title="Shipments"
           >
             <Package size={20} />
-            <span className="text-[10px] font-medium">Shipments</span>
+            <span className="text-[10px] font-medium">{t('nav.shipments')}</span>
           </button>
           <button
             onClick={() => handleTabChange('products')}
@@ -778,7 +781,7 @@ const App: React.FC = () => {
             title="Products"
           >
             <Box size={20} />
-            <span className="text-[10px] font-medium">Items</span>
+            <span className="text-[10px] font-medium">{t('nav.items')}</span>
           </button>
           <button
             onClick={() => handleTabChange('containers')}
@@ -786,7 +789,7 @@ const App: React.FC = () => {
             title="Containers"
           >
             <ContainerIcon size={20} />
-            <span className="text-[10px] font-medium">Containers</span>
+            <span className="text-[10px] font-medium">{t('nav.containers')}</span>
           </button>
           <button
             onClick={() => setInputMode('countries')}
@@ -794,7 +797,7 @@ const App: React.FC = () => {
             title="Countries"
           >
             <Globe size={20} />
-            <span className="text-[10px] font-medium">Countries</span>
+            <span className="text-[10px] font-medium">{t('nav.countries')}</span>
           </button>
           <button
             onClick={() => handleTabChange('config')}
@@ -802,7 +805,7 @@ const App: React.FC = () => {
             title="Configuration"
           >
             <Settings size={20} />
-            <span className="text-[10px] font-medium">Config</span>
+            <span className="text-[10px] font-medium">{t('nav.config')}</span>
           </button>
           {hasRole(effectiveRole, 'manager') && (
             <>
@@ -812,7 +815,7 @@ const App: React.FC = () => {
                 title="Management"
               >
                 <Users size={20} />
-                <span className="text-[10px] font-medium">Team</span>
+                <span className="text-[10px] font-medium">{t('nav.team')}</span>
               </button>
             </>
           )}
@@ -830,7 +833,7 @@ const App: React.FC = () => {
               title="Super Admin Panel"
             >
               <Building2 size={20} />
-              <span className="text-[10px] font-medium">Admin</span>
+              <span className="text-[10px] font-medium">{t('nav.admin')}</span>
             </button>
           )}
           <button onClick={() => logout()} className="text-slate-600 hover:text-red-400 transition-colors p-2">
@@ -849,6 +852,7 @@ const App: React.FC = () => {
             {hasRole(effectiveRole, 'admin') && (
               <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
             )}
+            <LanguageSwitcher />
 
             {/* View As Role Selector */}
             {userRole && hasRole(userRole, 'manager') && getAvailableViewRoles(userRole).length > 0 && (
@@ -857,8 +861,8 @@ const App: React.FC = () => {
                   onClick={() => setShowRoleMenu(!showRoleMenu)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:text-white hover:border-slate-600 transition-all"
                 >
-                  <span className="text-slate-500">View as:</span>
-                  <span className="font-medium">{viewAsRole ? getRoleLabel(viewAsRole) : 'My Role'}</span>
+                  <span className="text-slate-500">{t('header.viewAs')}:</span>
+                  <span className="font-medium">{viewAsRole ? getRoleLabel(viewAsRole) : t('header.myRole')}</span>
                   <ChevronDown size={12} className="text-slate-500" />
                 </button>
 
@@ -872,7 +876,7 @@ const App: React.FC = () => {
                       }}
                       className={`w-full text-left px-3 py-2 rounded text-xs flex items-center justify-between ${!viewAsRole ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
                     >
-                      <span>My Role ({getRoleLabel(userRole)})</span>
+                      <span>{t('header.myRole')} ({getRoleLabel(userRole)})</span>
                       {!viewAsRole && <Check size={12} />}
                     </button>
                     <div className="h-px bg-slate-800 my-1" />

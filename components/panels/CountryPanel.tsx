@@ -4,6 +4,7 @@ import { Role, hasRole } from '../../utils/roles';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ErrorModal from '../modals/ErrorModal';
+import { useTranslation } from 'react-i18next';
 
 interface Country {
     id: string;
@@ -31,6 +32,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     userProfile,
     companyId
 }) => {
+    const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
     const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
     const [newCountry, setNewCountry] = useState<Omit<Country, 'id'>>({
@@ -69,7 +71,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setNewCountry({ code: '', name: '', containerCosts: {} });
         } catch (error) {
             console.error('Error adding country:', error);
-            setErrorModal({ isOpen: true, message: 'Failed to add country' });
+            setErrorModal({ isOpen: true, message: t('countries.errorAdd') });
         }
     };
 
@@ -89,12 +91,12 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setCountries(countries.map(c => c.id === id ? { ...c, ...updates } : c));
         } catch (error) {
             console.error('Error updating country:', error);
-            setErrorModal({ isOpen: true, message: 'Failed to update country' });
+            setErrorModal({ isOpen: true, message: t('countries.errorUpdate') });
         }
     };
 
     const handleRemoveCountry = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this country configuration?')) return;
+        if (!window.confirm(t('countries.confirmDelete'))) return;
 
         try {
             const { error } = await supabase
@@ -107,7 +109,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             setCountries(countries.filter(c => c.id !== id));
         } catch (error) {
             console.error('Error deleting country:', error);
-            setErrorModal({ isOpen: true, message: 'Failed to delete country' });
+            setErrorModal({ isOpen: true, message: t('countries.errorDelete') });
         }
     };
 
@@ -126,11 +128,11 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             <div className="p-4 border-b border-slate-700 bg-slate-800/30">
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-                        <Plus size={16} className="text-blue-500" /> Add Country
+                        <Plus size={16} className="text-blue-500" /> {t('countries.addCountry')}
                     </h3>
 
                     <div>
-                        <label className="block text-xs text-slate-400 mb-1">Country Code</label>
+                        <label className="block text-xs text-slate-400 mb-1">{t('countries.code')}</label>
                         <input
                             value={newCountry.code}
                             onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
@@ -141,7 +143,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                     </div>
 
                     <div>
-                        <label className="block text-xs text-slate-400 mb-1">Country Name</label>
+                        <label className="block text-xs text-slate-400 mb-1">{t('countries.name')}</label>
                         <input
                             value={newCountry.name}
                             onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
@@ -155,7 +157,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                         disabled={!newCountry.code || !newCountry.name}
                         className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Plus size={16} className="mr-2" /> Add Country
+                        <Plus size={16} className="mr-2" /> {t('countries.addCountry')}
                     </button>
                 </div>
                 <ErrorModal
@@ -173,8 +175,8 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Globe className="text-blue-500" /> Country Configuration
-                        <span className="text-sm font-normal text-slate-500 ml-2">({countries.length} Countries)</span>
+                        <Globe className="text-blue-500" /> {t('countries.configuration')}
+                        <span className="text-sm font-normal text-slate-500 ml-2">({countries.length} {t('nav.countries')})</span>
                     </h2>
                 </div>
 
@@ -183,7 +185,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                     <input
                         type="text"
-                        placeholder="Search countries..."
+                        placeholder={t('countries.search')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
@@ -211,7 +213,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                             </div>
 
                             <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Container Costs</h4>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('countries.containerCosts')}</h4>
                                 <div className="space-y-2">
                                     {containerTemplates.map(template => (
                                         <div key={template.id} className="flex items-center justify-between gap-4">
@@ -221,7 +223,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                                                 <input
                                                     type="number"
                                                     min="0"
-                                                    placeholder="Default"
+                                                    placeholder={t('countries.default')}
                                                     value={country.containerCosts[template.id] || ''}
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value);
@@ -245,7 +247,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
 
                     {filteredCountries.length === 0 && (
                         <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-700 rounded-xl col-span-full">
-                            No countries configured.
+                            {t('countries.noCountries')}
                         </div>
                     )}
                 </div>

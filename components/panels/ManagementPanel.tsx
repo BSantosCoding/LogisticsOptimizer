@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabase';
 import { UserProfile } from '../../types';
 import { Role } from '../../utils/roles';
 import { Check, X, Shield, User, Trash2, Briefcase, Loader2, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ManagementPanelProps {
     viewMode?: 'summary' | 'list';
@@ -13,6 +14,7 @@ interface ManagementPanelProps {
 }
 
 const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', companyId, currentUserRole, currentUserId }) => {
+    const { t } = useTranslation();
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -39,7 +41,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     };
 
     const handleRemoveUser = async (userId: string) => {
-        if (!window.confirm("Are you sure you want to remove this user from the workspace?")) return;
+        if (!window.confirm(t('team.confirmRemove'))) return;
 
         setActionLoading(userId);
         await supabase.from('profiles').delete().eq('id', userId);
@@ -58,21 +60,21 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
         return (
             <div className="p-4 bg-slate-800 z-10">
                 <h3 className="text-sm font-bold text-white uppercase mb-2 flex items-center gap-2">
-                    <Users size={16} className="text-blue-500" /> Team Overview
+                    <Users size={16} className="text-blue-500" /> {t('team.overview')}
                 </h3>
 
                 <div className="flex gap-2 mt-3">
                     <div className="bg-slate-900 rounded p-3 flex-1 border border-slate-600 flex flex-col items-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Active</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold">{t('team.active')}</div>
                         <div className="text-2xl font-bold text-white">{activeMembers.length}</div>
                     </div>
                     <div className="bg-slate-900 rounded p-3 flex-1 border border-slate-600 flex flex-col items-center">
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">Pending</div>
+                        <div className="text-[10px] text-slate-500 uppercase font-bold">{t('team.pending')}</div>
                         <div className={`text-2xl font-bold ${pendingMembers.length > 0 ? 'text-orange-400' : 'text-slate-500'}`}>{pendingMembers.length}</div>
                     </div>
                 </div>
                 <div className="mt-4 text-xs text-slate-500">
-                    Manage team access and roles in the main panel.
+                    {t('team.manageAccess')}
                 </div>
             </div>
         );
@@ -89,8 +91,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                             <Users className="text-blue-400" size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-white">User Management</h2>
-                            <p className="text-xs text-slate-500">{activeMembers.length} active members</p>
+                            <h2 className="text-lg font-bold text-white">{t('team.userManagement')}</h2>
+                            <p className="text-xs text-slate-500">{activeMembers.length} {t('team.activeMembers')}</p>
                         </div>
                     </div>
 
@@ -104,7 +106,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                         <input
                             type="text"
                             className="block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-lg leading-5 bg-slate-800 text-slate-300 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-blue-500 sm:text-sm transition-colors"
-                            placeholder="Search users..."
+                            placeholder={t('team.searchUsers')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -118,7 +120,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                         <div className="bg-orange-900/10 rounded-lg border border-orange-500/30 overflow-hidden">
                             <div className="bg-orange-900/20 px-4 py-3 border-b border-orange-500/30 flex justify-between items-center">
                                 <h3 className="text-orange-200 font-bold text-sm uppercase flex items-center gap-2">
-                                    <User size={16} /> Pending Requests
+                                    <User size={16} /> {t('team.pendingRequests')}
                                 </h3>
                                 <span className="text-xs text-orange-400 bg-orange-900/30 px-2 py-0.5 rounded-full">
                                     {pendingMembers.length}
@@ -135,14 +137,14 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                 className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded text-xs font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
                                             >
                                                 {actionLoading === member.id ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                                                Accept
+                                                {t('team.accept')}
                                             </button>
                                             <button
                                                 disabled={!!actionLoading}
                                                 onClick={() => handleRemoveUser(member.id)}
                                                 className="bg-red-900/30 hover:bg-red-900/50 text-red-300 border border-red-900/50 px-4 py-1.5 rounded text-xs font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
                                             >
-                                                <X size={12} /> Reject
+                                                <X size={12} /> {t('team.reject')}
                                             </button>
                                         </div>
                                     </div>
@@ -154,7 +156,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                     {/* Active Team */}
                     <div>
                         <h3 className="text-slate-400 font-bold text-sm uppercase mb-3 flex items-center gap-2">
-                            <Shield size={16} className="text-blue-500" /> Active Members
+                            <Shield size={16} className="text-blue-500" /> {t('team.active')}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {activeMembers.map(member => {
@@ -174,7 +176,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                     {member.email}
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-1">
-                                                    {isMe && <span className="text-[9px] bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold mr-1">You</span>}
+                                                    {isMe && <span className="text-[9px] bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold mr-1">{t('team.you')}</span>}
                                                     <span className={isSuperAdmin ? 'text-indigo-400' : isAdmin ? 'text-blue-400' : isManager ? 'text-purple-400' : ''}>
                                                         {isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : isManager ? 'Manager' : 'Standard'}
                                                     </span>
@@ -211,7 +213,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                             {member.role === 'standard' && (
                                                 <div className={`rounded p-3 border ${isMe ? 'bg-slate-900/30 border-slate-700/30' : 'bg-slate-900/50 border-slate-700/50'}`}>
                                                     <div className="text-[10px] uppercase font-bold text-slate-500 mb-2 flex items-center gap-2">
-                                                        <Shield size={10} /> Permissions
+                                                        <Shield size={10} /> {t('team.permissions')}
                                                     </div>
                                                     <div className="grid grid-cols-1 gap-2">
                                                         {[

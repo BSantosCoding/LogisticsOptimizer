@@ -4,6 +4,7 @@ import { Product, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
 import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter, ChevronDown, Settings } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
+import { useTranslation } from 'react-i18next';
 
 interface ConfigPanelProps {
   viewMode: 'form' | 'list';
@@ -44,6 +45,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   optimalRange,
   setOptimalRange
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
 
@@ -64,11 +66,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         {optimalRange && setOptimalRange && (
           <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
             <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-              <Settings size={16} className="text-blue-500" /> Optimization Settings
+              <Settings size={16} className="text-blue-500" /> {t('config.optimizationSettings')}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Optimal Utilization Range (%)</label>
+                <label className="block text-xs text-slate-400 mb-1">{t('config.optimalRange')}</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -91,7 +93,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Target utilization range for containers. Optimization will aim to keep containers within this range.
+                  {t('config.rangeDesc')}
                 </p>
               </div>
             </div>
@@ -101,13 +103,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         {/* Template Creation Form */}
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-            <Copy size={16} className="text-blue-500" /> New Template
+            <Copy size={16} className="text-blue-500" /> {t('config.newTemplate')}
           </h3>
           {canManageTemplates ? (
             <div className="bg-slate-900/50 p-3 rounded border border-slate-700 space-y-3">
               <div className="flex gap-2">
                 <input
-                  placeholder="Template Name"
+                  placeholder={t('config.templateName')}
                   value={newTemplate.name}
                   onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
                   className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 min-w-0"
@@ -115,7 +117,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               </div>
 
               <div>
-                <span className="text-xs text-slate-500 uppercase font-bold">Restrictions</span>
+                <span className="text-xs text-slate-500 uppercase font-bold">{t('config.restrictions')}</span>
                 <RestrictionSelector
                   availableOptions={restrictionTags}
                   selected={newTemplate.restrictions || []}
@@ -127,12 +129,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 onClick={handleAddTemplate}
                 className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium"
               >
-                <Plus size={16} className="mr-2" /> Add Template
+                <Plus size={16} className="mr-2" /> {t('config.addTemplate')}
               </button>
             </div>
           ) : (
             <div className="mb-4 p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-400 flex items-center gap-2">
-              <Lock size={12} /> Template creation is restricted to managers and admins.
+              <Lock size={12} /> {t('config.restrictedAccess')}
             </div>
           )}
         </div>
@@ -140,12 +142,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         {/* Add Tag Form */}
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-            <ShieldAlert size={16} className="text-purple-500" /> New Tag
+            <ShieldAlert size={16} className="text-purple-500" /> {t('config.newTag')}
           </h3>
           {canManageTags ? (
             <div className="flex gap-2 items-center">
               <input
-                placeholder="New Tag Name"
+                placeholder={t('config.tagName')}
                 value={newTag}
                 onChange={e => setNewTag(e.target.value)}
                 className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 text-sm focus:border-blue-500 outline-none text-slate-200 h-9"
@@ -154,12 +156,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 onClick={handleAddTag}
                 className="bg-purple-600 hover:bg-purple-500 text-white px-3 h-9 rounded flex items-center gap-1 shrink-0 transition-colors"
               >
-                <Plus size={16} /> Add
+                <Plus size={16} /> {t('common.add')}
               </button>
             </div>
           ) : (
             <div className="text-xs text-slate-500 flex items-center gap-2">
-              <Lock size={12} /> Only managers can add tags.
+              <Lock size={12} /> {t('config.restrictedAccess')}
             </div>
           )}
         </div>
@@ -175,7 +177,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Copy className="text-blue-400" size={20} />
-            Product Templates
+            {t('config.productTemplates')}
           </h2>
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
@@ -185,7 +187,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t('common.search') + "..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 pl-9 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-8"
@@ -199,7 +201,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           <div className="p-4 border-b border-slate-700 bg-slate-800/30">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Template Name</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.templateName')}</label>
                 <input
                   placeholder="e.g. Standard Product"
                   value={newTemplate.name}
@@ -209,7 +211,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Restrictions</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.restrictions')}</label>
                 <RestrictionSelector
                   availableOptions={restrictionTags}
                   selected={newTemplate.restrictions || []}
@@ -221,7 +223,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 onClick={handleAddTemplate}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
               >
-                <Plus size={16} /> Add Template
+                <Plus size={16} /> {t('config.addTemplate')}
               </button>
             </div>
           </div>
@@ -231,7 +233,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {filteredTemplates.length === 0 ? (
             <div className="text-center py-8 text-slate-500 text-sm">
-              No templates found.
+              {t('config.noTemplates')}
             </div>
           ) : (
             filteredTemplates.map(t => (
@@ -251,7 +253,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     onClick={() => applyTemplate(t)}
                     className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded transition-colors text-center font-medium"
                   >
-                    Use Template
+                    {t('config.useTemplate')}
                   </button>
                   {canManageTemplates && (
                     <button
@@ -276,13 +278,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             <div className="p-4 border-b border-slate-700 bg-slate-800/50">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Settings className="text-green-400" size={20} />
-                Optimization
+                {t('config.optimizationSettings')}
               </h2>
             </div>
 
             <div className="p-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Optimal Utilization Range (%)</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.optimalRange')}</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -305,7 +307,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
-                  Target utilization range for containers.
+                  {t('config.rangeDesc')}
                 </p>
               </div>
             </div>
@@ -317,7 +319,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <ShieldAlert className="text-purple-400" size={20} />
-              Restriction Tags
+              {t('config.restrictionTags')}
             </h2>
             <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
               {restrictionTags.length}
@@ -329,7 +331,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             <div className="p-4 border-b border-slate-700 bg-slate-800/30">
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Tag Name</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.tagName')}</label>
                   <input
                     placeholder="e.g. Fragile"
                     value={newTag}
@@ -341,7 +343,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   onClick={handleAddTag}
                   className="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
                 >
-                  <Plus size={16} /> Add Tag
+                  <Plus size={16} /> {t('config.addTag')}
                 </button>
               </div>
             </div>

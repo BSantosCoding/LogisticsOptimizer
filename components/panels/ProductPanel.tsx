@@ -237,9 +237,9 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               onChange={(e) => setShipmentFilter(e.target.value as any)}
               className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9 min-w-[100px]"
             >
-              <option value="available">Available</option>
-              <option value="shipped">Shipped</option>
-              <option value="all">All</option>
+              <option value="available">{t('products.filterAvailable')}</option>
+              <option value="shipped">{t('products.filterShipped')}</option>
+              <option value="all">{t('products.filterAll')}</option>
             </select>
 
             <select
@@ -247,7 +247,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               onChange={e => setSelectedTagFilter(e.target.value)}
               className="bg-slate-800 border border-slate-600 rounded px-3 text-xs text-slate-200 focus:border-blue-500 outline-none h-9 min-w-[120px]"
             >
-              <option value="">All Tags</option>
+              <option value="">{t('products.allTags')}</option>
               {restrictionTags.map(tag => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}

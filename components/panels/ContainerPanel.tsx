@@ -118,89 +118,62 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">{t('containers.cost')}</label>
-              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-                <DollarSign size={14} className="text-slate-500 mr-2" />
-                <input
-                  type="number"
-                  placeholder={t('containers.costPlaceholder')}
-                  min="0"
-                  value={newContainer.cost}
-                  onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
-                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
-                />
-              </div>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">{t('containers.transitTime')}</label>
-              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-                <Clock size={14} className="text-slate-500 mr-2" />
-                <input
-                  type="number"
-                  placeholder={t('containers.transitTimePlaceholder')}
-                  min="0"
-                  value={newContainer.transitTimeDays}
-                  onChange={e => setNewContainer({ ...newContainer, transitTimeDays: parseInt(e.target.value) || 0 })}
-                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">{t('containers.availableFrom')}</label>
+          <div className="flex-1">
+            <label className="block text-xs text-slate-400 mb-1">{t('containers.cost')}</label>
             <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-              <Calendar size={14} className="text-slate-500 mr-2" />
+              <DollarSign size={14} className="text-slate-500 mr-2" />
               <input
-                type="date"
-                value={newContainer.availableFrom}
-                onChange={e => setNewContainer({ ...newContainer, availableFrom: e.target.value })}
+                type="number"
+                placeholder={t('containers.costPlaceholder')}
+                min="0"
+                value={newContainer.cost}
+                onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
                 className="bg-transparent text-sm text-slate-200 outline-none w-full"
               />
             </div>
           </div>
-
-          <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
-            <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
-            {formFactors.length === 0 ? (
-              <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>
-            ) : (
-              <div className="space-y-2">
-                {formFactors.map(ff => (
-                  <div key={ff.id} className="flex items-center gap-2">
-                    <label className="w-24 text-xs text-slate-400 font-medium truncate" title={ff.name}>{ff.name}</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={newContainer.capacities[ff.id] || 0}
-                      onChange={e => handleCapacityChange(ff.id, e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <span className="text-xs text-slate-500 uppercase font-bold">{t('containers.capabilities')}</span>
-            <RestrictionSelector
-              availableOptions={restrictionTags}
-              selected={newContainer.restrictions}
-              onChange={r => setNewContainer({ ...newContainer, restrictions: r })}
-            />
-          </div>
-
-          <button
-            onClick={handleSaveContainer}
-            className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingContainerId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-          >
-            {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
-          </button>
         </div>
+
+
+
+        <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
+          <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
+          {formFactors.length === 0 ? (
+            <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>
+          ) : (
+            <div className="space-y-2">
+              {formFactors.map(ff => (
+                <div key={ff.id} className="flex items-center gap-2">
+                  <label className="w-24 text-xs text-slate-400 font-medium truncate" title={ff.name}>{ff.name}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newContainer.capacities[ff.id] || 0}
+                    onChange={e => handleCapacityChange(ff.id, e.target.value)}
+                    className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <span className="text-xs text-slate-500 uppercase font-bold">{t('containers.capabilities')}</span>
+          <RestrictionSelector
+            availableOptions={restrictionTags}
+            selected={newContainer.restrictions}
+            onChange={r => setNewContainer({ ...newContainer, restrictions: r })}
+          />
+        </div>
+
+        <button
+          onClick={handleSaveContainer}
+          className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingContainerId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+        >
+          {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
+        </button>
       </div>
     );
   }
@@ -302,15 +275,9 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                     <MapPin size={12} />
                     {c.destination || 'No Destination'}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {c.transitTimeDays} days
-                  </div>
                 </div>
 
-                <div className="text-xs text-slate-500 border-t border-slate-700/50 pt-2 mb-2 flex justify-between">
-                  <span>Available: {c.availableFrom}</span>
-                </div>
+
 
                 {c.restrictions.length > 0 && (
                   <div className="flex gap-1 flex-wrap mb-1">

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2 } from 'lucide-react';
+import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { validateLoadedContainer } from '@/services/logisticsEngine';
 
 interface ResultsPanelProps {
@@ -19,6 +19,11 @@ interface ResultsPanelProps {
   optimalRange?: { min: number; max: number };
   onAddContainer?: (container: Container) => void;
   onDeleteContainer?: (containerId: string, priority: OptimizationPriority) => void;
+  onRunOptimization: () => void;
+  isOptimizing: boolean;
+  products: Product[];
+  selectedProductIds: Set<string>;
+  formFactors: any[];
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -35,7 +40,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onSaveShipment,
   optimalRange = { min: 85, max: 100 },
   onAddContainer,
-  onDeleteContainer
+  onDeleteContainer,
+  onRunOptimization,
+  isOptimizing,
+  products,
+  selectedProductIds,
+  formFactors
 }) => {
   const [isSaving, setIsSaving] = useState(false);
   const result = results ? results[activePriority] : null;
@@ -340,10 +350,32 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
         <Box size={48} className="mb-4 opacity-50" />
-        <p>Add products and containers, then click Run Optimization or switch to Manual mode.</p>
+        <p className="mb-6">Add products and containers, then click Run Optimization.</p>
+        <button
+          onClick={onRunOptimization}
+          disabled={products.length === 0 || containers.length === 0 || isOptimizing}
+          className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            }`}
+        >
+          {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
+          {isOptimizing ? 'Optimizing...' : 'Run Optimization'}
+        </button>
       </div>
     );
   }
+
+  // Calculate warnings
+  const selectedCount = selectedProductIds.size > 0 ? selectedProductIds.size : products.length;
+  const hasNoProducts = products.length === 0;
+  const hasNoContainers = containers.length === 0;
+  // Check for products with missing form factors if needed, but for now just general warnings
+  const warnings = [];
+  if (hasNoProducts) warnings.push("No products available");
+  if (hasNoContainers) warnings.push("No container templates");
+  if (selectedProductIds.size === 0 && products.length > 0) warnings.push("All products selected (default)");
+
 
 
   return (
@@ -354,12 +386,41 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Optimization Results</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Warnings / Info */}
+              <div className="flex flex-col items-end mr-2">
+                <div className="text-xs text-slate-400 flex items-center gap-1">
+                  <Box size={12} />
+                  <span>{selectedCount} products selected</span>
+                </div>
+                {warnings.length > 0 && (
+                  <div className="text-[10px] text-orange-400 flex items-center gap-1">
+                    <AlertTriangle size={10} />
+                    {warnings[0]}
+                  </div>
+                )}
+              </div>
+
+              {/* Optimize Button */}
+              <button
+                onClick={onRunOptimization}
+                disabled={hasNoProducts || hasNoContainers || isOptimizing}
+                className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg text-sm ${!hasNoProducts && !hasNoContainers
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
+              >
+                {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
+                {isOptimizing ? 'Running...' : 'Run Optimization'}
+              </button>
+
+              <div className="h-6 w-px bg-slate-700 mx-1"></div>
+
               <button
                 onClick={() => setIsSaving(true)}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-2 text-sm font-medium transition-colors"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded flex items-center gap-2 text-sm font-medium transition-colors border border-slate-700"
               >
-                <Save size={16} /> Save as Shipment
+                <Save size={16} /> Save
               </button>
               <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
                 <X size={24} />

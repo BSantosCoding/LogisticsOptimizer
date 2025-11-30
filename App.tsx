@@ -941,23 +941,13 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             {/* Optimize Button */}
-            <button
-              onClick={handleRunOptimization}
-              disabled={products.length === 0 || containers.length === 0 || isOptimizing}
-              className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                }`}
-            >
-              {isOptimizing ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
-              {isOptimizing ? 'Optimizing...' : 'Run Optimization'}
-            </button>
+            {/* Optimize Button Removed from here */}
           </div>
         </header>
 
         {/* Content Area */}
         <main className="flex-1 overflow-hidden relative flex">
-          {viewMode === 'results' && results ? (
+          {viewMode === 'results' ? (
             <div className="absolute inset-0 z-30 bg-slate-900 p-6">
               <ResultsPanel
                 results={results}
@@ -974,6 +964,11 @@ const App: React.FC = () => {
                 optimalRange={optimalUtilizationRange}
                 onAddContainer={addContainerInstance}
                 onDeleteContainer={deleteContainerInstance}
+                onRunOptimization={handleRunOptimization}
+                isOptimizing={isOptimizing}
+                products={products}
+                selectedProductIds={selectedProductIds}
+                formFactors={formFactors}
               />
             </div>
           ) : (

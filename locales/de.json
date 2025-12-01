@@ -7,7 +7,8 @@
         "countries": "Länder",
         "config": "Konfig",
         "team": "Team",
-        "admin": "Admin"
+        "admin": "Admin",
+        "userSettings": "Einstellungen"
     },
     "header": {
         "viewAs": "Ansicht als",
@@ -150,5 +151,26 @@
         "breakdown": "Aufschlüsselung",
         "export": "Bericht exportieren",
         "noResults": "Keine Ergebnisse verfügbar. Optimierung starten, um Daten zu sehen."
+    },
+    "userSettings": {
+        "title": "Benutzereinstellungen",
+        "accountManagement": "Kontoverwaltung",
+        "currentEmail": "Aktuelle E-Mail",
+        "resetPassword": "Passwort zurücksetzen",
+        "resetPasswordDesc": "Senden Sie einen Link zum Zurücksetzen des Passworts an Ihre E-Mail",
+        "sendResetLink": "Zurücksetzungslink senden",
+        "changeEmail": "E-Mail ändern",
+        "newEmail": "Neue E-Mail-Adresse",
+        "updateEmail": "E-Mail aktualisieren",
+        "resetSent": "Link zum Zurücksetzen des Passworts gesendet! Überprüfen Sie Ihre E-Mail.",
+        "emailUpdateSent": "Bestätigungs-E-Mail an Ihre neue Adresse gesendet.",
+        "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+        "sameEmail": "Neue E-Mail muss sich von der aktuellen E-Mail unterscheiden",
+        "userPreferences": "Benutzerpräferenzen",
+        "optimalRange": "Optimaler Auslastungsbereich (%)",
+        "rangeDesc": "Ihr bevorzugter Zielauslastungsbereich für Container."
+    },
+    "auth": {
+        "forgotPassword": "Passwort vergessen?"
     }
 }

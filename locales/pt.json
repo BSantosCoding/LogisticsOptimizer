@@ -7,7 +7,8 @@
         "countries": "Países",
         "config": "Configuração",
         "team": "Equipa",
-        "admin": "Admin"
+        "admin": "Admin",
+        "userSettings": "Definições"
     },
     "header": {
         "viewAs": "Ver como",
@@ -150,5 +151,26 @@
         "breakdown": "Discriminação",
         "export": "Exportar Relatório",
         "noResults": "Nenhum resultado disponível. Execute a otimização para ver os dados."
+    },
+    "userSettings": {
+        "title": "Definições de Utilizador",
+        "accountManagement": "Gestão de Conta",
+        "currentEmail": "E-mail Atual",
+        "resetPassword": "Redefinir Palavra-passe",
+        "resetPasswordDesc": "Enviar um link de redefinição de palavra-passe para o seu e-mail",
+        "sendResetLink": "Enviar Link de Redefinição",
+        "changeEmail": "Alterar E-mail",
+        "newEmail": "Novo Endereço de E-mail",
+        "updateEmail": "Atualizar E-mail",
+        "resetSent": "Link de redefinição de palavra-passe enviado! Verifique o seu e-mail.",
+        "emailUpdateSent": "E-mail de confirmação enviado para o seu novo endereço.",
+        "invalidEmail": "Por favor, introduza um endereço de e-mail válido",
+        "sameEmail": "O novo e-mail deve ser diferente do e-mail atual",
+        "userPreferences": "Preferências do Utilizador",
+        "optimalRange": "Intervalo de Utilização Ótima (%)",
+        "rangeDesc": "O seu intervalo de utilização alvo preferido para contentores."
+    },
+    "auth": {
+        "forgotPassword": "Esqueceu-se da palavra-passe?"
     }
 }

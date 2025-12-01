@@ -7,7 +7,8 @@
         "countries": "Countries",
         "config": "Config",
         "team": "Team",
-        "admin": "Admin"
+        "admin": "Admin",
+        "userSettings": "Settings"
     },
     "header": {
         "viewAs": "View as",
@@ -150,5 +151,26 @@
         "breakdown": "Breakdown",
         "export": "Export Report",
         "noResults": "No results available. Run optimization to see data."
+    },
+    "userSettings": {
+        "title": "User Settings",
+        "accountManagement": "Account Management",
+        "currentEmail": "Current Email",
+        "resetPassword": "Reset Password",
+        "resetPasswordDesc": "Send a password reset link to your email",
+        "sendResetLink": "Send Reset Link",
+        "changeEmail": "Change Email",
+        "newEmail": "New Email Address",
+        "updateEmail": "Update Email",
+        "resetSent": "Password reset link sent! Check your email.",
+        "emailUpdateSent": "Confirmation email sent to your new address.",
+        "invalidEmail": "Please enter a valid email address",
+        "sameEmail": "New email must be different from current email",
+        "userPreferences": "User Preferences",
+        "optimalRange": "Optimal Utilization Range (%)",
+        "rangeDesc": "Your preferred target utilization range for containers."
+    },
+    "auth": {
+        "forgotPassword": "Forgot password?"
     }
 }

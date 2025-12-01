@@ -836,6 +836,10 @@ const App: React.FC = () => {
             <Settings size={20} />
             <span className="text-[10px] font-medium">{t('nav.config')}</span>
           </button>
+
+          {/* Divider */}
+          <div className="h-px bg-slate-800 w-full my-2"></div>
+
           {hasRole(effectiveRole, 'manager') && (
             <>
               <button

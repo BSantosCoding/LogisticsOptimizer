@@ -13,7 +13,8 @@ import {
   Check,
   Zap,
   Box,
-  Globe
+  Globe,
+  UserCog
 } from 'lucide-react';
 import Auth from './components/Auth';
 import ProductPanel from './components/panels/ProductPanel';
@@ -852,7 +853,7 @@ const App: React.FC = () => {
             className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'user_settings' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="User Settings"
           >
-            <Settings size={20} />
+            <UserCog size={20} />
             <span className="text-[10px] font-medium">{t('nav.userSettings')}</span>
           </button>
         </nav>

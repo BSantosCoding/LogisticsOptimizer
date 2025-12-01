@@ -22,8 +22,6 @@ interface ConfigPanelProps {
   DEFAULT_RESTRICTIONS: string[];
   userRole: Role | null;
   userProfile: UserProfile | null;
-  optimalRange?: { min: number; max: number };
-  setOptimalRange?: (range: { min: number; max: number }) => void;
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({
@@ -41,9 +39,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   handleRemoveTag,
   DEFAULT_RESTRICTIONS,
   userRole,
-  userProfile,
-  optimalRange,
-  setOptimalRange
+  userProfile
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,44 +58,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   if (viewMode === 'form') {
     return (
       <div className="h-full flex flex-col gap-6 overflow-y-auto pr-2">
-        {/* Optimal Utilization Settings */}
-        {optimalRange && setOptimalRange && (
-          <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-            <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-              <Settings size={16} className="text-blue-500" /> {t('config.optimizationSettings')}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">{t('config.optimalRange')}</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={optimalRange.min}
-                    onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                    placeholder="Min"
-                  />
-                  <span className="text-slate-500">-</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={optimalRange.max}
-                    onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                    placeholder="Max"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  {t('config.rangeDesc')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Template Creation Form */}
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
           <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
@@ -272,48 +230,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
       {/* Right Column - Optimal Range + Tags stacked */}
       <div className="w-80 flex flex-col gap-4">
-        {/* Optimal Range Panel - Compact */}
-        {optimalRange && setOptimalRange && (
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-700 bg-slate-800/50">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Settings className="text-green-400" size={20} />
-                {t('config.optimizationSettings')}
-              </h2>
-            </div>
-
-            <div className="p-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.optimalRange')}</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={optimalRange.min}
-                    onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="Min"
-                  />
-                  <span className="text-slate-500">-</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={optimalRange.max}
-                    onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="Max"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  {t('config.rangeDesc')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Restriction Tags Panel */}
         <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">

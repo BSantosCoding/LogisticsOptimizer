@@ -19,6 +19,7 @@ import Auth from './components/Auth';
 import ProductPanel from './components/panels/ProductPanel';
 import ContainerPanel from './components/panels/ContainerPanel';
 import ConfigPanel from './components/panels/ConfigPanel';
+import UserSettingsPanel from './components/panels/UserSettingsPanel';
 import ManagementPanel from './components/panels/ManagementPanel';
 import CountryPanel from './components/panels/CountryPanel';
 import FormFactorPanel from './components/panels/FormFactorPanel';
@@ -92,7 +93,7 @@ const App: React.FC = () => {
   } = useAppData(companyId, session?.user?.id);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin' | 'user_settings'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
@@ -846,6 +847,14 @@ const App: React.FC = () => {
               </button>
             </>
           )}
+          <button
+            onClick={() => setInputMode('user_settings')}
+            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'user_settings' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            title="User Settings"
+          >
+            <Settings size={20} />
+            <span className="text-[10px] font-medium">{t('nav.userSettings')}</span>
+          </button>
         </nav>
 
         <div className="mt-auto flex flex-col gap-4">
@@ -1136,6 +1145,14 @@ const App: React.FC = () => {
                     DEFAULT_RESTRICTIONS={["Temperature Control"]}
                     userRole={effectiveRole}
                     userProfile={userProfile}
+                  />
+                </div>
+              )}
+
+              {inputMode === 'user_settings' && (
+                <div className="flex-1 overflow-hidden">
+                  <UserSettingsPanel
+                    userEmail={session?.user?.email || ''}
                     optimalRange={optimalUtilizationRange}
                     setOptimalRange={setOptimalUtilizationRange}
                   />

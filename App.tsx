@@ -966,7 +966,8 @@ const App: React.FC = () => {
                                 { key: 'can_edit_form_factors', label: 'Edit Form Factors' },
                                 { key: 'can_edit_containers', label: 'Edit Containers' },
                                 { key: 'can_edit_templates', label: 'Edit Templates' },
-                                { key: 'can_edit_tags', label: 'Edit Tags' }
+                                { key: 'can_edit_tags', label: 'Edit Tags' },
+                                { key: 'can_edit_import_config', label: 'Edit Import Config' }
                               ].map(perm => (
                                 <label key={perm.key} className="flex items-center gap-2 cursor-pointer group select-none">
                                   <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${userProfile?.[perm.key as keyof UserProfile] ? 'bg-blue-600 border-blue-500' : 'border-slate-600 bg-slate-900 group-hover:border-slate-500'}`}>

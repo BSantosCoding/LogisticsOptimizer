@@ -327,7 +327,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
       </div>
 
       {/* CSV Import Configuration */}
-      <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col mt-4 min-h-[400px]">
+      <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col min-h-[400px]">
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Settings className="text-green-400" size={20} />
@@ -347,7 +347,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {!canManageImportConfig && (
             <div className="p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-400 flex items-center gap-2 mb-4">
-              <Lock size={12} /> {t('config.restrictedAccess')}
+              <Lock size={12} /> {t('config.restrictedAccessCSV')}
             </div>
           )}
 
@@ -407,6 +407,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           </div>
         </div>
       </div>
+
+
     </div>
   );
 };

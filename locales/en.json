@@ -73,7 +73,9 @@
         "productTemplates": "Product Templates",
         "useTemplate": "Use Template",
         "restrictionTags": "Restriction Tags",
-        "noTemplates": "No templates found."
+        "noTemplates": "No templates found.",
+        "csvMapping": "CSV Import Configuration",
+        "restrictedAccessCSV": "CSV configuration is restricted to managers and authorized users."
     },
     "team": {
         "overview": "Team Overview",
@@ -93,7 +95,8 @@
         "permFormFactors": "Form Factors",
         "permContainers": "Containers",
         "permTemplates": "Templates",
-        "permTags": "Tags"
+        "permTags": "Tags",
+        "permImportConfig": "Import Config"
     },
     "countries": {
         "addCountry": "Add Country",

@@ -222,6 +222,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                             { key: 'can_edit_containers', label: t('team.permContainers') },
                                                             { key: 'can_edit_templates', label: t('team.permTemplates') },
                                                             { key: 'can_edit_tags', label: t('team.permTags') },
+                                                            { key: 'can_edit_import_config', label: t('team.permImportConfig') },
                                                         ].map(perm => (
                                                             <label key={perm.key} className={`flex items-center gap-2 ${isMe ? 'cursor-default' : 'cursor-pointer group'}`}>
                                                                 <div className="relative flex items-center">

@@ -788,7 +788,7 @@ const App: React.FC = () => {
           <Package className="text-white" size={24} />
         </div>
 
-        <nav className="flex flex-col gap-4 w-full px-2">
+        <nav className="flex flex-col gap-2 w-full px-2">
           {/* Operational Group */}
           <button
             onClick={() => results && setViewMode('results')}
@@ -875,7 +875,7 @@ const App: React.FC = () => {
           </button>
         </nav>
 
-        <div className="mt-auto flex flex-col gap-4">
+        <div className="mt-auto flex flex-col gap-2">
           {/* Super Admin Button - Only visible to super admins */}
           {hasRole(effectiveRole, 'super_admin') && (
             <button

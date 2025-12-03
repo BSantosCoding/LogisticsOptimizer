@@ -86,7 +86,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
   const canManageTemplates = hasRole(userRole, 'manager') || userProfile?.can_edit_templates;
   const canManageTags = hasRole(userRole, 'manager') || userProfile?.can_edit_tags;
-  const canManageConfig = canManageTemplates || canManageTags; // Fallback for general UI, but specific actions should check specific flags
+  const canManageImportConfig = hasRole(userRole, 'manager') || userProfile?.can_edit_import_config;
+  const canManageConfig = canManageTemplates || canManageTags || canManageImportConfig; // Fallback for general UI, but specific actions should check specific flags
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -344,13 +345,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {!canManageConfig && (
+          {!canManageImportConfig && (
             <div className="p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-400 flex items-center gap-2 mb-4">
               <Lock size={12} /> {t('config.restrictedAccess')}
             </div>
           )}
 
-          <div className={`space-y-4 ${!canManageConfig ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`space-y-4 ${!canManageImportConfig ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="grid grid-cols-1 gap-4">
               <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-1">Field Mapping (CSV Header Names)</h3>
 

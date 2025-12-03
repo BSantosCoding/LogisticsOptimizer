@@ -80,6 +80,7 @@ export interface UserProfile {
   can_edit_containers?: boolean;
   can_edit_templates?: boolean;
   can_edit_tags?: boolean;
+  can_edit_import_config?: boolean;
 }
 
 export interface CSVMapping {

@@ -4,10 +4,11 @@ export const parseProductsCSV = (
     csvContent: string,
     formFactors: ProductFormFactor[],
     csvMapping: CSVMapping
-): { products: Product[], productsWithMissingFF: string[] } => {
+): { products: Product[], productsWithMissingFF: string[], missingHeaders: string[] } => {
     const lines = csvContent.split('\n');
     const newProducts: Product[] = [];
     const productsWithMissingFF: string[] = [];
+    const missingHeaders: string[] = [];
 
     // Sort form factors by length (descending) to match longest name first
     const sortedFormFactors = [...formFactors].sort((a, b) => b.name.length - a.name.length);
@@ -64,7 +65,32 @@ export const parseProductsCSV = (
     const salesOrgIdx = getColIndex('salesOrg');
     const quantityIdx = getColIndex('quantity');
     const descriptionIdx = getColIndex('description');
-    const tempControlIdx = getColIndex('tempControl');
+
+    // Get indices for all restriction headers
+    const restrictionIndices = (csvMapping.restrictions || []).map(header => ({
+        header,
+        index: headerMap.get(header?.toLowerCase().trim() || '') ?? -1
+    })).filter(item => item.index !== -1);
+
+    // Validate that at least some configured headers were found
+    const configuredHeaders = [
+        csvMapping.customerNum,
+        csvMapping.country,
+        csvMapping.shipToName,
+        csvMapping.incoterms,
+        csvMapping.incoterms2,
+        csvMapping.salesOrg,
+        csvMapping.quantity,
+        csvMapping.description,
+        ...(csvMapping.restrictions || []),
+        ...Object.values(csvMapping.customFields || {})
+    ];
+
+    for (const header of configuredHeaders) {
+        if (header && !headerMap.has(header.toLowerCase().trim())) {
+            missingHeaders.push(header);
+        }
+    }
 
     // Pre-calculate indices for grouping fields (standard + custom)
     const groupingIndices = csvMapping.groupingFields.map(field => ({
@@ -90,7 +116,6 @@ export const parseProductsCSV = (
         const salesOrg = getVal(salesOrgIdx);
         const numPackagesStr = getVal(quantityIdx);
         const description = getVal(descriptionIdx);
-        const tempControl = getVal(tempControlIdx);
 
         // 1. Grouping Key -> Destination
         // Construct destination based on groupingFields
@@ -118,10 +143,14 @@ export const parseProductsCSV = (
             productsWithMissingFF.push(description);
         }
 
-        // 4. Restrictions
+        // 4. Restrictions - check all configured restriction headers
         const restrictions: string[] = [];
-        if (tempControl && tempControl.trim().length > 0) {
-            restrictions.push('Temperature Control');
+        for (const { header, index } of restrictionIndices) {
+            const value = getVal(index);
+            if (value && value.trim().length > 0) {
+                restrictions.push('Temperature Control'); // Map to standard restriction tag
+                break; // Only add once even if multiple headers have values
+            }
         }
 
         const newProduct: Product = {
@@ -141,5 +170,5 @@ export const parseProductsCSV = (
         newProducts.push(newProduct);
     }
 
-    return { products: newProducts, productsWithMissingFF };
+    return { products: newProducts, productsWithMissingFF, missingHeaders };
 };

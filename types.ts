@@ -93,8 +93,7 @@ export interface CSVMapping {
   salesOrg: string;
   quantity: string;
   description: string;
-  tempControl: string;
-  // Array of internal field names to combine for the destination key
+  restrictions: string[]; // Array of CSV header names for restriction fields
   // Array of internal field names to combine for the destination key
   groupingFields: string[];
   // Custom fields mapping: internalKey -> CSV Header Name

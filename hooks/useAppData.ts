@@ -11,7 +11,7 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     salesOrg: "Sales Organization",
     quantity: "Number of Packages",
     description: "Material Description",
-    tempControl: "Temp. Control (Description)",
+    restrictions: ["Temp. Control (Description)"],
     groupingFields: ["customerNum", "incoterms", "incoterms2", "salesOrg"]
 };
 
@@ -45,33 +45,17 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', companyId);
             const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', companyId);
             const { data: ffData } = await supabase.from('form_factors').select('*').eq('company_id', companyId);
-            const { data: configData } = await supabase.from('import_configs').select('*').eq('company_id', companyId).eq('config_key', 'product_import_mapping').single();
 
-            if (productsData) {
-                setProducts(productsData.map((r: any) => ({
-                    ...r.data,
-                    id: r.id,
-                    formFactorId: r.form_factor_id || r.data.formFactorId,
-                    quantity: r.quantity || r.data.quantity || 1,
-                    shipmentId: r.shipment_id,
-                    status: r.status || 'available'
-                })));
-            }
-
-            if (containersData) {
-                setContainers(containersData.map((r: any) => ({
-                    ...r.data,
-                    id: r.id,
-                    name: r.data.carrierName ? `${r.data.carrierName} ${r.data.containerType}` : r.data.name, // Migration fallback
-                    capacities: r.capacities || r.data.capacities || {}
-                })));
-            }
-
-            if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
-            if (ffData) setFormFactors(ffData);
-            if (configData) {
-                setCsvMapping(configData.config_value);
-            } else {
+            // Try to load import config, but don't fail if table doesn't exist
+            try {
+                const { data: configData } = await supabase.from('import_configs').select('*').eq('company_id', companyId).eq('config_key', 'product_import_mapping').single();
+                if (configData) {
+                    setCsvMapping(configData.config_value);
+                } else {
+                    setCsvMapping(DEFAULT_CSV_MAPPING);
+                }
+            } catch (error) {
+                console.warn('import_configs table not found, using default mapping');
                 setCsvMapping(DEFAULT_CSV_MAPPING);
             }
 

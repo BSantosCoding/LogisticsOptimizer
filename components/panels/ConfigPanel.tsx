@@ -364,7 +364,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 { key: 'salesOrg', label: 'Sales Org' },
                 { key: 'quantity', label: 'Quantity' },
                 { key: 'description', label: 'Description' },
-                { key: 'tempControl', label: 'Temp Control' },
               ].map(({ key, label }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
@@ -375,6 +374,50 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   />
                 </div>
               ))}
+
+              {/* Restrictions Headers */}
+              <div className="pt-2 border-t border-slate-700 mt-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Restriction Headers</h4>
+                {(editingMapping.restrictions || []).map((header, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="flex gap-2">
+                      <input
+                        value={header}
+                        onChange={e => {
+                          const newRestrictions = [...editingMapping.restrictions];
+                          newRestrictions[idx] = e.target.value;
+                          setEditingMapping(prev => ({ ...prev, restrictions: newRestrictions }));
+                          setHasUnsavedChanges(true);
+                        }}
+                        placeholder="CSV Header Name"
+                        className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <button
+                        onClick={() => {
+                          const newRestrictions = editingMapping.restrictions.filter((_, i) => i !== idx);
+                          setEditingMapping(prev => ({ ...prev, restrictions: newRestrictions }));
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="text-red-400 hover:text-red-300 p-2"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => {
+                    setEditingMapping(prev => ({
+                      ...prev,
+                      restrictions: [...(prev.restrictions || []), '']
+                    }));
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded text-xs flex items-center justify-center gap-2"
+                >
+                  <Plus size={14} /> Add Restriction Header
+                </button>
+              </div>
 
               {/* Custom Fields */}
               <div className="pt-2 border-t border-slate-700 mt-2">

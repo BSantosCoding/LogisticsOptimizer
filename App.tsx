@@ -234,11 +234,22 @@ const App: React.FC = () => {
 
   const handleImportProducts = async (csvContent: string) => {
     if (!companyId) return;
-    const { products: newProducts, productsWithMissingFF } = parseProductsCSV(csvContent, formFactors, csvMapping);
+    try {
+      const { products: parsedProducts, productsWithMissingFF, missingHeaders } = parseProductsCSV(csvContent, formFactors, csvMapping);
 
-    if (newProducts.length > 0) {
-      setPendingImportData({ products: newProducts, productsWithMissingFF });
+      // Show warning if configured headers are missing from CSV
+      if (missingHeaders.length > 0) {
+        setErrorModal({
+          isOpen: true,
+          message: `Warning: The following configured headers were not found in the CSV file:\n\n${missingHeaders.join('\n')}\n\nThe import will continue, but data from these columns will be missing.`
+        });
+      }
+
+      setPendingImportData({ products: parsedProducts, productsWithMissingFF });
       setShowImportModal(true);
+    } catch (error) {
+      console.error('Failed to parse CSV:', error);
+      setErrorModal({ isOpen: true, message: 'Failed to parse CSV file. Please check the format.' });
     }
   };
 

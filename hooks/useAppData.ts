@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
-import { Product, Container, ProductFormFactor, Shipment, OptimizationResult } from '../types';
+import { Product, Container, ProductFormFactor, Shipment, OptimizationResult, CSVMapping } from '../types';
+
+const DEFAULT_CSV_MAPPING: CSVMapping = {
+    customerNum: "Ship To: Customer Number",
+    country: "Ship To: Country",
+    shipToName: "Ship To: Name",
+    incoterms: "Incoterms",
+    incoterms2: "Incoterms (Part 2)",
+    salesOrg: "Sales Organization",
+    quantity: "Number of Packages",
+    description: "Material Description",
+    tempControl: "Temp. Control (Description)",
+    groupingFields: ["customerNum", "incoterms", "incoterms2", "salesOrg"]
+};
 
 const DEFAULT_RESTRICTIONS = [
     "Temperature Control"
@@ -14,6 +27,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
     const [countries, setCountries] = useState<any[]>([]);
     const [shipments, setShipments] = useState<Shipment[]>([]);
     const [restrictionTags, setRestrictionTags] = useState<string[]>([]);
+    const [csvMapping, setCsvMapping] = useState<CSVMapping>(DEFAULT_CSV_MAPPING);
     const [isDataLoading, setIsDataLoading] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -31,6 +45,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             const { data: templatesData } = await supabase.from('templates').select('*').eq('company_id', companyId);
             const { data: tagsData } = await supabase.from('tags').select('*').eq('company_id', companyId);
             const { data: ffData } = await supabase.from('form_factors').select('*').eq('company_id', companyId);
+            const { data: configData } = await supabase.from('import_configs').select('*').eq('company_id', companyId).eq('config_key', 'product_import_mapping').single();
 
             if (productsData) {
                 setProducts(productsData.map((r: any) => ({
@@ -54,6 +69,11 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
 
             if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
             if (ffData) setFormFactors(ffData);
+            if (configData) {
+                setCsvMapping(configData.config_value);
+            } else {
+                setCsvMapping(DEFAULT_CSV_MAPPING);
+            }
 
             const dbTags = tagsData?.map((t: any) => t.name) || [];
             setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
@@ -105,6 +125,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             setCountries([]);
             setShipments([]);
             setRestrictionTags([]);
+            setCsvMapping(DEFAULT_CSV_MAPPING);
         }
     }, [companyId, userId, loadData]);
 
@@ -149,6 +170,24 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
         setShipments(prev => [shipment, ...prev]);
     };
 
+    const updateCsvMapping = async (newMapping: CSVMapping) => {
+        if (!companyId) return;
+        setCsvMapping(newMapping);
+
+        const { error } = await supabase
+            .from('import_configs')
+            .upsert({
+                company_id: companyId,
+                config_key: 'product_import_mapping',
+                config_value: newMapping
+            }, { onConflict: 'company_id, config_key' });
+
+        if (error) {
+            console.error('Error saving CSV mapping:', error);
+            // Revert on error? For now just log.
+        }
+    };
+
     return {
         products,
         setProducts,
@@ -174,6 +213,8 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
         addFormFactor,
         updateFormFactor,
         removeFormFactor,
-        addShipment
+        addShipment,
+        csvMapping,
+        updateCsvMapping
     };
 };

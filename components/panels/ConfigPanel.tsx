@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Product, UserProfile } from '../../types';
+import { Product, UserProfile, CSVMapping } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
-import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter, ChevronDown, Settings } from 'lucide-react';
+import { Copy, Plus, ShieldAlert, Trash2, Lock, Search, Filter, ChevronDown, Settings, Save, Check } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +22,8 @@ interface ConfigPanelProps {
   DEFAULT_RESTRICTIONS: string[];
   userRole: Role | null;
   userProfile: UserProfile | null;
+  csvMapping: CSVMapping;
+  onUpdateCsvMapping: (mapping: CSVMapping) => void;
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({
@@ -39,11 +41,48 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   handleRemoveTag,
   DEFAULT_RESTRICTIONS,
   userRole,
-  userProfile
+  userProfile,
+  csvMapping,
+  onUpdateCsvMapping
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+
+  // Local state for CSV mapping editing
+  const [editingMapping, setEditingMapping] = useState<CSVMapping>(csvMapping);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Sync local state when prop changes (if not editing?)
+  // Actually, we want to initialize it. If prop updates from DB, we might overwrite changes if we are not careful.
+  // But since we are the only editor, it's fine to sync on mount or when prop changes if we haven't touched it.
+  // For simplicity, let's just sync when prop changes if !hasUnsavedChanges
+  React.useEffect(() => {
+    if (!hasUnsavedChanges) {
+      setEditingMapping(csvMapping);
+    }
+  }, [csvMapping, hasUnsavedChanges]);
+
+  const handleMappingChange = (field: keyof CSVMapping, value: string) => {
+    setEditingMapping(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  const toggleGroupingField = (field: string) => {
+    setEditingMapping(prev => {
+      const current = prev.groupingFields;
+      const next = current.includes(field)
+        ? current.filter(f => f !== field)
+        : [...current, field];
+      return { ...prev, groupingFields: next };
+    });
+    setHasUnsavedChanges(true);
+  };
+
+  const saveMapping = () => {
+    onUpdateCsvMapping(editingMapping);
+    setHasUnsavedChanges(false);
+  };
 
   const canManageTemplates = hasRole(userRole, 'manager') || userProfile?.can_edit_templates;
   const canManageTags = hasRole(userRole, 'manager') || userProfile?.can_edit_tags;
@@ -282,6 +321,88 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CSV Import Configuration */}
+      <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col mt-4 min-h-[400px]">
+        <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Settings className="text-green-400" size={20} />
+            {t('config.csvMapping', 'CSV Import Configuration')}
+          </h2>
+          {hasUnsavedChanges && (
+            <button
+              onClick={saveMapping}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+            >
+              <Save size={14} />
+              {t('common.save', 'Save')}
+            </button>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {!canManageConfig && (
+            <div className="p-3 bg-slate-800/50 border border-slate-700 rounded text-xs text-slate-400 flex items-center gap-2 mb-4">
+              <Lock size={12} /> {t('config.restrictedAccess')}
+            </div>
+          )}
+
+          <div className={`space-y-4 ${!canManageConfig ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className="grid grid-cols-1 gap-4">
+              <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-1">Field Mapping (CSV Header Names)</h3>
+
+              {[
+                { key: 'customerNum', label: 'Customer Number' },
+                { key: 'country', label: 'Country' },
+                { key: 'shipToName', label: 'Ship To Name' },
+                { key: 'incoterms', label: 'Incoterms' },
+                { key: 'incoterms2', label: 'Incoterms 2' },
+                { key: 'salesOrg', label: 'Sales Org' },
+                { key: 'quantity', label: 'Quantity' },
+                { key: 'description', label: 'Description' },
+                { key: 'tempControl', label: 'Temp Control' },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+                  <input
+                    value={(editingMapping as any)[key] || ''}
+                    onChange={e => handleMappingChange(key as keyof CSVMapping, e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4">
+              <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-2 mb-3">Grouping Fields (Destination Key)</h3>
+              <div className="space-y-2">
+                {[
+                  'customerNum', 'country', 'shipToName', 'incoterms', 'incoterms2', 'salesOrg', 'tempControl'
+                ].map(field => (
+                  <label key={field} className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${editingMapping.groupingFields.includes(field)
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-slate-600 group-hover:border-slate-500'
+                      }`}>
+                      {editingMapping.groupingFields.includes(field) && <Check size={10} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={editingMapping.groupingFields.includes(field)}
+                      onChange={() => toggleGroupingField(field)}
+                    />
+                    <span className="text-sm text-slate-300 capitalize">{field.replace(/([A-Z])/g, ' $1').trim()}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Selected fields will be combined to create unique destinations for container optimization.
+              </p>
+            </div>
           </div>
         </div>
       </div>

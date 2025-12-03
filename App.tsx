@@ -90,7 +90,9 @@ const App: React.FC = () => {
     addFormFactor,
     updateFormFactor,
     removeFormFactor,
-    addShipment
+    addShipment,
+    csvMapping,
+    updateCsvMapping
   } = useAppData(companyId, session?.user?.id);
 
   // --- App State ---
@@ -232,7 +234,7 @@ const App: React.FC = () => {
 
   const handleImportProducts = async (csvContent: string) => {
     if (!companyId) return;
-    const { products: newProducts, productsWithMissingFF } = parseProductsCSV(csvContent, formFactors);
+    const { products: newProducts, productsWithMissingFF } = parseProductsCSV(csvContent, formFactors, csvMapping);
 
     if (newProducts.length > 0) {
       setPendingImportData({ products: newProducts, productsWithMissingFF });
@@ -1147,9 +1149,11 @@ const App: React.FC = () => {
                     setNewTag={setNewTag}
                     handleAddTag={handleAddTag}
                     handleRemoveTag={handleRemoveTag}
-                    DEFAULT_RESTRICTIONS={["Temperature Control"]}
+                    DEFAULT_RESTRICTIONS={['Temperature Control']}
                     userRole={effectiveRole}
                     userProfile={userProfile}
+                    csvMapping={csvMapping}
+                    onUpdateCsvMapping={updateCsvMapping}
                   />
                 </div>
               )}

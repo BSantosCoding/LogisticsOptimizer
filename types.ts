@@ -81,3 +81,18 @@ export interface UserProfile {
   can_edit_templates?: boolean;
   can_edit_tags?: boolean;
 }
+
+export interface CSVMapping {
+  // Map internal field name to CSV Header Name (string)
+  customerNum: string;
+  country: string;
+  shipToName: string;
+  incoterms: string;
+  incoterms2: string;
+  salesOrg: string;
+  quantity: string;
+  description: string;
+  tempControl: string;
+  // Array of internal field names to combine for the destination key
+  groupingFields: string[];
+}

@@ -59,6 +59,30 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 setCsvMapping(DEFAULT_CSV_MAPPING);
             }
 
+            // Process loaded data
+            if (productsData) {
+                setProducts(productsData.map((r: any) => ({
+                    ...r.data,
+                    id: r.id,
+                    formFactorId: r.form_factor_id || r.data.formFactorId,
+                    quantity: r.quantity || r.data.quantity || 1,
+                    shipmentId: r.shipment_id,
+                    status: r.status || 'available'
+                })));
+            }
+
+            if (containersData) {
+                setContainers(containersData.map((r: any) => ({
+                    ...r.data,
+                    id: r.id,
+                    name: r.data.carrierName ? `${r.data.carrierName} ${r.data.containerType}` : r.data.name,
+                    capacities: r.capacities || r.data.capacities || {}
+                })));
+            }
+
+            if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
+            if (ffData) setFormFactors(ffData);
+
             const dbTags = tagsData?.map((t: any) => t.name) || [];
             setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
 

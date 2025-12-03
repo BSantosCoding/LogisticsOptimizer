@@ -793,7 +793,7 @@ const App: React.FC = () => {
           <button
             onClick={() => results && setViewMode('results')}
             disabled={!results}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${results && viewMode === 'results'
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${results && viewMode === 'results'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
               : results
                 ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-900 cursor-pointer'
@@ -801,7 +801,7 @@ const App: React.FC = () => {
               }`}
             title={results ? "View optimization results" : "Run an optimization to see results"}
           >
-            <BarChart3 size={20} />
+            <BarChart3 size={18} />
             <span className="text-[10px] font-medium">{t('nav.results')}</span>
           </button>
 
@@ -811,42 +811,42 @@ const App: React.FC = () => {
           {/* Main Tabs */}
           <button
             onClick={() => setInputMode('shipments')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Shipments"
           >
-            <Package size={20} />
+            <Package size={18} />
             <span className="text-[10px] font-medium">{t('nav.shipments')}</span>
           </button>
           <button
             onClick={() => handleTabChange('products')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Products"
           >
-            <Box size={20} />
+            <Box size={18} />
             <span className="text-[10px] font-medium">{t('nav.items')}</span>
           </button>
           <button
             onClick={() => handleTabChange('containers')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'containers' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'containers' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Containers"
           >
-            <ContainerIcon size={20} />
+            <ContainerIcon size={18} />
             <span className="text-[10px] font-medium">{t('nav.containers')}</span>
           </button>
           <button
             onClick={() => setInputMode('countries')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Countries"
           >
-            <Globe size={20} />
+            <Globe size={18} />
             <span className="text-[10px] font-medium">{t('nav.countries')}</span>
           </button>
           <button
             onClick={() => handleTabChange('config')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'config' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'config' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="Configuration"
           >
-            <Settings size={20} />
+            <Settings size={18} />
             <span className="text-[10px] font-medium">{t('nav.config')}</span>
           </button>
 
@@ -857,41 +857,41 @@ const App: React.FC = () => {
             <>
               <button
                 onClick={() => handleTabChange('management')}
-                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+                className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
                 title="Management"
               >
-                <Users size={20} />
+                <Users size={18} />
                 <span className="text-[10px] font-medium">{t('nav.team')}</span>
               </button>
             </>
           )}
           <button
             onClick={() => setInputMode('user_settings')}
-            className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'user_settings' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
+            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'user_settings' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
             title="User Settings"
           >
-            <UserCog size={20} />
+            <UserCog size={18} />
             <span className="text-[10px] font-medium">{t('nav.userSettings')}</span>
           </button>
         </nav>
 
-        <div className="mt-auto flex flex-col gap-2">
+        <div className="mt-auto flex flex-col gap-2 items-center">
           {/* Super Admin Button - Only visible to super admins */}
           {hasRole(effectiveRole, 'super_admin') && (
             <button
               onClick={() => setInputMode('super_admin')}
-              className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin'
+              className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin'
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20'
                 : 'text-slate-500 hover:text-purple-400 hover:bg-slate-900'
                 }`}
               title="Super Admin Panel"
             >
-              <Building2 size={20} />
+              <Building2 size={18} />
               <span className="text-[10px] font-medium">{t('nav.admin')}</span>
             </button>
           )}
           <button onClick={() => logout()} className="text-slate-600 hover:text-red-400 transition-colors p-2">
-            <LogOut size={20} />
+            <LogOut size={18} />
           </button>
         </div>
       </div>

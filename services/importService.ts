@@ -37,26 +37,40 @@ export const parseProductsCSV = (
     const headerLine = lines[0].trim();
     const headers = parseCSVLine(headerLine).map(h => h.trim());
 
-    // Map Configured Header Names to Indices
-    const getIndex = (headerName: string): number => {
-        const index = headers.findIndex(h => h.toLowerCase() === headerName.toLowerCase());
-        return index;
+    // Create a map of lowercased header names to their index
+    const headerMap = new Map<string, number>();
+    headers.forEach((h, i) => headerMap.set(h.toLowerCase(), i));
+
+    // Dynamic Column Mapping
+    const getColIndex = (key: keyof CSVMapping | string) => {
+        // Check standard keys first
+        if (key in csvMapping && typeof (csvMapping as any)[key] === 'string') {
+            const headerName = (csvMapping as any)[key];
+            return headerMap.get(headerName?.toLowerCase().trim() || '') ?? -1;
+        }
+        // Check custom fields
+        if (csvMapping.customFields && key in csvMapping.customFields) {
+            const headerName = csvMapping.customFields[key];
+            return headerMap.get(headerName?.toLowerCase().trim() || '') ?? -1;
+        }
+        return -1;
     };
 
-    const fieldIndices = {
-        customerNum: getIndex(csvMapping.customerNum),
-        country: getIndex(csvMapping.country),
-        shipToName: getIndex(csvMapping.shipToName),
-        incoterms: getIndex(csvMapping.incoterms),
-        incoterms2: getIndex(csvMapping.incoterms2),
-        salesOrg: getIndex(csvMapping.salesOrg),
-        quantity: getIndex(csvMapping.quantity),
-        description: getIndex(csvMapping.description),
-        tempControl: getIndex(csvMapping.tempControl),
-    };
+    const customerNumIdx = getColIndex('customerNum');
+    const countryIdx = getColIndex('country');
+    const shipToNameIdx = getColIndex('shipToName');
+    const incotermsIdx = getColIndex('incoterms');
+    const incoterms2Idx = getColIndex('incoterms2');
+    const salesOrgIdx = getColIndex('salesOrg');
+    const quantityIdx = getColIndex('quantity');
+    const descriptionIdx = getColIndex('description');
+    const tempControlIdx = getColIndex('tempControl');
 
-    // Check for critical missing headers (optional, but good for debugging)
-    // console.log('Field Indices:', fieldIndices);
+    // Pre-calculate indices for grouping fields (standard + custom)
+    const groupingIndices = csvMapping.groupingFields.map(field => ({
+        field,
+        index: getColIndex(field)
+    }));
 
     // Skip header (index 0)
     for (let i = 1; i < lines.length; i++) {
@@ -65,26 +79,24 @@ export const parseProductsCSV = (
 
         const cols = parseCSVLine(line);
 
-        // Extract fields based on mapped indices
         // Helper to safely get value
         const getVal = (index: number) => index >= 0 && index < cols.length ? cols[index] : '';
 
-        const customerNum = getVal(fieldIndices.customerNum);
-        const country = getVal(fieldIndices.country)?.trim();
-        const shipToName = getVal(fieldIndices.shipToName)?.trim();
-        const incoterms = getVal(fieldIndices.incoterms);
-        const incoterms2 = getVal(fieldIndices.incoterms2);
-        const salesOrg = getVal(fieldIndices.salesOrg);
-        const numPackagesStr = getVal(fieldIndices.quantity);
-        const description = getVal(fieldIndices.description);
-        const tempControl = getVal(fieldIndices.tempControl);
+        const customerNum = getVal(customerNumIdx);
+        const country = getVal(countryIdx)?.trim();
+        const shipToName = getVal(shipToNameIdx)?.trim();
+        const incoterms = getVal(incotermsIdx);
+        const incoterms2 = getVal(incoterms2Idx);
+        const salesOrg = getVal(salesOrgIdx);
+        const numPackagesStr = getVal(quantityIdx);
+        const description = getVal(descriptionIdx);
+        const tempControl = getVal(tempControlIdx);
 
         // 1. Grouping Key -> Destination
         // Construct destination based on groupingFields
-        const destinationParts = csvMapping.groupingFields.map(fieldKey => {
-            const idx = getIndex((csvMapping as any)[fieldKey]);
-            return getVal(idx);
-        });
+        const destinationParts = groupingIndices
+            .filter(item => item.index !== -1) // Only include fields that were found in the header
+            .map(item => getVal(item.index));
         const destination = destinationParts.join('|');
 
         // 2. Quantity

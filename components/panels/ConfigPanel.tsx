@@ -375,13 +375,83 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   />
                 </div>
               ))}
+
+              {/* Custom Fields */}
+              <div className="pt-2 border-t border-slate-700 mt-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Custom Fields</h4>
+                {Object.entries(editingMapping.customFields || {}).map(([key, value]) => (
+                  <div key={key} className="mb-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-medium text-slate-400">{key}</label>
+                      <button
+                        onClick={() => {
+                          const newCustom = { ...editingMapping.customFields };
+                          delete newCustom[key];
+                          setEditingMapping(prev => ({ ...prev, customFields: newCustom }));
+                          // Also remove from grouping if present
+                          if (editingMapping.groupingFields.includes(key)) {
+                            toggleGroupingField(key);
+                          }
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                    <input
+                      value={value}
+                      onChange={e => {
+                        setEditingMapping(prev => ({
+                          ...prev,
+                          customFields: {
+                            ...prev.customFields,
+                            [key]: e.target.value
+                          }
+                        }));
+                        setHasUnsavedChanges(true);
+                      }}
+                      className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                ))}
+
+                <div className="flex gap-2 mt-2">
+                  <input
+                    placeholder="New Field Key (e.g. region)"
+                    id="newCustomFieldInput"
+                    className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      const input = document.getElementById('newCustomFieldInput') as HTMLInputElement;
+                      const key = input.value.trim();
+                      if (key && !editingMapping.customFields?.[key] && !(key in editingMapping)) {
+                        setEditingMapping(prev => ({
+                          ...prev,
+                          customFields: {
+                            ...prev.customFields,
+                            [key]: ''
+                          }
+                        }));
+                        setHasUnsavedChanges(true);
+                        input.value = '';
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded text-xs"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="pt-4">
               <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-2 mb-3">Grouping Fields (Destination Key)</h3>
               <div className="space-y-2">
                 {[
-                  'customerNum', 'country', 'shipToName', 'incoterms', 'incoterms2', 'salesOrg', 'tempControl'
+                  'customerNum', 'country', 'shipToName', 'incoterms', 'incoterms2', 'salesOrg', 'tempControl',
+                  ...Object.keys(editingMapping.customFields || {})
                 ].map(field => (
                   <label key={field} className="flex items-center gap-2 cursor-pointer group">
                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${editingMapping.groupingFields.includes(field)

@@ -73,7 +73,11 @@
         "productTemplates": "Modelos de Produto",
         "useTemplate": "Usar Modelo",
         "restrictionTags": "Etiquetas de Restrição",
-        "noTemplates": "Nenhum modelo encontrado."
+        "noTemplates": "Nenhum modelo encontrado.",
+        "csvMapping": "Configuração de Importação CSV",
+        "restrictedAccessCSV": "A configuração CSV é restrita a gestores e utilizadores autorizados.",
+        "customFields": "Campos Personalizados",
+        "newFieldKey": "Nova Chave de Campo (ex. região)"
     },
     "team": {
         "overview": "Visão Geral da Equipa",
@@ -93,7 +97,8 @@
         "permFormFactors": "Formatos",
         "permContainers": "Contentores",
         "permTemplates": "Modelos",
-        "permTags": "Etiquetas"
+        "permTags": "Etiquetas",
+        "permImportConfig": "Config Importação"
     },
     "countries": {
         "addCountry": "Adicionar País",

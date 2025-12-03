@@ -73,7 +73,11 @@
         "productTemplates": "Produktvorlagen",
         "useTemplate": "Vorlage verwenden",
         "restrictionTags": "Einschränkungs-Tags",
-        "noTemplates": "Keine Vorlagen gefunden."
+        "noTemplates": "Keine Vorlagen gefunden.",
+        "csvMapping": "CSV Import Konfiguration",
+        "restrictedAccessCSV": "CSV-Konfiguration ist auf Manager und autorisierte Benutzer beschränkt.",
+        "customFields": "Benutzerdefinierte Felder",
+        "newFieldKey": "Neuer Feldschlüssel (z.B. Region)"
     },
     "team": {
         "overview": "Teamübersicht",
@@ -93,7 +97,8 @@
         "permFormFactors": "Formfaktoren",
         "permContainers": "Container",
         "permTemplates": "Vorlagen",
-        "permTags": "Tags"
+        "permTags": "Tags",
+        "permImportConfig": "Import Konfig"
     },
     "countries": {
         "addCountry": "Land hinzufügen",

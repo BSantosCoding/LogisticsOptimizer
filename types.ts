@@ -95,5 +95,8 @@ export interface CSVMapping {
   description: string;
   tempControl: string;
   // Array of internal field names to combine for the destination key
+  // Array of internal field names to combine for the destination key
   groupingFields: string[];
+  // Custom fields mapping: internalKey -> CSV Header Name
+  customFields?: Record<string, string>;
 }

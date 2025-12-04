@@ -159,8 +159,8 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           )}
         </div>
 
-        <div>
-          <span className="text-xs text-slate-500 uppercase font-bold">{t('containers.capabilities')}</span>
+        <div className="mb-3">
+          <span className="text-xs text-slate-500 uppercase font-bold block mb-2">{t('containers.capabilities')}</span>
           <RestrictionSelector
             availableOptions={restrictionTags}
             selected={newContainer.restrictions}

@@ -207,23 +207,17 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
 
         // Auto-create tags for any new restriction headers
         if (newMapping.restrictions) {
-            console.log('[updateCsvMapping] Checking restrictions:', newMapping.restrictions);
-            console.log('[updateCsvMapping] Current restrictionTags:', restrictionTags);
 
             const newTags: string[] = [];
             for (const header of newMapping.restrictions) {
                 if (header && header.trim().length > 0) {
                     const tagName = header.trim();
                     if (!restrictionTags.includes(tagName)) {
-                        console.log('[updateCsvMapping] Found new tag:', tagName);
                         newTags.push(tagName);
-                    } else {
-                        console.log('[updateCsvMapping] Tag already exists:', tagName);
                     }
                 }
             }
 
-            console.log('[updateCsvMapping] New tags to insert:', newTags);
             if (newTags.length > 0) {
                 // Add to local state immediately
                 setRestrictionTags(prev => [...prev, ...newTags]);
@@ -234,15 +228,12 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     name: tagName
                 }));
 
-                console.log('[updateCsvMapping] Inserting tags into database:', tagsToInsert);
                 const { error: tagError } = await supabase
                     .from('tags')
                     .insert(tagsToInsert);
 
                 if (tagError) {
                     console.error('[updateCsvMapping] Error creating tags:', tagError);
-                } else {
-                    console.log('[updateCsvMapping] Tags created successfully!');
                 }
             }
         }

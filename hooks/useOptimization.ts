@@ -115,8 +115,9 @@ export const useOptimization = (
         // Transform countries data into countryCosts map
         const countryCosts: Record<string, Record<string, number>> = {};
         countries.forEach((country: any) => {
-            if (country.code && country.containerCosts) {
-                countryCosts[country.code] = country.containerCosts;
+            if (country.containerCosts) {
+                if (country.code) countryCosts[country.code] = country.containerCosts;
+                if (country.name) countryCosts[country.name] = country.containerCosts;
             }
         });
 

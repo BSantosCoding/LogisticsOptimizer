@@ -83,8 +83,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const countryCosts = React.useMemo(() => {
     const costs: Record<string, Record<string, number>> = {};
     countries.forEach((country: any) => {
-      if (country.code && country.containerCosts) {
-        costs[country.code] = country.containerCosts;
+      if (country.containerCosts) {
+        if (country.code) costs[country.code] = country.containerCosts;
+        if (country.name) costs[country.name] = country.containerCosts;
       }
     });
     return costs;

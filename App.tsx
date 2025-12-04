@@ -1158,11 +1158,6 @@ const App: React.FC = () => {
                     handleRemoveTemplate={handleRemoveTemplate}
                     applyTemplate={applyTemplate}
                     restrictionTags={restrictionTags}
-                    newTag={newTag}
-                    setNewTag={setNewTag}
-                    handleAddTag={handleAddTag}
-                    handleRemoveTag={handleRemoveTag}
-                    DEFAULT_RESTRICTIONS={['Temperature Control']}
                     userRole={effectiveRole}
                     userProfile={userProfile}
                     csvMapping={csvMapping}

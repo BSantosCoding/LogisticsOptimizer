@@ -14,9 +14,7 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     groupingFields: ["customerNum", "incoterms", "salesOrg"]
 };
 
-const DEFAULT_RESTRICTIONS = [
-    "Temperature Control"
-];
+
 
 export const useAppData = (companyId: string | null, userId: string | undefined) => {
     const [products, setProducts] = useState<Product[]>([]);
@@ -101,12 +99,10 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 })));
             }
 
-            if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
             if (tagsData) {
-                const dbTags = tagsData.map((t: any) => t.name);
-                setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
+                setRestrictionTags(tagsData.map((t: any) => t.name));
             } else {
-                setRestrictionTags(DEFAULT_RESTRICTIONS);
+                setRestrictionTags([]);
             }
 
             if (ffData) {

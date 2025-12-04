@@ -60,8 +60,14 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     }
 
                     // Migration: Convert tempControl to restrictions
-                    if (loadedConfig.tempControl && !loadedConfig.restrictions) {
-                        loadedConfig.restrictions = [loadedConfig.tempControl];
+                    if (loadedConfig.tempControl) {
+                        if (!loadedConfig.restrictions || !Array.isArray(loadedConfig.restrictions)) {
+                            loadedConfig.restrictions = [loadedConfig.tempControl];
+                        } else if (loadedConfig.restrictions.length === 0) {
+                            loadedConfig.restrictions = [loadedConfig.tempControl];
+                        } else if (!loadedConfig.restrictions.includes(loadedConfig.tempControl)) {
+                            loadedConfig.restrictions.push(loadedConfig.tempControl);
+                        }
                         delete loadedConfig.tempControl;
                     }
 

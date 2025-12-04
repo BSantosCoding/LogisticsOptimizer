@@ -94,10 +94,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   // Helper to get cost for a container
   const getContainerCost = (loadedContainer: LoadedContainer) => {
     const country = loadedContainer.assignedProducts[0]?.country;
-    const countryData = countryCosts[country];
-    const containerId = loadedContainer.container.id;
-    const countryCost = countryData?.[containerId];
-    console.log('Cost lookup:', { country, containerId, countryData, countryCost, fallback: loadedContainer.container.cost });
+    // Strip the -instance-XX suffix from container ID for cost lookup
+    const baseContainerId = loadedContainer.container.id.replace(/-instance-\d+$/, '');
+    const countryCost = countryCosts[country]?.[baseContainerId];
     return countryCost ?? loadedContainer.container.cost;
   };
 

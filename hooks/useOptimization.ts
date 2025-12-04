@@ -135,7 +135,9 @@ export const useOptimization = (
             // Calculate total cost using country-specific costs when available
             const totalCost = assignments.reduce((sum, a) => {
                 const country = a.assignedProducts[0]?.country;
-                const cost = (country && countryCosts[country]?.[a.container.id]) ?? a.container.cost;
+                // Strip the -instance-XX suffix from container ID for cost lookup
+                const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
+                const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
                 return sum + cost;
             }, 0);
 

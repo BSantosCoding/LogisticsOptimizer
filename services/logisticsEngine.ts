@@ -164,11 +164,13 @@ const canFit = (products: Product[], container: Container, weightLimit?: number)
 
 // --- Core Packing Logic (Greedy) ---
 // Returns a list of raw container instances (unvalidated)
+// --- Core Packing Logic (Greedy) ---
+// Returns a list of raw container instances (unvalidated)
 const packItems = (
   products: Product[],
   templates: Container[],
   maxUtilization: number = 100,
-  weightLimit?: number
+  weightLimitResolver: (templateId: string) => number | undefined
 ): Array<{ template: Container; assigned: Product[] }> => {
 
   if (templates.length === 0) return [];
@@ -197,6 +199,7 @@ const packItems = (
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
         // Also check weight limit if configured
         const productWeight = product.weight ?? 0;
+        const weightLimit = weightLimitResolver(currentInstance.template.id);
         const canFitWeight = weightLimit === undefined ||
           (currentInstance.currentWeight + productWeight <= weightLimit);
 
@@ -229,10 +232,16 @@ const packItems = (
       // Find the best template for THIS product
       // Since products are sorted by Restricted -> Standard, this ensures that if the current
       // product is Restricted, we pick a container that supports it (e.g. Reefer).
-      const bestTemplate = templates.find(t =>
-        t.capacities[product.formFactorId] &&
-        checkCompatibility(product, t).length === 0
-      );
+      const bestTemplate = templates.find(t => {
+        if (!t.capacities[product.formFactorId]) return false;
+        if (checkCompatibility(product, t).length > 0) return false;
+
+        // Check if it can hold at least one unit by weight
+        const limit = weightLimitResolver(t.id);
+        if (limit !== undefined && product.weight && product.weight > limit) return false;
+
+        return true;
+      });
 
       if (!bestTemplate) {
         // Cannot fit anywhere
@@ -241,11 +250,19 @@ const packItems = (
       }
 
       const maxCap = bestTemplate.capacities[product.formFactorId];
+      const weightLimit = weightLimitResolver(bestTemplate.id);
 
       // Calculate how many units can fit considering weight limit
       let maxByCapacity = maxCap;
       if (weightLimit !== undefined && product.weight !== undefined && product.weight > 0) {
         maxByCapacity = Math.min(maxCap, Math.floor(weightLimit / product.weight));
+      }
+
+      // Safety check: maxByCapacity should be >= 1 because we filtered templates above
+      // But just in case of floating point weirdness
+      if (maxByCapacity < 1) {
+        unassigned.push({ ...product, quantity: remainingQty });
+        break;
       }
 
       const take = Math.min(maxByCapacity, remainingQty); // Can't take more than allowed
@@ -360,9 +377,8 @@ export const calculatePacking = (
       return countryWeightLimits[groupCountry]?.[templateId];
     };
 
-    // 5. Phase 1: Greedy Packing (use first template's weight limit as a baseline)
-    const defaultWeightLimit = getWeightLimit(sortedTemplates[0]?.id);
-    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, defaultWeightLimit);
+    // 5. Phase 1: Greedy Packing
+    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
@@ -408,8 +424,7 @@ export const calculatePacking = (
         if (smallerTemplates.length > 0) {
           // Re-run packing logic on the combined items with restricted templates
           // Note: The combined items maintain their relative order (Restricted -> Standard) from the previous sort
-          const altWeightLimit = getWeightLimit(smallerTemplates[0]?.id);
-          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, altWeightLimit);
+          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, getWeightLimit);
 
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);

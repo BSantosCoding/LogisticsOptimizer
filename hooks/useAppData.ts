@@ -102,7 +102,13 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             }
 
             if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
-            if (ffData) setFormFactors(ffData);
+            if (tagsData) {
+                setRestrictionTags(tagsData.map((t: any) => t.name));
+            }
+
+            if (ffData) {
+                setFormFactors(ffData);
+            }
 
             const dbTags = tagsData?.map((t: any) => t.name) || [];
             setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);

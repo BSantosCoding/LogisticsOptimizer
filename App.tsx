@@ -272,12 +272,14 @@ const App: React.FC = () => {
             restrictions: p.restrictions,
             formFactorId: p.formFactorId,
             quantity: p.quantity,
+            weight: p.weight,
             destination: p.destination,
             country: p.country,
             shipToName: p.shipToName
           },
           form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
+          weight: p.weight,
           destination: p.destination,
           country: p.country || null,
           ship_to_name: p.shipToName || null

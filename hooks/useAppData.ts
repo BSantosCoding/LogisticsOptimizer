@@ -58,6 +58,13 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                             delete loadedConfig.incoterms2;
                         }
                     }
+
+                    // Migration: Convert tempControl to restrictions
+                    if (loadedConfig.tempControl && !loadedConfig.restrictions) {
+                        loadedConfig.restrictions = [loadedConfig.tempControl];
+                        delete loadedConfig.tempControl;
+                    }
+
                     setCsvMapping(loadedConfig);
                 } else {
                     setCsvMapping(DEFAULT_CSV_MAPPING);

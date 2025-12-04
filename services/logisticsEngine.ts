@@ -16,7 +16,12 @@ const getPoC = (product: Product, container: Container): number => {
   return 1 / cap;
 };
 
-export const checkCompatibility = (product: Product, container: Container): string[] => {
+export const checkCompatibility = (
+  product: Product,
+  container: Container,
+  existingWeight: number = 0,
+  weightLimit?: number
+): string[] => {
   const issues: string[] = [];
 
   // 1. Check Form Factor Capacity
@@ -45,7 +50,15 @@ export const checkCompatibility = (product: Product, container: Container): stri
     issues.push(`Destination mismatch: Product to ${product.destination}, Container to ${container.destination}`);
   }
 
-  // 4. Check Dates
+  // 4. Check Weight Limit (if configured)
+  if (weightLimit !== undefined && product.weight !== undefined) {
+    const productTotalWeight = product.weight * product.quantity;
+    if (existingWeight + productTotalWeight > weightLimit) {
+      issues.push(`Weight limit exceeded: ${(existingWeight + productTotalWeight).toFixed(1)}kg > ${weightLimit}kg`);
+    }
+  }
+
+  // 5. Check Dates
   const containerAvailTime = new Date(container.availableFrom).getTime();
   const containerArriveTime = containerAvailTime + (container.transitTimeDays * 24 * 60 * 60 * 1000);
 
@@ -77,13 +90,15 @@ export const checkCompatibility = (product: Product, container: Container): stri
 // Validates a fully packed container and calculates final stats
 export const validateLoadedContainer = (
   container: Container,
-  products: Product[]
+  products: Product[],
+  weightLimit?: number
 ): LoadedContainer => {
 
   let totalUtilization = 0;
+  let totalWeight = 0;
   const issues: string[] = [];
 
-  // Calculate Utilization
+  // Calculate Utilization and Weight
   products.forEach(p => {
     const maxCap = container.capacities[p.formFactorId];
     if (!maxCap) {
@@ -91,6 +106,11 @@ export const validateLoadedContainer = (
     } else {
       const utilizationContribution = (p.quantity / maxCap) * 100;
       totalUtilization += utilizationContribution;
+    }
+
+    // Track total weight
+    if (p.weight !== undefined) {
+      totalWeight += p.weight * p.quantity;
     }
 
     const productIssues = checkCompatibility(p, container);
@@ -104,6 +124,11 @@ export const validateLoadedContainer = (
     issues.push(`Overfilled: ${totalUtilization.toFixed(1)}%`);
   }
 
+  // Check weight limit
+  if (weightLimit !== undefined && totalWeight > weightLimit) {
+    issues.push(`Weight limit exceeded: ${totalWeight.toFixed(1)}kg > ${weightLimit}kg`);
+  }
+
   return {
     container,
     assignedProducts: products,
@@ -113,8 +138,9 @@ export const validateLoadedContainer = (
 };
 
 // Helper to check if a list of products fits in a container template
-const canFit = (products: Product[], container: Container): boolean => {
+const canFit = (products: Product[], container: Container, weightLimit?: number): boolean => {
   let totalUtilization = 0;
+  let totalWeight = 0;
   for (const p of products) {
     const maxCap = container.capacities[p.formFactorId];
     if (!maxCap) return false;
@@ -123,7 +149,16 @@ const canFit = (products: Product[], container: Container): boolean => {
     if (issues.length > 0) return false;
 
     totalUtilization += (p.quantity / maxCap) * 100;
+    if (p.weight !== undefined) {
+      totalWeight += p.weight * p.quantity;
+    }
   }
+
+  // Check weight limit if configured
+  if (weightLimit !== undefined && totalWeight > weightLimit) {
+    return false;
+  }
+
   return totalUtilization <= 100.1;
 };
 
@@ -132,14 +167,15 @@ const canFit = (products: Product[], container: Container): boolean => {
 const packItems = (
   products: Product[],
   templates: Container[],
-  maxUtilization: number = 100
+  maxUtilization: number = 100,
+  weightLimit?: number
 ): Array<{ template: Container; assigned: Product[] }> => {
 
   if (templates.length === 0) return [];
 
   // templates are assumed to be sorted by Preference (usually Capacity Desc, Cost Asc)
 
-  const packedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number }> = [];
+  const packedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = [];
   const unassigned: Product[] = [];
 
   // Logic:
@@ -159,14 +195,31 @@ const packItems = (
       // Standard products will usually be compatible with Specialized containers (e.g. Reefer)
       // so this allows mixed packing.
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
-        const spacePercent = (maxUtilization + 0.1) - currentInstance.currentUtil;
-        const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
+        // Also check weight limit if configured
+        const productWeight = product.weight ?? 0;
+        const canFitWeight = weightLimit === undefined ||
+          (currentInstance.currentWeight + productWeight <= weightLimit);
 
-        if (maxQtyThatFits > 0) {
-          const take = Math.min(maxQtyThatFits, remainingQty);
-          currentInstance.assigned.push({ ...product, quantity: take });
-          currentInstance.currentUtil += (take / maxCap) * 100;
-          remainingQty -= take;
+        if (canFitWeight) {
+          const spacePercent = (maxUtilization + 0.1) - currentInstance.currentUtil;
+          const maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
+
+          // Also limit by weight if configured
+          let qtyByWeight = maxQtyThatFits;
+          if (weightLimit !== undefined && productWeight > 0) {
+            const remainingWeightCapacity = weightLimit - currentInstance.currentWeight;
+            qtyByWeight = Math.floor(remainingWeightCapacity / productWeight);
+          }
+
+          const maxQtyAllowed = Math.min(maxQtyThatFits, qtyByWeight);
+
+          if (maxQtyAllowed > 0) {
+            const take = Math.min(maxQtyAllowed, remainingQty);
+            currentInstance.assigned.push({ ...product, quantity: take });
+            currentInstance.currentUtil += (take / maxCap) * 100;
+            currentInstance.currentWeight += take * productWeight;
+            remainingQty -= take;
+          }
         }
       }
     }
@@ -188,13 +241,22 @@ const packItems = (
       }
 
       const maxCap = bestTemplate.capacities[product.formFactorId];
-      const take = Math.min(maxCap, remainingQty); // Can't take more than a full container obviously
+
+      // Calculate how many units can fit considering weight limit
+      let maxByCapacity = maxCap;
+      if (weightLimit !== undefined && product.weight !== undefined && product.weight > 0) {
+        maxByCapacity = Math.min(maxCap, Math.floor(weightLimit / product.weight));
+      }
+
+      const take = Math.min(maxByCapacity, remainingQty); // Can't take more than allowed
+      const productWeight = product.weight ?? 0;
 
       // Create new instance
       packedInstances.push({
         template: bestTemplate,
         assigned: [{ ...product, quantity: take }],
-        currentUtil: (take / maxCap) * 100
+        currentUtil: (take / maxCap) * 100,
+        currentWeight: take * productWeight
       });
 
       remainingQty -= take;
@@ -213,7 +275,8 @@ export const calculatePacking = (
   priority: OptimizationPriority,
   minUtilization: number = 70,
   countryCosts: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> cost
-  maxUtilization: number = 100
+  maxUtilization: number = 100,
+  countryWeightLimits: Record<string, Record<string, number>> = {} // countryCode -> containerTemplateId -> weightLimit
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
   // 1. Group Products by Destination ONLY
@@ -291,8 +354,15 @@ export const calculatePacking = (
     // Then pack standard items. They will backfill the open specialized containers if space allows.
     const sortedProducts = [...restrictedProducts, ...standardProducts];
 
-    // 5. Phase 1: Greedy Packing
-    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization);
+    // Get weight limit for this country/container combination
+    const getWeightLimit = (templateId: string): number | undefined => {
+      if (!groupCountry) return undefined;
+      return countryWeightLimits[groupCountry]?.[templateId];
+    };
+
+    // 5. Phase 1: Greedy Packing (use first template's weight limit as a baseline)
+    const defaultWeightLimit = getWeightLimit(sortedTemplates[0]?.id);
+    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, defaultWeightLimit);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
@@ -308,7 +378,8 @@ export const calculatePacking = (
 
       for (const t of sortedTemplates) {
         // Check if cost is lower AND strictly compatible with the items assigned
-        if (t.cost < bestCost && canFit(lastInstance.assigned, t)) {
+        const tWeightLimit = getWeightLimit(t.id);
+        if (t.cost < bestCost && canFit(lastInstance.assigned, t, tWeightLimit)) {
           bestReplacement = t;
           bestCost = t.cost;
           foundBetter = true;
@@ -337,7 +408,8 @@ export const calculatePacking = (
         if (smallerTemplates.length > 0) {
           // Re-run packing logic on the combined items with restricted templates
           // Note: The combined items maintain their relative order (Restricted -> Standard) from the previous sort
-          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization);
+          const altWeightLimit = getWeightLimit(smallerTemplates[0]?.id);
+          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, altWeightLimit);
 
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);
@@ -367,7 +439,10 @@ export const calculatePacking = (
         destination: inst.template.destination || group.destination
       };
 
-      allAssignments.push(validateLoadedContainer(instanceContainer, inst.assigned));
+      // Get weight limit for this specific container template
+      const weightLimitForTemplate = getWeightLimit(inst.template.id);
+
+      allAssignments.push(validateLoadedContainer(instanceContainer, inst.assigned, weightLimitForTemplate));
     });
   }
 

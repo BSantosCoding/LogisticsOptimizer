@@ -114,10 +114,15 @@ export const useOptimization = (
 
         // Transform countries data into countryCosts map
         const countryCosts: Record<string, Record<string, number>> = {};
+        const countryWeightLimits: Record<string, Record<string, number>> = {};
         countries.forEach((country: any) => {
             if (country.containerCosts) {
                 if (country.code) countryCosts[country.code] = country.containerCosts;
                 if (country.name) countryCosts[country.name] = country.containerCosts;
+            }
+            if (country.weightLimits) {
+                if (country.code) countryWeightLimits[country.code] = country.weightLimits;
+                if (country.name) countryWeightLimits[country.name] = country.weightLimits;
             }
         });
 
@@ -129,7 +134,8 @@ export const useOptimization = (
                 priority,
                 optimalUtilizationRange.min,
                 countryCosts,
-                optimalUtilizationRange.max
+                optimalUtilizationRange.max,
+                countryWeightLimits
             );
 
             // Calculate total cost using country-specific costs when available

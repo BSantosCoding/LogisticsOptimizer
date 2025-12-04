@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
-import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search, Weight } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ErrorModal from '../modals/ErrorModal';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ interface Country {
     code: string;
     name: string;
     containerCosts: Record<string, number>; // containerTemplateId -> cost
+    weightLimits: Record<string, number>; // containerTemplateId -> weight limit in kg
 }
 
 interface CountryPanelProps {
@@ -38,7 +39,8 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     const [newCountry, setNewCountry] = useState<Omit<Country, 'id'>>({
         code: '',
         name: '',
-        containerCosts: {}
+        containerCosts: {},
+        weightLimits: {}
     });
     const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
 
@@ -54,7 +56,8 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                     company_id: companyId,
                     code: newCountry.code,
                     name: newCountry.name,
-                    container_costs: newCountry.containerCosts
+                    container_costs: newCountry.containerCosts,
+                    weight_limits: newCountry.weightLimits
                 }])
                 .select()
                 .single();
@@ -65,10 +68,11 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                 id: data.id,
                 code: data.code,
                 name: data.name,
-                containerCosts: data.container_costs || {}
+                containerCosts: data.container_costs || {},
+                weightLimits: data.weight_limits || {}
             };
             setCountries([...countries, country]);
-            setNewCountry({ code: '', name: '', containerCosts: {} });
+            setNewCountry({ code: '', name: '', containerCosts: {}, weightLimits: {} });
         } catch (error) {
             console.error('Error adding country:', error);
             setErrorModal({ isOpen: true, message: t('countries.errorAdd') });
@@ -82,7 +86,8 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                 .update({
                     code: updates.code,
                     name: updates.name,
-                    container_costs: updates.containerCosts
+                    container_costs: updates.containerCosts,
+                    weight_limits: updates.weightLimits
                 })
                 .eq('id', id);
 
@@ -234,6 +239,37 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                                                             newCosts[template.id] = val;
                                                         }
                                                         handleUpdateCountry(country.id, { containerCosts: newCosts });
+                                                    }}
+                                                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 focus:border-blue-500 outline-none text-right"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-900/50 rounded p-3 border border-slate-700 mt-3">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('countries.weightLimits')}</h4>
+                                <div className="space-y-2">
+                                    {containerTemplates.map(template => (
+                                        <div key={template.id} className="flex items-center justify-between gap-4">
+                                            <span className="text-sm text-slate-300 truncate flex-1">{template.name}</span>
+                                            <div className="flex items-center gap-2 w-32">
+                                                <Weight size={14} className="text-slate-500" />
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder={t('countries.noLimit')}
+                                                    value={country.weightLimits?.[template.id] || ''}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        const newLimits = { ...country.weightLimits };
+                                                        if (isNaN(val)) {
+                                                            delete newLimits[template.id];
+                                                        } else {
+                                                            newLimits[template.id] = val;
+                                                        }
+                                                        handleUpdateCountry(country.id, { weightLimits: newLimits });
                                                     }}
                                                     className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 focus:border-blue-500 outline-none text-right"
                                                 />

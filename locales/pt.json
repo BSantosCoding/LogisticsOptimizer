@@ -108,6 +108,8 @@
         "configuration": "Configuração de País",
         "search": "Pesquisar países...",
         "containerCosts": "Custos de Contentores",
+        "weightLimits": "Limites de Peso (kg)",
+        "noLimit": "Sem limite",
         "default": "Padrão",
         "noCountries": "Nenhum país configurado.",
         "confirmDelete": "Tem a certeza de que pretende eliminar esta configuração de país?",

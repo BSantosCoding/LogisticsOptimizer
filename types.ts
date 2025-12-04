@@ -10,6 +10,7 @@ export interface Product {
   name: string;
   formFactorId: string; // Link to Form Factor
   quantity: number; // Number of units requested
+  weight?: number; // Weight per unit in kg
   destination?: string;
   country?: string;
   shipToName?: string;

@@ -103,7 +103,10 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
 
             if (templatesData) setTemplates(templatesData.map((r: any) => ({ ...r.data, id: r.id })));
             if (tagsData) {
-                setRestrictionTags(tagsData.map((t: any) => t.name));
+                const dbTags = tagsData.map((t: any) => t.name);
+                setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
+            } else {
+                setRestrictionTags(DEFAULT_RESTRICTIONS);
             }
 
             if (ffData) {
@@ -205,6 +208,39 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
     const updateCsvMapping = async (newMapping: CSVMapping) => {
         if (!companyId) return;
         setCsvMapping(newMapping);
+
+        // Auto-create tags for any new restriction headers
+        if (newMapping.restrictions) {
+            const newTags: string[] = [];
+            for (const header of newMapping.restrictions) {
+                if (header && header.trim().length > 0) {
+                    const tagName = header.trim();
+                    if (!restrictionTags.includes(tagName)) {
+                        newTags.push(tagName);
+                    }
+                }
+            }
+
+            if (newTags.length > 0) {
+                // Add to local state immediately
+                setRestrictionTags(prev => [...prev, ...newTags]);
+
+                // Add to database
+                const tagsToInsert = newTags.map(tagName => ({
+                    company_id: companyId,
+                    name: tagName,
+                    created_by: userId
+                }));
+
+                const { error: tagError } = await supabase
+                    .from('tags')
+                    .insert(tagsToInsert);
+
+                if (tagError) {
+                    console.error('Error creating tags:', tagError);
+                }
+            }
+        }
 
         const { error } = await supabase
             .from('import_configs')

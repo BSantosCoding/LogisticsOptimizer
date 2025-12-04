@@ -91,49 +91,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
     try {
       await onUpdateCsvMapping(editingMapping);
       setHasUnsavedChanges(false);
-
-      // Auto-create tags for any new restriction headers
-      if (editingMapping.restrictions) {
-        let newTagsAdded = false;
-        for (const header of editingMapping.restrictions) {
-          if (header && header.trim().length > 0) {
-            const tagName = header.trim();
-            // Check against current props to see if we need to add it
-            if (!restrictionTags.includes(tagName)) {
-              // Add to database
-              try {
-                const { error } = await supabase
-                  .from('tags')
-                  .insert([{
-                    company_id: companyId,
-                    name: tagName,
-                    created_by: session?.user?.id
-                  }]);
-
-                if (error) {
-                  console.error('Error creating tag:', error);
-                } else {
-                  newTagsAdded = true;
-                }
-              } catch (err) {
-                console.error('Failed to create tag:', err);
-              }
-            }
-          }
-        }
-
-        // If we added tags, we should update the local state to reflect it immediately
-        // The parent component might re-fetch, but let's be safe
-        if (newTagsAdded) {
-          // We can't force re-fetch easily without a callback, but we can update local state via setRestrictionTags
-          // We already have setRestrictionTags from props
-          const currentTags = new Set(restrictionTags);
-          editingMapping.restrictions.forEach(h => {
-            if (h && h.trim()) currentTags.add(h.trim());
-          });
-          setRestrictionTags(Array.from(currentTags));
-        }
-      }
     } catch (error) {
       console.error("Failed to save mapping:", error);
     }

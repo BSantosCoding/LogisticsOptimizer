@@ -57,7 +57,8 @@
         "filterShipped": "Enviado",
         "filterAll": "Todos",
         "allTags": "Todas as Etiquetas",
-        "allSelectedDefault": "Todos os produtos selecionados por padrão"
+        "allSelectedDefault": "Todos os produtos selecionados por padrão",
+        "weight": "Peso (kg)"
     },
     "config": {
         "optimizationSettings": "Definições de Otimização",
@@ -78,7 +79,7 @@
         "csvMapping": "Configuração de Importação CSV",
         "restrictedAccessCSV": "A configuração CSV é restrita a gestores e utilizadores autorizados.",
         "customFields": "Campos Personalizados",
-        "newFieldKey": "Nova Chave de Campo (ex. região)"
+        "newFieldKey": "Nova Chave de Campo (ex: regiao)"
     },
     "team": {
         "overview": "Visão Geral da Equipa",

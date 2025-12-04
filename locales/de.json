@@ -57,7 +57,8 @@
         "filterShipped": "Versendet",
         "filterAll": "Alle",
         "allTags": "Alle Tags",
-        "allSelectedDefault": "Alle Produkte standardmäßig ausgewählt"
+        "allSelectedDefault": "Alle Produkte standardmäßig ausgewählt",
+        "weight": "Gewicht (kg)"
     },
     "config": {
         "optimizationSettings": "Optimierungseinstellungen",
@@ -75,10 +76,11 @@
         "useTemplate": "Vorlage verwenden",
         "restrictionTags": "Einschränkungs-Tags",
         "noTemplates": "Keine Vorlagen gefunden.",
-        "csvMapping": "CSV Import Konfiguration",
-        "restrictedAccessCSV": "CSV-Konfiguration ist auf Manager und autorisierte Benutzer beschränkt.",
+        "csvMapping": "CSV-Importkonfiguration",
+        "restrictedAccessCSV": "Die CSV-Konfiguration ist auf Manager und autorisierte Benutzer beschränkt.",
         "customFields": "Benutzerdefinierte Felder",
-        "newFieldKey": "Neuer Feldschlüssel (z.B. Region)"
+        "newFieldKey": "Neuer Feldschlüssel (z.B. region)",
+        "weight": "Gewicht"
     },
     "team": {
         "overview": "Teamübersicht",

@@ -136,7 +136,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
 
 
 
-        <div className="bg-slate-900/50 p-3 rounded border border-slate-700 mt-3">
+        <div className="bg-slate-900/50 p-3 rounded border border-slate-700 mt-3 mb-3">
           <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
           {formFactors.length === 0 ? (
             <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>

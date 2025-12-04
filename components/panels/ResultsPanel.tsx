@@ -91,6 +91,18 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     return costs;
   }, [countries]);
 
+  // Transform countries data into countryWeightLimits map
+  const countryWeightLimits = React.useMemo(() => {
+    const limits: Record<string, Record<string, number>> = {};
+    countries.forEach((country: any) => {
+      if (country.weightLimits) {
+        if (country.code) limits[country.code] = country.weightLimits;
+        if (country.name) limits[country.name] = country.weightLimits;
+      }
+    });
+    return limits;
+  }, [countries]);
+
   // Helper to get cost for a container
   const getContainerCost = (loadedContainer: LoadedContainer) => {
     const country = loadedContainer.assignedProducts[0]?.country;
@@ -98,6 +110,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     const baseContainerId = loadedContainer.container.id.replace(/-instance-\d+$/, '');
     const countryCost = countryCosts[country]?.[baseContainerId];
     return countryCost ?? loadedContainer.container.cost;
+  };
+
+  // Helper to get weight limit for a container
+  const getContainerWeightLimit = (loadedContainer: LoadedContainer) => {
+    const country = loadedContainer.assignedProducts[0]?.country;
+    if (!country) return undefined;
+    const baseContainerId = loadedContainer.container.id.replace(/-instance-\d+$/, '');
+    return countryWeightLimits[country]?.[baseContainerId];
+  };
+
+  // Helper to calculate total weight for a container
+  const getContainerWeight = (loadedContainer: LoadedContainer) => {
+    return loadedContainer.assignedProducts.reduce((sum, p) => sum + ((p.weight || 0) * p.quantity), 0);
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -998,6 +1023,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                   <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
                                   <span>•</span>
                                   <span className="text-green-400">${getContainerCost(loadedContainer).toLocaleString()}</span>
+                                  {(() => {
+                                    const weight = getContainerWeight(loadedContainer);
+                                    const limit = getContainerWeightLimit(loadedContainer);
+                                    if (weight > 0) {
+                                      return (
+                                        <>
+                                          <span>•</span>
+                                          <span className={`${limit && weight > limit ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
+                                            {weight.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg
+                                            {limit ? ` / ${limit.toLocaleString()} kg` : ''}
+                                          </span>
+                                        </>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               </div>
                               <div className="text-right flex items-center gap-3">

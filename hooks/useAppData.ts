@@ -140,7 +140,8 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     id: r.id,
                     code: r.code,
                     name: r.name,
-                    containerCosts: r.container_costs || {}
+                    containerCosts: r.container_costs || {},
+                    weightLimits: r.weight_limits || {}
                 })));
             }
 

@@ -87,9 +87,37 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
     setHasUnsavedChanges(true);
   };
 
-  const saveMapping = () => {
+  const saveMapping = async () => {
     onUpdateCsvMapping(editingMapping);
     setHasUnsavedChanges(false);
+
+    // Auto-create tags for any new restriction headers
+    if (editingMapping.restrictions) {
+      for (const header of editingMapping.restrictions) {
+        if (header && header.trim().length > 0) {
+          const tagName = header.trim();
+          if (!restrictionTags.includes(tagName)) {
+            // Add to local state immediately
+            setRestrictionTags(prev => [...prev, tagName]);
+
+            // Add to database
+            try {
+              const { error } = await supabase
+                .from('tags')
+                .insert([{
+                  company_id: companyId,
+                  name: tagName,
+                  created_by: session?.user?.id
+                }]);
+
+              if (error) console.error('Error creating tag:', error);
+            } catch (err) {
+              console.error('Failed to create tag:', err);
+            }
+          }
+        }
+      }
+    }
   };
 
   const canManageTemplates = hasRole(userRole, 'manager') || userProfile?.can_edit_templates;
@@ -433,36 +461,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     <div className="flex gap-2">
                       <input
                         value={header}
-                        onChange={async e => {
-                          const newValue = e.target.value;
+                        onChange={e => {
                           const newRestrictions = [...editingMapping.restrictions];
-                          newRestrictions[idx] = newValue;
+                          newRestrictions[idx] = e.target.value;
                           setEditingMapping(prev => ({ ...prev, restrictions: newRestrictions }));
                           setHasUnsavedChanges(true);
-
-                          // Auto-create tag if it doesn't exist
-                          if (newValue && newValue.trim().length > 0) {
-                            const tagName = newValue.trim();
-                            if (!restrictionTags.includes(tagName)) {
-                              // Add to local state immediately
-                              setRestrictionTags(prev => [...prev, tagName]);
-
-                              // Add to database
-                              try {
-                                const { error } = await supabase
-                                  .from('tags')
-                                  .insert([{
-                                    company_id: companyId,
-                                    name: tagName,
-                                    created_by: session?.user?.id
-                                  }]);
-
-                                if (error) console.error('Error creating tag:', error);
-                              } catch (err) {
-                                console.error('Failed to create tag:', err);
-                              }
-                            }
-                          }
                         }}
                         placeholder="CSV Header Name"
                         className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"

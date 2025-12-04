@@ -60,8 +60,13 @@ export const parseProductsCSV = (
     const customerNumIdx = getColIndex('customerNum');
     const countryIdx = getColIndex('country');
     const shipToNameIdx = getColIndex('shipToName');
-    const incotermsIdx = getColIndex('incoterms');
-    const incoterms2Idx = getColIndex('incoterms2');
+
+    // Get indices for all Incoterms headers
+    const incotermsIndices = (csvMapping.incoterms || []).map(header => ({
+        header,
+        index: headerMap.get(header?.toLowerCase().trim() || '') ?? -1
+    })).filter(item => item.index !== -1);
+
     const salesOrgIdx = getColIndex('salesOrg');
     const quantityIdx = getColIndex('quantity');
     const descriptionIdx = getColIndex('description');
@@ -77,8 +82,8 @@ export const parseProductsCSV = (
         csvMapping.customerNum,
         csvMapping.country,
         csvMapping.shipToName,
-        csvMapping.incoterms,
-        csvMapping.incoterms2,
+        csvMapping.shipToName,
+        ...(csvMapping.incoterms || []),
         csvMapping.salesOrg,
         csvMapping.quantity,
         csvMapping.description,
@@ -111,8 +116,11 @@ export const parseProductsCSV = (
         const customerNum = getVal(customerNumIdx);
         const country = getVal(countryIdx)?.trim();
         const shipToName = getVal(shipToNameIdx)?.trim();
-        const incoterms = getVal(incotermsIdx);
-        const incoterms2 = getVal(incoterms2Idx);
+
+        // Concatenate Incoterms
+        const incotermsParts = incotermsIndices.map(item => getVal(item.index)).filter(Boolean);
+        const incoterms = incotermsParts.join(' ');
+
         const salesOrg = getVal(salesOrgIdx);
         const numPackagesStr = getVal(quantityIdx);
         const description = getVal(descriptionIdx);
@@ -148,8 +156,7 @@ export const parseProductsCSV = (
         for (const { header, index } of restrictionIndices) {
             const value = getVal(index);
             if (value && value.trim().length > 0) {
-                restrictions.push('Temperature Control'); // Map to standard restriction tag
-                break; // Only add once even if multiple headers have values
+                restrictions.push(header); // Map Header Name -> Tag Name
             }
         }
 

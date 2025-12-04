@@ -24,6 +24,10 @@ interface ConfigPanelProps {
   userProfile: UserProfile | null;
   csvMapping: CSVMapping;
   onUpdateCsvMapping: (mapping: CSVMapping) => void;
+  supabase: any; // Assuming 'any' type for supabase, adjust if a specific type is available
+  session: any; // Assuming 'any' type for session, adjust if a specific type is available
+  companyId: string;
+  setRestrictionTags: (tags: string[]) => void;
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({
@@ -43,7 +47,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   userRole,
   userProfile,
   csvMapping,
-  onUpdateCsvMapping
+  onUpdateCsvMapping,
+  supabase,
+  session,
+  companyId,
+  setRestrictionTags
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -359,8 +367,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 { key: 'customerNum', label: 'Customer Number' },
                 { key: 'country', label: 'Country' },
                 { key: 'shipToName', label: 'Ship To Name' },
-                { key: 'incoterms', label: 'Incoterms' },
-                { key: 'incoterms2', label: 'Incoterms 2' },
                 { key: 'salesOrg', label: 'Sales Org' },
                 { key: 'quantity', label: 'Quantity' },
                 { key: 'description', label: 'Description' },
@@ -375,6 +381,50 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 </div>
               ))}
 
+              {/* Incoterms Headers */}
+              <div className="pt-2 border-t border-slate-700 mt-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Incoterms Headers</h4>
+                {(editingMapping.incoterms || []).map((header, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="flex gap-2">
+                      <input
+                        value={header}
+                        onChange={e => {
+                          const newIncoterms = [...editingMapping.incoterms];
+                          newIncoterms[idx] = e.target.value;
+                          setEditingMapping(prev => ({ ...prev, incoterms: newIncoterms }));
+                          setHasUnsavedChanges(true);
+                        }}
+                        placeholder="CSV Header Name"
+                        className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                      <button
+                        onClick={() => {
+                          const newIncoterms = editingMapping.incoterms.filter((_, i) => i !== idx);
+                          setEditingMapping(prev => ({ ...prev, incoterms: newIncoterms }));
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="text-red-400 hover:text-red-300 p-2"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => {
+                    setEditingMapping(prev => ({
+                      ...prev,
+                      incoterms: [...(prev.incoterms || []), '']
+                    }));
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs flex items-center justify-center gap-2"
+                >
+                  <Plus size={14} /> Add Incoterms Header
+                </button>
+              </div>
+
               {/* Restrictions Headers */}
               <div className="pt-2 border-t border-slate-700 mt-2">
                 <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Restriction Headers</h4>
@@ -383,11 +433,36 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     <div className="flex gap-2">
                       <input
                         value={header}
-                        onChange={e => {
+                        onChange={async e => {
+                          const newValue = e.target.value;
                           const newRestrictions = [...editingMapping.restrictions];
-                          newRestrictions[idx] = e.target.value;
+                          newRestrictions[idx] = newValue;
                           setEditingMapping(prev => ({ ...prev, restrictions: newRestrictions }));
                           setHasUnsavedChanges(true);
+
+                          // Auto-create tag if it doesn't exist
+                          if (newValue && newValue.trim().length > 0) {
+                            const tagName = newValue.trim();
+                            if (!restrictionTags.includes(tagName)) {
+                              // Add to local state immediately
+                              setRestrictionTags(prev => [...prev, tagName]);
+
+                              // Add to database
+                              try {
+                                const { error } = await supabase
+                                  .from('tags')
+                                  .insert([{
+                                    company_id: companyId,
+                                    name: tagName,
+                                    created_by: session?.user?.id
+                                  }]);
+
+                                if (error) console.error('Error creating tag:', error);
+                              } catch (err) {
+                                console.error('Failed to create tag:', err);
+                              }
+                            }
+                          }
                         }}
                         placeholder="CSV Header Name"
                         className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"

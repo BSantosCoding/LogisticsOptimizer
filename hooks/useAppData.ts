@@ -6,13 +6,12 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     customerNum: "Ship To: Customer Number",
     country: "Ship To: Country",
     shipToName: "Ship To: Name",
-    incoterms: "Incoterms",
-    incoterms2: "Incoterms (Part 2)",
+    incoterms: ["Incoterms", "Incoterms (Part 2)"],
     salesOrg: "Sales Organization",
     quantity: "Number of Packages",
     description: "Material Description",
     restrictions: ["Temp. Control (Description)"],
-    groupingFields: ["customerNum", "incoterms", "incoterms2", "salesOrg"]
+    groupingFields: ["customerNum", "incoterms", "salesOrg"]
 };
 
 const DEFAULT_RESTRICTIONS = [
@@ -210,6 +209,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
         shipments,
         setShipments,
         restrictionTags,
+        setRestrictionTags,
         isDataLoading,
         refreshData: loadData,
         addProduct,

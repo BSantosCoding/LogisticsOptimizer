@@ -88,8 +88,7 @@ export interface CSVMapping {
   customerNum: string;
   country: string;
   shipToName: string;
-  incoterms: string;
-  incoterms2: string;
+  incoterms: string[]; // Array of CSV header names
   salesOrg: string;
   quantity: string;
   description: string;

@@ -79,6 +79,7 @@ const App: React.FC = () => {
     shipments,
     setShipments,
     restrictionTags,
+    setRestrictionTags,
     isDataLoading,
     refreshData,
     addProduct,
@@ -1166,6 +1167,11 @@ const App: React.FC = () => {
                     userProfile={userProfile}
                     csvMapping={csvMapping}
                     onUpdateCsvMapping={updateCsvMapping}
+                    canManageImportConfig={hasRole(effectiveRole, 'manager')}
+                    supabase={supabase}
+                    session={session}
+                    companyId={companyId}
+                    setRestrictionTags={setRestrictionTags}
                   />
                 </div>
               )}

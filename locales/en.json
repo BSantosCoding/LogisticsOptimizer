@@ -153,7 +153,16 @@
         "totalContainers": "Total Containers",
         "breakdown": "Breakdown",
         "export": "Export Report",
-        "noResults": "No results available. Run optimization to see data."
+        "noResults": "No results available. Run optimization to see data.",
+        "productsSelected": "{{count}} products selected",
+        "unassignedItems": "Unassigned Items",
+        "moveItems": "Move Items",
+        "moveItemsDescription": "How many units of {{productName}} would you like to move?",
+        "ofAvailable": "of {{maxQty}} available",
+        "moveUnits": "Move {{count}} units",
+        "saveShipment": "Save Shipment",
+        "shipmentName": "Shipment Name",
+        "shipmentNamePlaceholder": "Enter shipment name..."
     },
     "userSettings": {
         "title": "User Settings",

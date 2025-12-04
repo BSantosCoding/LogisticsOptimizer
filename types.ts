@@ -85,17 +85,17 @@ export interface UserProfile {
 }
 
 export interface CSVMapping {
-  // Map internal field name to CSV Header Name (string)
-  customerNum: string;
-  country: string;
-  shipToName: string;
-  incoterms: string[]; // Array of CSV header names
-  salesOrg: string;
-  quantity: string;
-  description: string;
-  restrictions: string[]; // Array of CSV header names for restriction fields
-  // Array of internal field names to combine for the destination key
-  groupingFields: string[];
-  // Custom fields mapping: internalKey -> CSV Header Name
-  customFields?: Record<string, string>;
+  // Core fields - always available, just need header name mapping
+  country: string;          // CSV header for country code
+  quantity: string;         // CSV header for quantity/number of packages
+  weight: string;           // CSV header for weight in kg
+  restrictions: string[];   // Array of CSV header names for restriction fields
+  incoterms: string[];      // Array of CSV header names for incoterms
+
+  // Grouping key - which fields combine to create the destination
+  groupingFields: string[]; // Array of field keys (core or custom) to combine for destination
+
+  // Custom fields - company-specific additional fields
+  // Maps internal key name to CSV header name
+  customFields: Record<string, string>;
 }

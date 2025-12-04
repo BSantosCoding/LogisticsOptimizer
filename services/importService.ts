@@ -42,54 +42,56 @@ export const parseProductsCSV = (
     const headerMap = new Map<string, number>();
     headers.forEach((h, i) => headerMap.set(h.toLowerCase(), i));
 
-    // Dynamic Column Mapping
-    const getColIndex = (key: keyof CSVMapping | string) => {
-        // Check standard keys first
-        if (key in csvMapping && typeof (csvMapping as any)[key] === 'string') {
-            const headerName = (csvMapping as any)[key];
-            return headerMap.get(headerName?.toLowerCase().trim() || '') ?? -1;
-        }
+    // Get column index from header name
+    const getColIndexByHeader = (headerName: string | undefined): number => {
+        if (!headerName) return -1;
+        return headerMap.get(headerName.toLowerCase().trim()) ?? -1;
+    };
+
+    // Get column index for a field (core or custom)
+    const getColIndex = (fieldKey: string): number => {
+        // Check core fields first
+        if (fieldKey === 'country') return getColIndexByHeader(csvMapping.country);
+        if (fieldKey === 'quantity') return getColIndexByHeader(csvMapping.quantity);
+        if (fieldKey === 'weight') return getColIndexByHeader(csvMapping.weight);
+
         // Check custom fields
-        if (csvMapping.customFields && key in csvMapping.customFields) {
-            const headerName = csvMapping.customFields[key];
-            return headerMap.get(headerName?.toLowerCase().trim() || '') ?? -1;
+        if (csvMapping.customFields && fieldKey in csvMapping.customFields) {
+            return getColIndexByHeader(csvMapping.customFields[fieldKey]);
         }
         return -1;
     };
 
-    const customerNumIdx = getColIndex('customerNum');
+    // Core field indices
     const countryIdx = getColIndex('country');
+    const quantityIdx = getColIndex('quantity');
+    const weightIdx = getColIndex('weight');
+
+    // Custom field indices
     const shipToNameIdx = getColIndex('shipToName');
+    const descriptionIdx = getColIndex('description');
 
     // Get indices for all Incoterms headers
     const incotermsIndices = (csvMapping.incoterms || []).map(header => ({
         header,
-        index: headerMap.get(header?.toLowerCase().trim() || '') ?? -1
+        index: getColIndexByHeader(header)
     })).filter(item => item.index !== -1);
-
-    const salesOrgIdx = getColIndex('salesOrg');
-    const quantityIdx = getColIndex('quantity');
-    const descriptionIdx = getColIndex('description');
 
     // Get indices for all restriction headers
     const restrictionIndices = (csvMapping.restrictions || []).map(header => ({
         header,
-        index: headerMap.get(header?.toLowerCase().trim() || '') ?? -1
+        index: getColIndexByHeader(header)
     })).filter(item => item.index !== -1);
 
-    // Validate that at least some configured headers were found
-    const configuredHeaders = [
-        csvMapping.customerNum,
+    // Build list of all configured headers to validate
+    const configuredHeaders: string[] = [
         csvMapping.country,
-        csvMapping.shipToName,
-        csvMapping.shipToName,
-        ...(csvMapping.incoterms || []),
-        csvMapping.salesOrg,
         csvMapping.quantity,
-        csvMapping.description,
+        csvMapping.weight,
+        ...(csvMapping.incoterms || []),
         ...(csvMapping.restrictions || []),
         ...Object.values(csvMapping.customFields || {})
-    ];
+    ].filter(Boolean);
 
     for (const header of configuredHeaders) {
         if (header && !headerMap.has(header.toLowerCase().trim())) {
@@ -97,7 +99,7 @@ export const parseProductsCSV = (
         }
     }
 
-    // Pre-calculate indices for grouping fields (standard + custom)
+    // Pre-calculate indices for grouping fields
     const groupingIndices = csvMapping.groupingFields.map(field => ({
         field,
         index: getColIndex(field)
@@ -113,22 +115,20 @@ export const parseProductsCSV = (
         // Helper to safely get value
         const getVal = (index: number) => index >= 0 && index < cols.length ? cols[index] : '';
 
-        const customerNum = getVal(customerNumIdx);
         const country = getVal(countryIdx)?.trim();
         const shipToName = getVal(shipToNameIdx)?.trim();
+        const description = getVal(descriptionIdx);
 
         // Concatenate Incoterms
         const incotermsParts = incotermsIndices.map(item => getVal(item.index)).filter(Boolean);
         const incoterms = incotermsParts.join(' ');
 
-        const salesOrg = getVal(salesOrgIdx);
         const numPackagesStr = getVal(quantityIdx);
-        const description = getVal(descriptionIdx);
+        const weightStr = getVal(weightIdx);
 
         // 1. Grouping Key -> Destination
-        // Construct destination based on groupingFields
         const destinationParts = groupingIndices
-            .filter(item => item.index !== -1) // Only include fields that were found in the header
+            .filter(item => item.index !== -1)
             .map(item => getVal(item.index));
         const destination = destinationParts.join('|');
 
@@ -136,7 +136,10 @@ export const parseProductsCSV = (
         const quantity = parseInt(numPackagesStr.replace(/,/g, ''), 10) || 0;
         if (quantity <= 0) continue;
 
-        // 3. Form Factor Matching
+        // 3. Weight (parse, allow decimals)
+        const weight = parseFloat(weightStr.replace(/,/g, '')) || undefined;
+
+        // 4. Form Factor Matching
         let matchedFFId = '';
         for (const ff of sortedFormFactors) {
             if (description.toLowerCase().includes(ff.name.toLowerCase())) {
@@ -145,26 +148,26 @@ export const parseProductsCSV = (
             }
         }
 
-        // If no form factor matched, flag it
         if (!matchedFFId) {
             console.warn(`Could not match form factor for: ${description}`);
             productsWithMissingFF.push(description);
         }
 
-        // 4. Restrictions - check all configured restriction headers
+        // 5. Restrictions - check all configured restriction headers
         const restrictions: string[] = [];
         for (const { header, index } of restrictionIndices) {
             const value = getVal(index);
             if (value && value.trim().length > 0) {
-                restrictions.push(header); // Map Header Name -> Tag Name
+                restrictions.push(header);
             }
         }
 
         const newProduct: Product = {
             id: crypto.randomUUID(),
-            name: description.substring(0, 50), // Truncate name if too long
+            name: description.substring(0, 50),
             formFactorId: matchedFFId,
             quantity: quantity,
+            weight: weight,
             destination: destination,
             country: country,
             shipToName: shipToName,
@@ -179,3 +182,4 @@ export const parseProductsCSV = (
 
     return { products: newProducts, productsWithMissingFF, missingHeaders };
 };
+

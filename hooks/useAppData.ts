@@ -3,16 +3,22 @@ import { supabase } from '../services/supabase';
 import { Product, Container, ProductFormFactor, Shipment, OptimizationResult, CSVMapping } from '../types';
 
 const DEFAULT_CSV_MAPPING: CSVMapping = {
-    customerNum: "Ship To: Customer Number",
+    // Core fields
     country: "Ship To: Country",
-    shipToName: "Ship To: Name",
-    incoterms: ["Incoterms", "Incoterms (Part 2)"],
-    salesOrg: "Sales Organization",
     quantity: "Number of Packages",
-    description: "Material Description",
+    weight: "Gross Weight",
     restrictions: ["Temp. Control (Description)"],
-    groupingFields: ["customerNum", "incoterms", "salesOrg"]
+    incoterms: ["Incoterms", "Incoterms (Part 2)"],
+    groupingFields: ["customerNum", "incoterms", "salesOrg"],
+    // Custom fields - company-specific
+    customFields: {
+        customerNum: "Ship To: Customer Number",
+        shipToName: "Ship To: Name",
+        salesOrg: "Sales Organization",
+        description: "Material Description"
+    }
 };
+
 
 
 
@@ -69,6 +75,23 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                         delete loadedConfig.tempControl;
                     }
 
+                    // Migration: Move old top-level fields to customFields
+                    if (!loadedConfig.customFields) {
+                        loadedConfig.customFields = {};
+                    }
+                    const oldFields = ['customerNum', 'shipToName', 'salesOrg', 'description'];
+                    for (const field of oldFields) {
+                        if (loadedConfig[field] && typeof loadedConfig[field] === 'string') {
+                            loadedConfig.customFields[field] = loadedConfig[field];
+                            delete loadedConfig[field];
+                        }
+                    }
+
+                    // Ensure weight field exists
+                    if (!loadedConfig.weight) {
+                        loadedConfig.weight = '';
+                    }
+
                     setCsvMapping(loadedConfig);
                 } else {
                     setCsvMapping(DEFAULT_CSV_MAPPING);
@@ -85,6 +108,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     id: r.id,
                     formFactorId: r.form_factor_id || r.data.formFactorId,
                     quantity: r.quantity || r.data.quantity || 1,
+                    weight: r.weight ?? r.data?.weight,
                     shipmentId: r.shipment_id,
                     status: r.status || 'available'
                 })));

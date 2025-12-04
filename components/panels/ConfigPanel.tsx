@@ -273,15 +273,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
           <div className={`space-y-4 ${!canManageImportConfig ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="grid grid-cols-1 gap-4">
-              <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-1">Field Mapping (CSV Header Names)</h3>
+              {/* Core Fields */}
+              <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-1">Core Fields (CSV Header Names)</h3>
 
               {[
-                { key: 'customerNum', label: 'Customer Number' },
                 { key: 'country', label: 'Country' },
-                { key: 'shipToName', label: 'Ship To Name' },
-                { key: 'salesOrg', label: 'Sales Org' },
                 { key: 'quantity', label: 'Quantity' },
-                { key: 'description', label: 'Description' },
+                { key: 'weight', label: 'Weight (kg)' },
               ].map(({ key, label }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
@@ -383,7 +381,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
               {/* Custom Fields */}
               <div className="pt-2 border-t border-slate-700 mt-2">
-                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Custom Fields</h4>
+                <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Custom Fields (Company-Specific)</h4>
+                <p className="text-[10px] text-slate-500 mb-3">
+                  Map additional CSV columns to internal field names. These can be used for grouping or display.
+                </p>
                 {Object.entries(editingMapping.customFields || {}).map(([key, value]) => (
                   <div key={key} className="mb-2">
                     <div className="flex justify-between items-center mb-1">
@@ -416,6 +417,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                         }));
                         setHasUnsavedChanges(true);
                       }}
+                      placeholder="CSV Header Name"
                       className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                   </div>
@@ -423,7 +425,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
                 <div className="flex gap-2 mt-2">
                   <input
-                    placeholder="New Field Key (e.g. region)"
+                    placeholder={t('config.newFieldKey')}
                     id="newCustomFieldInput"
                     className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -431,7 +433,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     onClick={() => {
                       const input = document.getElementById('newCustomFieldInput') as HTMLInputElement;
                       const key = input.value.trim();
-                      if (key && !editingMapping.customFields?.[key] && !(key in editingMapping)) {
+                      if (key && !editingMapping.customFields?.[key] && !['country', 'quantity', 'weight'].includes(key)) {
                         setEditingMapping(prev => ({
                           ...prev,
                           customFields: {
@@ -453,9 +455,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
             <div className="pt-4">
               <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-2 mb-3">Grouping Fields (Destination Key)</h3>
+              <p className="text-[10px] text-slate-500 mb-3">
+                Select which fields combine to create unique destinations for container optimization.
+              </p>
               <div className="space-y-2">
                 {[
-                  'customerNum', 'country', 'shipToName', 'incoterms', 'incoterms2', 'salesOrg', 'tempControl',
+                  // Core groupable fields
+                  'country', 'incoterms',
+                  // Custom fields
                   ...Object.keys(editingMapping.customFields || {})
                 ].map(field => (
                   <label key={field} className="flex items-center gap-2 cursor-pointer group">
@@ -475,9 +482,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   </label>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-500 mt-2">
-                Selected fields will be combined to create unique destinations for container optimization.
-              </p>
             </div>
           </div>
         </div>

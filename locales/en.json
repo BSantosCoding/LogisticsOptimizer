@@ -57,7 +57,8 @@
         "filterShipped": "Shipped",
         "filterAll": "All",
         "allTags": "All Tags",
-        "allSelectedDefault": "All products selected by default"
+        "allSelectedDefault": "All products selected by default",
+        "weight": "Weight (kg)"
     },
     "config": {
         "optimizationSettings": "Optimization Settings",
@@ -76,7 +77,8 @@
         "restrictionTags": "Restriction Tags",
         "noTemplates": "No templates found.",
         "csvMapping": "CSV Import Configuration",
-        "restrictedAccessCSV": "CSV configuration is restricted to managers and authorized users."
+        "restrictedAccessCSV": "CSV configuration is restricted to managers and authorized users.",
+        "newFieldKey": "New Field Key (e.g. region)"
     },
     "team": {
         "overview": "Team Overview",

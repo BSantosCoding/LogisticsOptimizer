@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product, ProductFormFactor } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash, AlertTriangle } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash, AlertTriangle, Weight } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 
 interface ProductPanelProps {
@@ -149,7 +149,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 ))}
               </select>
             </div>
-            <div className="w-1/3">
+            <div className="w-1/4">
               <label className="block text-xs text-slate-400 mb-1">{t('common.units')}</label>
               <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2 h-[38px]">
                 <input
@@ -160,6 +160,21 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   className="bg-transparent text-sm text-slate-200 outline-none w-full"
                 />
                 <span className="text-slate-500 text-xs ml-1">#</span>
+              </div>
+            </div>
+            <div className="w-1/4">
+              <label className="block text-xs text-slate-400 mb-1">{t('products.weight', 'Weight (kg)')}</label>
+              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2 h-[38px]">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  placeholder="-"
+                  value={newProduct.weight ?? ''}
+                  onChange={e => setNewProduct({ ...newProduct, weight: e.target.value ? parseFloat(e.target.value) : undefined })}
+                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                />
+                <Weight size={14} className="text-slate-500 ml-1" />
               </div>
             </div>
           </div>
@@ -333,6 +348,9 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
                   <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
                     <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} {t('common.units')}</div>
+                    {p.weight !== undefined && (
+                      <div className="flex items-center gap-1.5"><Weight size={14} className="text-slate-500" /> {p.weight} kg</div>
+                    )}
                   </div>
 
                   {(p.readyDate) && (

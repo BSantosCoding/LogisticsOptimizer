@@ -56,7 +56,8 @@
         "filterAvailable": "Available",
         "filterShipped": "Shipped",
         "filterAll": "All",
-        "allTags": "All Tags"
+        "allTags": "All Tags",
+        "allSelectedDefault": "All products selected by default"
     },
     "config": {
         "optimizationSettings": "Optimization Settings",

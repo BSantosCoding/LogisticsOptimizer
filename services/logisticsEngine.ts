@@ -52,7 +52,19 @@ export const checkCompatibility = (
 
   // 4. Check Weight Limit (if configured)
   if (weightLimit !== undefined && product.weight !== undefined) {
-    const productTotalWeight = product.weight * product.quantity;
+    // product.weight is TOTAL weight for the line item
+    // We need to calculate the weight of the specific quantity being checked?
+    // Actually, checkCompatibility is usually called with a product object that has a specific quantity.
+    // BUT, if the product object passed here is a "slice" (e.g. quantity=1), does it have the weight of 1 unit or the original total?
+    // The engine creates slices. We need to ensure when we create a slice, we adjust the weight.
+    // If we do that, then product.weight HERE is the total weight of THIS slice.
+
+    // However, to be safe and consistent with the new logic:
+    // We assume the caller has already adjusted the weight for the slice, OR we calculate unit weight if we have context.
+    // But checkCompatibility doesn't know about the "original" quantity.
+    // So we must enforce that any Product object passed around has its .weight property matching its .quantity.
+
+    const productTotalWeight = product.weight;
     if (existingWeight + productTotalWeight > weightLimit) {
       issues.push(`Weight limit exceeded: ${(existingWeight + productTotalWeight).toFixed(1)}kg > ${weightLimit}kg`);
     }
@@ -110,7 +122,7 @@ export const validateLoadedContainer = (
 
     // Track total weight
     if (p.weight !== undefined) {
-      totalWeight += p.weight * p.quantity;
+      totalWeight += p.weight; // p.weight is now total weight for this assignment
     }
 
     const productIssues = checkCompatibility(p, container);
@@ -150,7 +162,7 @@ const canFit = (products: Product[], container: Container, weightLimit?: number)
 
     totalUtilization += (p.quantity / maxCap) * 100;
     if (p.weight !== undefined) {
-      totalWeight += p.weight * p.quantity;
+      totalWeight += p.weight; // p.weight is total for this slice
     }
   }
 
@@ -198,10 +210,12 @@ const packItems = (
       // so this allows mixed packing.
       if (maxCap && checkCompatibility(product, currentInstance.template).length === 0) {
         // Also check weight limit if configured
-        const productWeight = product.weight ?? 0;
+        const totalLineWeight = product.weight ?? 0;
+        const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
+
         const weightLimit = weightLimitResolver(currentInstance.template.id);
         const canFitWeight = weightLimit === undefined ||
-          (currentInstance.currentWeight + productWeight <= weightLimit);
+          (currentInstance.currentWeight + unitWeight <= weightLimit); // Check if at least 1 unit fits
 
         if (canFitWeight) {
           const spacePercent = (maxUtilization + 0.1) - currentInstance.currentUtil;
@@ -209,18 +223,20 @@ const packItems = (
 
           // Also limit by weight if configured
           let qtyByWeight = maxQtyThatFits;
-          if (weightLimit !== undefined && productWeight > 0) {
+          if (weightLimit !== undefined && unitWeight > 0) {
             const remainingWeightCapacity = weightLimit - currentInstance.currentWeight;
-            qtyByWeight = Math.floor(remainingWeightCapacity / productWeight);
+            qtyByWeight = Math.floor(remainingWeightCapacity / unitWeight);
           }
 
           const maxQtyAllowed = Math.min(maxQtyThatFits, qtyByWeight);
 
           if (maxQtyAllowed > 0) {
             const take = Math.min(maxQtyAllowed, remainingQty);
-            currentInstance.assigned.push({ ...product, quantity: take });
+            // Create assigned product with proportional weight
+            const assignedWeight = unitWeight * take;
+            currentInstance.assigned.push({ ...product, quantity: take, weight: assignedWeight });
             currentInstance.currentUtil += (take / maxCap) * 100;
-            currentInstance.currentWeight += take * productWeight;
+            currentInstance.currentWeight += assignedWeight;
             remainingQty -= take;
           }
         }
@@ -238,42 +254,48 @@ const packItems = (
 
         // Check if it can hold at least one unit by weight
         const limit = weightLimitResolver(t.id);
-        if (limit !== undefined && product.weight && product.weight > limit) return false;
+        const totalLineWeight = product.weight ?? 0;
+        const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
+
+        if (limit !== undefined && unitWeight > limit) return false;
 
         return true;
       });
 
       if (!bestTemplate) {
         // Cannot fit anywhere
-        unassigned.push({ ...product, quantity: remainingQty });
+        unassigned.push({ ...product, quantity: remainingQty, weight: (product.weight && product.quantity > 0) ? (product.weight / product.quantity) * remainingQty : 0 });
         break;
       }
 
       const maxCap = bestTemplate.capacities[product.formFactorId];
       const weightLimit = weightLimitResolver(bestTemplate.id);
 
+      const totalLineWeight = product.weight ?? 0;
+      const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
+
       // Calculate how many units can fit considering weight limit
       let maxByCapacity = maxCap;
-      if (weightLimit !== undefined && product.weight !== undefined && product.weight > 0) {
-        maxByCapacity = Math.min(maxCap, Math.floor(weightLimit / product.weight));
+      if (weightLimit !== undefined && unitWeight > 0) {
+        maxByCapacity = Math.min(maxCap, Math.floor(weightLimit / unitWeight));
       }
 
       // Safety check: maxByCapacity should be >= 1 because we filtered templates above
       // But just in case of floating point weirdness
       if (maxByCapacity < 1) {
-        unassigned.push({ ...product, quantity: remainingQty });
+        unassigned.push({ ...product, quantity: remainingQty, weight: unitWeight * remainingQty });
         break;
       }
 
       const take = Math.min(maxByCapacity, remainingQty); // Can't take more than allowed
-      const productWeight = product.weight ?? 0;
+      const assignedWeight = unitWeight * take;
 
       // Create new instance
       packedInstances.push({
         template: bestTemplate,
-        assigned: [{ ...product, quantity: take }],
+        assigned: [{ ...product, quantity: take, weight: assignedWeight }],
         currentUtil: (take / maxCap) * 100,
-        currentWeight: take * productWeight
+        currentWeight: assignedWeight
       });
 
       remainingQty -= take;

@@ -122,7 +122,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   // Helper to calculate total weight for a container
   const getContainerWeight = (loadedContainer: LoadedContainer) => {
-    return loadedContainer.assignedProducts.reduce((sum, p) => sum + ((p.weight || 0) * p.quantity), 0);
+    return loadedContainer.assignedProducts.reduce((sum, p) => sum + (p.weight || 0), 0);
   };
 
   const [searchQuery, setSearchQuery] = useState('');

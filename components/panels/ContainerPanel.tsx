@@ -136,7 +136,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
 
 
 
-        <div className="bg-slate-900/50 p-3 rounded border border-slate-700">
+        <div className="bg-slate-900/50 p-3 rounded border border-slate-700 mt-3">
           <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
           {formFactors.length === 0 ? (
             <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>
@@ -190,9 +190,6 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           {canManage && (
             <>
               <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
-              <button onClick={() => fileInputRef.current?.click()} className="h-9 text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
-                {t('products.importCsv')}
-              </button>
               {containers.length > 0 && (
                 <button onClick={onClearAll} className="h-9 text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
                   {t('common.clearAll')}

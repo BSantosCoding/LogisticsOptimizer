@@ -49,7 +49,16 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             try {
                 const { data: configData } = await supabase.from('import_configs').select('*').eq('company_id', companyId).eq('config_key', 'product_import_mapping').single();
                 if (configData) {
-                    setCsvMapping(configData.config_value);
+                    const loadedConfig = configData.config_value;
+                    // Migration: Ensure incoterms is an array
+                    if (typeof loadedConfig.incoterms === 'string') {
+                        loadedConfig.incoterms = [loadedConfig.incoterms];
+                        if (loadedConfig.incoterms2) {
+                            loadedConfig.incoterms.push(loadedConfig.incoterms2);
+                            delete loadedConfig.incoterms2;
+                        }
+                    }
+                    setCsvMapping(loadedConfig);
                 } else {
                     setCsvMapping(DEFAULT_CSV_MAPPING);
                 }

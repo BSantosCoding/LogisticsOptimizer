@@ -110,9 +110,6 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 setFormFactors(ffData);
             }
 
-            const dbTags = tagsData?.map((t: any) => t.name) || [];
-            setRestrictionTags([...new Set([...DEFAULT_RESTRICTIONS, ...dbTags])]);
-
             // Load countries
             const { data: countriesData } = await supabase.from('countries').select('*').eq('company_id', companyId);
             if (countriesData) {

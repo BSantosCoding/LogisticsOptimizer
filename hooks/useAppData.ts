@@ -235,8 +235,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 // Add to database
                 const tagsToInsert = newTags.map(tagName => ({
                     company_id: companyId,
-                    name: tagName,
-                    created_by: userId
+                    name: tagName
                 }));
 
                 console.log('[updateCsvMapping] Inserting tags into database:', tagsToInsert);

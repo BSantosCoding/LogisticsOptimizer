@@ -94,7 +94,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   // Helper to get cost for a container
   const getContainerCost = (loadedContainer: LoadedContainer) => {
     const country = loadedContainer.assignedProducts[0]?.country;
-    return (country && countryCosts[country]?.[loadedContainer.container.id]) ?? loadedContainer.container.cost;
+    const countryData = countryCosts[country];
+    const containerId = loadedContainer.container.id;
+    const countryCost = countryData?.[containerId];
+    console.log('Cost lookup:', { country, containerId, countryData, countryCost, fallback: loadedContainer.container.cost });
+    return countryCost ?? loadedContainer.container.cost;
   };
 
   const [searchQuery, setSearchQuery] = useState('');

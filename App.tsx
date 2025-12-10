@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin' | 'user_settings'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
   const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [pendingReoptimize, setPendingReoptimize] = useState(false);
 
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
@@ -559,11 +560,8 @@ const App: React.FC = () => {
               : p
           ));
 
-          // Trigger re-optimization after unpacking
-          // Use setTimeout to ensure state updates have been applied
-          setTimeout(() => {
-            handleRunOptimization();
-          }, 100);
+          // Set flag to trigger re-optimization after state update
+          setPendingReoptimize(true);
         } catch (error) {
           console.error('Error loading base plan:', error);
           setErrorModal({ isOpen: true, message: 'Failed to load base plan.' });
@@ -650,6 +648,18 @@ const App: React.FC = () => {
       () => setViewMode('results')
     );
   };
+
+  // Effect to handle pending re-optimization (triggered after unpacking a shipment)
+  useEffect(() => {
+    if (pendingReoptimize) {
+      // Check if there are available products to optimize
+      const availableProducts = products.filter(p => !p.status || p.status === 'available');
+      if (availableProducts.length > 0) {
+        setPendingReoptimize(false);
+        handleRunOptimization();
+      }
+    }
+  }, [pendingReoptimize, products]);
 
   const toggleProductSelection = (id: string) => {
     setSelectedProductIds(prev => {

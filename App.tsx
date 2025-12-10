@@ -559,7 +559,11 @@ const App: React.FC = () => {
               : p
           ));
 
-          setInputMode('products');
+          // Trigger re-optimization after unpacking
+          // Use setTimeout to ensure state updates have been applied
+          setTimeout(() => {
+            handleRunOptimization();
+          }, 100);
         } catch (error) {
           console.error('Error loading base plan:', error);
           setErrorModal({ isOpen: true, message: 'Failed to load base plan.' });

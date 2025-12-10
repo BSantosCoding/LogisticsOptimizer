@@ -418,8 +418,22 @@ const App: React.FC = () => {
     if (!companyId) return;
 
     try {
+      // Build country costs map from countries data (same logic as optimization)
+      const countryCosts: Record<string, Record<string, number>> = {};
+      countries.forEach((country: any) => {
+        if (country.containerCosts) {
+          if (country.code) countryCosts[country.code] = country.containerCosts;
+          if (country.name) countryCosts[country.name] = country.containerCosts;
+        }
+      });
+
+      // Calculate total cost using country-specific costs when available
       const totalCost = result.assignments.reduce((sum: number, a: any) => {
-        return sum + a.container.cost;
+        const country = a.assignedProducts[0]?.country;
+        // Strip the -instance-XX suffix from container ID for cost lookup
+        const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
+        const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
+        return sum + cost;
       }, 0);
 
       const { data: shipmentData, error: shipmentError } = await supabase

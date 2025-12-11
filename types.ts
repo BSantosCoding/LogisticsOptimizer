@@ -108,3 +108,8 @@ export interface CSVMapping {
   shippingAvailableBy: string; // CSV header for date
   displayFields?: string[]; // Keys from customFields to show in UI
 }
+
+export interface OptimizerSettings {
+  allowUnitSplitting: boolean;
+  shippingDateGroupingRange?: number;
+}

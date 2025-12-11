@@ -93,7 +93,9 @@ const App: React.FC = () => {
     removeFormFactor,
     addShipment,
     csvMapping,
-    updateCsvMapping
+    updateCsvMapping,
+    optimizerSettings,
+    updateOptimizerSettings
   } = useAppData(companyId, session?.user?.id);
 
   // --- App State ---
@@ -124,8 +126,7 @@ const App: React.FC = () => {
     return { min: 85, max: 100 };
   });
 
-  const [allowUnitSplitting, setAllowUnitSplitting] = useState<boolean>(true);
-  const [shippingDateGroupingRange, setShippingDateGroupingRange] = useState<number | undefined>(undefined);
+
 
   // Save optimal range to localStorage whenever it changes
   useEffect(() => {
@@ -149,7 +150,7 @@ const App: React.FC = () => {
     handleDrop,
     handleAddContainer: addContainerInstance,
     handleDeleteContainer: deleteContainerInstance
-  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, allowUnitSplitting, shippingDateGroupingRange);
+  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, optimizerSettings.allowUnitSplitting, optimizerSettings.shippingDateGroupingRange);
 
   // Forms
   const [newTag, setNewTag] = useState('');
@@ -1219,10 +1220,12 @@ const App: React.FC = () => {
                     session={session}
                     companyId={companyId}
                     setRestrictionTags={setRestrictionTags}
-                    allowUnitSplitting={allowUnitSplitting}
-                    setAllowUnitSplitting={setAllowUnitSplitting}
-                    shippingDateGroupingRange={shippingDateGroupingRange}
-                    setShippingDateGroupingRange={setShippingDateGroupingRange}
+                    allowUnitSplitting={optimizerSettings.allowUnitSplitting}
+                    setAllowUnitSplitting={(val) => updateOptimizerSettings({ ...optimizerSettings, allowUnitSplitting: val })}
+                    shippingDateGroupingRange={optimizerSettings.shippingDateGroupingRange}
+                    setShippingDateGroupingRange={(val) => updateOptimizerSettings({ ...optimizerSettings, shippingDateGroupingRange: val })}
+                    optimizerSettings={optimizerSettings}
+                    updateOptimizerSettings={updateOptimizerSettings}
                   />
                 </div>
               )}

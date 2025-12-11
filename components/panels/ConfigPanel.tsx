@@ -149,103 +149,104 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   // LIST VIEW
   return (
     <div className="flex gap-4 h-full">
-      {/* Product Templates Panel - Smaller Width (w-80 or w-1/4) */}
-      <div className="w-80 flex-none bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Copy className="text-blue-400" size={20} />
-            {t('config.productTemplates')}
-          </h2>
-          <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
-            {filteredTemplates.length}
-          </span>
-        </div>
+      {/* Left Panel: Templates + Optimization Settings */}
+      <div className="w-96 flex-none flex flex-col gap-4 overflow-y-auto pr-1">
 
-        <div className="px-4 py-2 border-b border-slate-700 bg-slate-800/30">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-            <input
-              type="text"
-              placeholder={t('common.search')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 pl-9 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-8"
-            />
+        {/* Product Templates Section */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col shrink-0">
+          <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Copy className="text-blue-400" size={20} />
+              {t('config.productTemplates')}
+            </h2>
+            <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
+              {filteredTemplates.length}
+            </span>
           </div>
-        </div>
 
-        {/* Template Creation Form */}
-        {canManageTemplates && (
-          <div className="p-4 border-b border-slate-700 bg-slate-800/30">
-            <div className="space-y-3">
-              <div>
-                <input
-                  placeholder="New Template Name"
-                  value={newTemplate.name}
-                  onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
-              </div>
-              <RestrictionSelector
-                availableOptions={restrictionTags}
-                selected={newTemplate.restrictions || []}
-                onChange={r => setNewTemplate({ ...newTemplate, restrictions: r })}
+          <div className="px-4 py-2 border-b border-slate-700 bg-slate-800/30">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+              <input
+                type="text"
+                placeholder={t('common.search')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 pl-9 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-8"
               />
-              <button
-                onClick={handleAddTemplate}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
-              >
-                <Plus size={16} /> {t('config.addTemplate')}
-              </button>
             </div>
           </div>
-        )}
 
-        {/* Templates List */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {filteredTemplates.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-sm">
-              {t('config.noTemplates')}
-            </div>
-          ) : (
-            filteredTemplates.map(template => (
-              <div key={template.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-slate-600 transition-colors">
-                <div className="font-semibold text-slate-200 mb-2">{template.name}</div>
-                {template.restrictions.length > 0 && (
-                  <div className="flex gap-1 flex-wrap mb-3">
-                    {template.restrictions.map(r => (
-                      <span key={r} className="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-700">
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2 mt-2 pt-3 border-t border-slate-700/50">
-                  <button
-                    onClick={() => applyTemplate(template)}
-                    className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded transition-colors text-center font-medium"
-                  >
-                    {t('config.useTemplate')}
-                  </button>
-                  {canManageTemplates && (
-                    <button
-                      onClick={() => handleRemoveTemplate(template.id)}
-                      className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+          {/* Template Creation Form */}
+          {canManageTemplates && (
+            <div className="p-4 border-b border-slate-700 bg-slate-800/30">
+              <div className="space-y-3">
+                <div>
+                  <input
+                    placeholder="New Template Name"
+                    value={newTemplate.name}
+                    onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                 </div>
+                <RestrictionSelector
+                  availableOptions={restrictionTags}
+                  selected={newTemplate.restrictions || []}
+                  onChange={r => setNewTemplate({ ...newTemplate, restrictions: r })}
+                />
+                <button
+                  onClick={handleAddTemplate}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} /> {t('config.addTemplate')}
+                </button>
               </div>
-            ))
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Settings Column (New) */}
-      <div className="w-80 flex-none flex flex-col gap-4">
-        {/* Optimization Settings */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+          {/* Templates List */}
+          <div className="max-h-[300px] overflow-y-auto p-2 space-y-2">
+            {filteredTemplates.length === 0 ? (
+              <div className="text-center py-8 text-slate-500 text-sm">
+                {t('config.noTemplates')}
+              </div>
+            ) : (
+              filteredTemplates.map(template => (
+                <div key={template.id} className="bg-slate-700/30 border border-slate-700 rounded-lg p-3 group hover:border-slate-600 transition-colors">
+                  <div className="font-semibold text-slate-200 mb-2">{template.name}</div>
+                  {template.restrictions.length > 0 && (
+                    <div className="flex gap-1 flex-wrap mb-3">
+                      {template.restrictions.map(r => (
+                        <span key={r} className="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 border border-slate-700">
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2 pt-3 border-t border-slate-700/50">
+                    <button
+                      onClick={() => applyTemplate(template)}
+                      className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded transition-colors text-center font-medium"
+                    >
+                      {t('config.useTemplate')}
+                    </button>
+                    {canManageTemplates && (
+                      <button
+                        onClick={() => handleRemoveTemplate(template.id)}
+                        className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Optimization Settings (Merged here) */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 shrink-0">
           <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2">
             <Settings size={16} className="text-purple-400" /> Optimization
           </h3>
@@ -263,8 +264,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
           </div>
         </div>
 
-        {/* Grouping Settings */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+        {/* Grouping Settings (Merged here) */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4 shrink-0">
           <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2">
             <Filter size={16} className="text-yellow-400" /> Grouping
           </h3>
@@ -293,7 +294,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
       </div>
 
-      {/* CSV Import Configuration (Flex-1) */}
+      {/* Right Panel: CSV Import Configuration (Flex-1) */}
       <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col min-h-[400px]">
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">

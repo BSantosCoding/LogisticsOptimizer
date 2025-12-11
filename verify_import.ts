@@ -27,6 +27,7 @@ const defaultMapping: CSVMapping = {
     country: "Ship To: Country",
     quantity: "Number of Packages",
     weight: "Gross Weight",
+    formFactor: "Material Description", // Default to description if dedicated column not present, but needs explicit mapping now
     incoterms: ["Incoterms", "Incoterms (Part 2)"],
     restrictions: ["Temp. Control (Description)", "DG: Hazard Note 1"],
     groupingFields: ["customerNum", "salesOrg"],

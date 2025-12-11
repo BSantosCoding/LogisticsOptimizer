@@ -751,13 +751,21 @@ const App: React.FC = () => {
   // --- Bulk Operations ---
   const handleClearProducts = async () => {
     if (!companyId) return;
-    if (!window.confirm('Are you sure you want to delete ALL products? This cannot be undone.')) return;
 
-    setProducts([]);
-    setSelectedProductIds(new Set());
-    setResults(null);
-
-    await supabase.from('products').delete().eq('created_by', session.user.id);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Clear All Products',
+      message: 'Are you sure you want to delete ALL products? This cannot be undone.',
+      confirmText: 'Delete All',
+      isDestructive: true,
+      onConfirm: async () => {
+        setProducts([]);
+        setSelectedProductIds(new Set());
+        setResults(null);
+        await supabase.from('products').delete().eq('created_by', session.user.id);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const handleImportDeals = async (csvContent: string) => {
@@ -766,13 +774,21 @@ const App: React.FC = () => {
 
   const handleClearDeals = async () => {
     if (!companyId) return;
-    if (!window.confirm('Are you sure you want to delete ALL containers? This cannot be undone.')) return;
 
-    setContainers([]);
-    setSelectedContainerIds(new Set());
-    setResults(null);
-
-    await supabase.from('containers').delete().eq('company_id', companyId);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Clear All Containers',
+      message: 'Are you sure you want to delete ALL containers? This cannot be undone.',
+      confirmText: 'Delete All',
+      isDestructive: true,
+      onConfirm: async () => {
+        setContainers([]);
+        setSelectedContainerIds(new Set());
+        setResults(null);
+        await supabase.from('containers').delete().eq('company_id', companyId);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   if (loadingSession) {

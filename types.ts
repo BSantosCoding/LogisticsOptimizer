@@ -89,6 +89,7 @@ export interface CSVMapping {
   country: string;          // CSV header for country code
   quantity: string;         // CSV header for quantity/number of packages
   weight: string;           // CSV header for weight in kg
+  formFactor: string;       // CSV header for form factor name
   restrictions: string[];   // Array of CSV header names for restriction fields
   incoterms: string[];      // Array of CSV header names for incoterms
 

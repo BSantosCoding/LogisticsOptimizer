@@ -44,6 +44,7 @@ export const parseProductsCSV = (
         if (fieldKey === 'country') return getColIndexByHeader(csvMapping.country);
         if (fieldKey === 'quantity') return getColIndexByHeader(csvMapping.quantity);
         if (fieldKey === 'weight') return getColIndexByHeader(csvMapping.weight);
+        if (fieldKey === 'formFactor') return getColIndexByHeader(csvMapping.formFactor);
 
         // Check custom fields
         if (csvMapping.customFields && fieldKey in csvMapping.customFields) {
@@ -56,6 +57,7 @@ export const parseProductsCSV = (
     const countryIdx = getColIndex('country');
     const quantityIdx = getColIndex('quantity');
     const weightIdx = getColIndex('weight');
+    const formFactorIdx = getColIndex('formFactor');
 
     // Custom field indices
     const shipToNameIdx = getColIndex('shipToName');
@@ -78,6 +80,7 @@ export const parseProductsCSV = (
         csvMapping.country,
         csvMapping.quantity,
         csvMapping.weight,
+        csvMapping.formFactor,
         ...(csvMapping.incoterms || []),
         ...(csvMapping.restrictions || []),
         ...Object.values(csvMapping.customFields || {})
@@ -128,11 +131,26 @@ export const parseProductsCSV = (
         const weight = parseFloat(weightStr.replace(/,/g, '')) || undefined;
 
         // 4. Form Factor Matching
+        // If a specific Form Factor column is mapped and has a value, try to match by name exactly first
+        // Otherwise fall back to description substring matching as before
+        const formFactorVal = getVal(formFactorIdx)?.trim();
         let matchedFFId = '';
-        for (const ff of sortedFormFactors) {
-            if (description.toLowerCase().includes(ff.name.toLowerCase())) {
-                matchedFFId = ff.id;
-                break;
+
+        if (formFactorVal) {
+            // Try exact match on mapped column
+            const exactMatch = formFactors.find(ff => ff.name.toLowerCase() === formFactorVal.toLowerCase());
+            if (exactMatch) {
+                matchedFFId = exactMatch.id;
+            }
+        }
+
+        // Fallback: description substring matching
+        if (!matchedFFId) {
+            for (const ff of sortedFormFactors) {
+                if (description.toLowerCase().includes(ff.name.toLowerCase())) {
+                    matchedFFId = ff.id;
+                    break;
+                }
             }
         }
 

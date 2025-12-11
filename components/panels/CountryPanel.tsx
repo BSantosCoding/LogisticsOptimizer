@@ -4,6 +4,7 @@ import { Role, hasRole } from '../../utils/roles';
 import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search, Weight } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ErrorModal from '../modals/ErrorModal';
+import ConfirmModal from '../modals/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 
 interface Country {
@@ -43,6 +44,17 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
         weightLimits: {}
     });
     const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { }
+    });
 
     const canManage = hasRole(userRole, 'admin') || userRole === 'manager' || userProfile?.can_edit_countries;
 
@@ -101,21 +113,28 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     };
 
     const handleRemoveCountry = async (id: string) => {
-        if (!window.confirm(t('countries.confirmDelete'))) return;
+        setConfirmModal({
+            isOpen: true,
+            title: t('countries.confirmDelete', 'Delete Country'),
+            message: t('countries.confirmDeleteMessage', 'Are you sure you want to delete this country?'),
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('countries')
+                        .delete()
+                        .eq('id', id);
 
-        try {
-            const { error } = await supabase
-                .from('countries')
-                .delete()
-                .eq('id', id);
+                    if (error) throw error;
 
-            if (error) throw error;
-
-            setCountries(countries.filter(c => c.id !== id));
-        } catch (error) {
-            console.error('Error deleting country:', error);
-            setErrorModal({ isOpen: true, message: t('countries.errorDelete') });
-        }
+                    setCountries(countries.filter(c => c.id !== id));
+                } catch (error) {
+                    console.error('Error deleting country:', error);
+                    setErrorModal({ isOpen: true, message: t('countries.errorDelete') });
+                } finally {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
     };
 
     const filteredCountries = countries.filter(c =>
@@ -292,6 +311,14 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                 isOpen={errorModal.isOpen}
                 message={errorModal.message}
                 onClose={() => setErrorModal({ isOpen: false, message: '' })}
+            />
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                isDestructive={true}
             />
         </div >
     );

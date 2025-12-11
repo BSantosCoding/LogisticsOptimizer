@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabase';
 import { UserProfile } from '../../types';
 import { Role } from '../../utils/roles';
 import { Check, X, Shield, User, Trash2, Briefcase, Loader2, Users } from 'lucide-react';
+import ConfirmModal from '../modals/ConfirmModal';
 import { useTranslation } from 'react-i18next';
 
 interface ManagementPanelProps {
@@ -19,6 +20,17 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     const [loading, setLoading] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { }
+    });
 
     const fetchMembers = async () => {
         setLoading(true);
@@ -41,12 +53,22 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     };
 
     const handleRemoveUser = async (userId: string) => {
-        if (!window.confirm(t('team.confirmRemove'))) return;
-
-        setActionLoading(userId);
-        await supabase.from('profiles').delete().eq('id', userId);
-        await fetchMembers();
-        setActionLoading(null);
+        setConfirmModal({
+            isOpen: true,
+            title: t('team.confirmRemove', 'Remove User'),
+            message: t('team.confirmRemoveMessage', 'Are you sure you want to remove this user?'),
+            isDestructive: true,
+            onConfirm: async () => {
+                setActionLoading(userId);
+                try {
+                    await supabase.from('profiles').delete().eq('id', userId);
+                    await fetchMembers();
+                } finally {
+                    setActionLoading(null);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
     };
 
     const pendingMembers = members.filter(m => m.status === 'pending');
@@ -250,6 +272,14 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                     </div>
                 </div>
             </div>
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                isDestructive={true}
+            />
         </div>
     );
 };

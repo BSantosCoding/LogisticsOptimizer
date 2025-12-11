@@ -40,6 +40,7 @@
         "country": "Land",
         "formFactor": "Formfaktor",
         "selectFormFactor": "Formfaktor wählen...",
+        "quantity": "Menge",
         "restrictions": "Einschränkungen",
         "addProduct": "Produkt hinzufügen",
         "updateProduct": "Produkt aktualisieren",

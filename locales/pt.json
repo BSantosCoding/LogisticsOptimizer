@@ -40,6 +40,7 @@
         "country": "País",
         "formFactor": "Formato",
         "selectFormFactor": "Selecionar Formato...",
+        "quantity": "Quantidade",
         "restrictions": "Restrições",
         "addProduct": "Adicionar Produto",
         "updateProduct": "Atualizar Produto",

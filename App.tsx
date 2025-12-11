@@ -1143,8 +1143,7 @@ const App: React.FC = () => {
                     setAllowUnitSplitting={(val) => updateOptimizerSettings({ ...optimizerSettings, allowUnitSplitting: val })}
                     shippingDateGroupingRange={optimizerSettings.shippingDateGroupingRange}
                     setShippingDateGroupingRange={(val) => updateOptimizerSettings({ ...optimizerSettings, shippingDateGroupingRange: val })}
-                    optimizerSettings={optimizerSettings}
-                    updateOptimizerSettings={updateOptimizerSettings}
+
                   />
                 </div>
               )}

@@ -8,7 +8,6 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     country: "Ship To: Country",
     quantity: "Number of Packages",
     weight: "Gross Weight",
-    formFactor: "Material Description",
     restrictions: ["Temp. Control (Description)"],
     incoterms: ["Incoterms", "Incoterms (Part 2)"],
     groupingFields: ["customerNum", "incoterms", "salesOrg"],

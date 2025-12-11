@@ -1092,6 +1092,7 @@ const App: React.FC = () => {
                 products={products}
                 selectedProductIds={selectedProductIds}
                 formFactors={formFactors}
+                csvMapping={csvMapping}
               />
             </div>
           ) : (
@@ -1115,6 +1116,7 @@ const App: React.FC = () => {
                       onImport={handleImportProducts}
                       onClearAll={handleClearProducts}
                       formFactors={formFactors}
+                      csvMapping={csvMapping}
                     />
                   </div>
                   <div className="flex-1 overflow-hidden p-6">
@@ -1136,6 +1138,7 @@ const App: React.FC = () => {
                       formFactors={formFactors}
                       onSelectAll={toggleSelectAllProducts}
                       allSelected={products.length > 0 && selectedProductIds.size === products.length}
+                      csvMapping={csvMapping}
                     />
                   </div>
                 </div>

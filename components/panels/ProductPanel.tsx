@@ -336,93 +336,84 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             return (
               <Card
                 key={p.id}
-                onClick={() => toggleProductSelection(p.id)}
-                className={`group cursor-pointer transition-all hover:shadow-md ${hasMissingFF ? 'border-yellow-500/50 bg-yellow-500/5' :
-                  isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                className={`transform transition-all duration-200 hover:shadow-md border bg-card text-card-foreground group relative overflow-hidden ${hasMissingFF ? 'border-yellow-500/50 bg-yellow-500/5' :
+                    isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
                   } ${editingProductId === p.id ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => toggleProductSelection(p.id)}
               >
-                <CardContent className="p-4">
-                  {hasMissingFF && (
-                    <Badge variant="outline" className="mb-2 bg-yellow-500/10 text-yellow-600 border-yellow-500/20 hover:bg-yellow-500/20">
-                      <AlertTriangle size={10} className="mr-1" />
-                      {t('products.noFormFactor')}
-                    </Badge>
-                  )}
+                <div onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-20">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
+                    }`} onClick={() => toggleProductSelection(p.id)}>
+                    {isSelected && <div className="w-2.5 h-2.5 bg-current rounded-sm" />}
+                  </div>
+                </div>
 
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-foreground truncate pr-6">{p.name}</h3>
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background'}`}>
-                      {isSelected && <div className="w-2 h-2 bg-current rounded-sm" />}
+                <div className="p-4 flex flex-col h-full relative z-10">
+                  <div className="mb-3 pr-6">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {p.formFactorId ? (
+                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal bg-secondary/30 text-secondary-foreground border-border/50">
+                          {formFactors.find(f => f.id === p.formFactorId)?.name || 'Unknown'}
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="text-[10px] h-5 px-1.5 font-normal">
+                          <AlertTriangle size={8} className="mr-1" /> {t('products.noFormFactor')}
+                        </Badge>
+                      )}
                     </div>
+                    <h3 className="font-semibold text-sm leading-tight text-foreground truncate" title={p.name}>{p.name}</h3>
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-muted-foreground mb-3">
+                  <div className="grid grid-cols-2 gap-y-1 gap-x-4 text-xs text-muted-foreground mt-auto">
                     <div className="flex items-center gap-1.5">
-                      <MapPin size={12} />
-                      {p.destination || 'No Destination'}
-                      {p.country && <span className="text-muted-foreground/75">({p.country})</span>}
+                      <MapPin size={12} className="shrink-0 opacity-70" />
+                      <span className="truncate" title={p.destination || 'N/A'}>{p.destination || <span className="opacity-50">-</span>}</span>
+                      {p.country && <span className="opacity-50 text-[10px]">({p.country})</span>}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <Box size={12} />
-                      {ff?.name || <span className="text-yellow-600 font-medium">{t('products.unknown')}</span>}
+                      <Box size={12} className="shrink-0 opacity-70" />
+                      <span>{p.quantity} {t('common.units')}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Weight size={12} className="shrink-0 opacity-70" />
+                      <span>{p.weight || '-'} kg</span>
                     </div>
                   </div>
-
-                  <Separator className="my-2" />
-
-                  <div className="grid grid-cols-2 gap-y-1 text-xs text-muted-foreground mb-3">
-                    <div><span className="font-medium text-foreground">{t('products.quantity')}:</span> {p.quantity}</div>
-                    {p.weight && <div><span className="font-medium text-foreground">{t('products.weight')}:</span> {p.weight} kg</div>}
-                    {p.shippingAvailableBy && <div className="col-span-2"><span className="font-medium text-foreground">Avail:</span> {p.shippingAvailableBy}</div>}
-                    {csvMapping?.displayFields?.map(fieldKey => {
-                      const val = p.extraFields?.[fieldKey];
-                      if (!val) return null;
-                      return (
-                        <div key={fieldKey} className="col-span-2 truncate">
-                          <span className="font-medium text-foreground capitalize">{fieldKey.replace(/([A-Z])/g, ' $1').trim()}:</span> {val}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {p.readyDate && (
-                    <div className="text-xs text-muted-foreground border-t border-border pt-2 mb-2">
-                      <div className="flex items-center gap-1.5">{t('products.ready')}: {p.readyDate}</div>
-                    </div>
-                  )}
 
                   {p.restrictions.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
+                    <div className="flex gap-1 flex-wrap mt-3 pt-3 border-t border-border/50">
                       {p.restrictions.map((r, i) => (
                         <div key={i} className="contents">
-                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal bg-secondary/20 text-secondary-foreground">
                             {r}
                           </Badge>
                         </div>
                       ))}
                     </div>
                   )}
+                </div>
 
-                  <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-7 w-7"
-                      onClick={(e) => { e.stopPropagation(); handleEditProduct(p); }}
-                    >
-                      <Pencil size={12} />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="h-7 w-7"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id); }}
-                    >
-                      <Trash2 size={12} />
-                    </Button>
-                  </div>
-
-                </CardContent>
+                {/* Edit Actions overlay on hover - correctly positioned within the relative card */}
+                <div className="absolute right-2 bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-7 w-7 shadow-sm bg-background border border-border hover:bg-secondary hover:text-secondary-foreground"
+                    onClick={(e) => { e.stopPropagation(); handleEditProduct(p) }}
+                  >
+                    <Pencil size={12} />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 shadow-sm bg-background border border-border text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id) }}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
               </Card>
             );
           })}

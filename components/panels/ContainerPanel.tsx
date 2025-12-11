@@ -269,41 +269,45 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
               <Card
                 key={c.id}
                 onClick={() => toggleContainerSelection(c.id)}
-                className={`group cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                className={`transform transition-all duration-200 hover:shadow-md border bg-card text-card-foreground group relative overflow-hidden ${isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
                   } ${editingContainerId === c.id ? 'ring-2 ring-primary' : ''}`}
               >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{c.name}</h3>
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {Object.entries(c.capacities).map(([ffId, cap]) => {
-                          const ff = formFactors.find(f => f.id === ffId);
-                          if (!ff) return null;
-                          return (
-                            <div key={ffId} className="contents">
-                              <Badge variant="outline" className="text-[10px] font-normal bg-secondary/50 text-secondary-foreground">
-                                {ff.name}: {cap}
-                              </Badge>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background'}`}>
-                      {isSelected && <div className="w-2 h-2 bg-current rounded-sm" />}
+                <div onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-20">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
+                    }`} onClick={() => toggleContainerSelection(c.id)}>
+                    {isSelected && <div className="w-2.5 h-2.5 bg-current rounded-sm" />}
+                  </div>
+                </div>
+
+                <div className="p-4 flex flex-col h-full relative z-10">
+                  <div className="mb-3 pr-6">
+                    <h3 className="font-semibold text-sm leading-tight text-foreground truncate">{c.name}</h3>
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {Object.entries(c.capacities).map(([ffId, cap]) => {
+                        const ff = formFactors.find(f => f.id === ffId);
+                        if (!ff) return null;
+                        return (
+                          <div key={ffId} className="contents">
+                            <Badge variant="outline" className="text-[10px] font-normal h-5 px-1.5 bg-secondary/30 text-secondary-foreground border-border/50">
+                              {ff.name}: {cap}
+                            </Badge>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                  <div className="grid grid-cols-2 gap-y-1 gap-x-4 text-xs text-muted-foreground mt-auto">
                     <div className="flex items-center gap-1.5">
-                      <MapPin size={12} />
-                      {c.destination || 'No Destination'}
+                      <MapPin size={12} className="shrink-0 opacity-70" />
+                      <span className="truncate" title={c.destination || 'N/A'}>{c.destination || <span className="opacity-50">-</span>}</span>
                     </div>
                   </div>
 
                   {c.restrictions.length > 0 && (
-                    <div className="flex gap-1 flex-wrap mt-3">
+                    <div className="flex gap-1 flex-wrap mt-3 pt-3 border-t border-border/50">
                       {c.restrictions.map((r, i) => (
                         <div key={i} className="contents">
                           <Badge variant="secondary" className="text-[10px] h-5 px-1.5 gap-1 text-green-600 bg-green-500/10 hover:bg-green-500/20 border-green-500/20">
@@ -313,28 +317,28 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                       ))}
                     </div>
                   )}
+                </div>
 
-                  {canManage && (
-                    <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }}
-                      >
-                        <Pencil size={12} />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }}
-                      >
-                        <Trash2 size={12} />
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
+                {canManage && (
+                  <div className="absolute right-2 bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-7 w-7 shadow-sm bg-background border border-border hover:bg-secondary hover:text-secondary-foreground"
+                      onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }}
+                    >
+                      <Pencil size={12} />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shadow-sm bg-background border border-border text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }}
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
+                )}
               </Card>
             );
           })}

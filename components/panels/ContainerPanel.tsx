@@ -54,7 +54,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all_caps');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canManage = hasRole(userRole, 'manager') || userProfile?.can_edit_containers;
 
@@ -73,7 +73,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   const filteredContainers = containers.filter(c => {
     const textMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.destination.toLowerCase().includes(searchTerm.toLowerCase());
-    const tagMatch = selectedTagFilter ? c.restrictions.includes(selectedTagFilter) : true;
+    const tagMatch = selectedTagFilter && selectedTagFilter !== 'all_caps' ? c.restrictions.includes(selectedTagFilter) : true;
     return textMatch && tagMatch;
   });
 
@@ -95,220 +95,246 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
     }
 
     return (
-      <div className={`p-4 border-b border-slate-700 z-10 ${editingContainerId ? 'bg-blue-900/10' : 'bg-slate-800'}`}>
-        <div className="space-y-3">
-          {editingContainerId && (
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold text-blue-400 uppercase flex items-center gap-1"><Pencil size={12} /> {t('containers.editing')}</span>
-              <button onClick={handleCancelContainerEdit} className="text-xs text-slate-400 hover:text-white flex items-center gap-1"><X size={12} /> {t('common.cancel')}</button>
-            </div>
-          )}
-
-          <input
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-4 py-3 border-b border-border">
+          <CardTitle className="text-sm font-medium flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              {editingContainerId ? <><Pencil size={16} className="text-primary" /> {t('containers.editing')}</> : <><Plus size={16} className="text-primary" /> {t('containers.addContainer')}</>}
+            </span>
+            {editingContainerId && (
+              <Button variant="ghost" size="sm" onClick={handleCancelContainerEdit} className="h-6 text-xs">
+                <X size={12} className="mr-1" /> {t('common.cancel')}
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <Input
             placeholder={t('containers.namePlaceholder')}
             value={newContainer.name}
             onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200"
           />
 
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">{t('containers.destination')}</label>
-              <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-                <ContainerIcon size={14} className="text-slate-500 mr-2" />
-                <input
-                  placeholder={t('containers.destinationPlaceholder')}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{t('containers.destination')}</Label>
+              <div className="relative">
+                <ContainerIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-9"
                   value={newContainer.destination}
                   onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })}
-                  className="bg-transparent text-sm text-slate-200 outline-none w-full"
+                  placeholder={t('containers.destinationPlaceholder')}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('containers.cost')}</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  min="0"
+                  className="pl-9"
+                  value={newContainer.cost}
+                  onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
+                  placeholder={t('containers.costPlaceholder')}
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex-1">
-            <label className="block text-xs text-slate-400 mb-1">{t('containers.cost')}</label>
-            <div className="flex items-center bg-slate-900 border border-slate-600 rounded px-3 py-2">
-              <DollarSign size={14} className="text-slate-500 mr-2" />
-              <input
-                type="number"
-                placeholder={t('containers.costPlaceholder')}
-                min="0"
-                value={newContainer.cost}
-                onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
-                className="bg-transparent text-sm text-slate-200 outline-none w-full"
-              />
-            </div>
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+            <Label className="text-xs uppercase text-muted-foreground font-bold mb-3 block">{t('containers.capacities')}</Label>
+            {formFactors.length === 0 ? (
+              <div className="text-xs text-destructive">{t('containers.noFormFactors')}</div>
+            ) : (
+              <div className="space-y-3">
+                {formFactors.map(ff => (
+                  <div key={ff.id} className="flex items-center gap-3">
+                    <Label className="w-24 text-xs font-medium truncate" title={ff.name}>{ff.name}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={newContainer.capacities[ff.id] || 0}
+                      onChange={e => handleCapacityChange(ff.id, e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
 
+          <div className="space-y-2">
+            <Label className="text-xs uppercase text-muted-foreground font-bold">{t('containers.capabilities')}</Label>
+            <RestrictionSelector
+              availableOptions={restrictionTags}
+              selected={newContainer.restrictions}
+              onChange={r => setNewContainer({ ...newContainer, restrictions: r })}
+            />
+          </div>
 
-
-        <div className="bg-slate-900/50 p-3 rounded border border-slate-700 mt-3 mb-3">
-          <span className="text-xs text-slate-500 uppercase font-bold mb-3 block">{t('containers.capacities')}</span>
-          {formFactors.length === 0 ? (
-            <div className="text-xs text-red-400">{t('containers.noFormFactors')}</div>
-          ) : (
-            <div className="space-y-2">
-              {formFactors.map(ff => (
-                <div key={ff.id} className="flex items-center gap-2">
-                  <label className="w-24 text-xs text-slate-400 font-medium truncate" title={ff.name}>{ff.name}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={newContainer.capacities[ff.id] || 0}
-                    onChange={e => handleCapacityChange(ff.id, e.target.value)}
-                    className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-200 h-[38px]"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <span className="text-xs text-slate-500 uppercase font-bold block mb-2">{t('containers.capabilities')}</span>
-          <RestrictionSelector
-            availableOptions={restrictionTags}
-            selected={newContainer.restrictions}
-            onChange={r => setNewContainer({ ...newContainer, restrictions: r })}
-          />
-        </div>
-
-        <button
-          onClick={handleSaveContainer}
-          className={`w-full py-2 rounded flex items-center justify-center transition-colors text-sm font-medium shadow-sm ${editingContainerId ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-        >
-          {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
-        </button>
-      </div>
+          <Button
+            onClick={handleSaveContainer}
+            className="w-full"
+            variant={editingContainerId ? "default" : "secondary"}
+          >
+            {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   // LIST VIEW
   return (
     <div className="h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <ContainerIcon className="text-blue-500" /> {t('containers.logisticsContainers')}
-          <span className="text-sm font-normal text-slate-500 ml-2">{filteredContainers.length} {t('common.units')}</span>
-        </h2>
-        <div className="flex gap-2">
-          {canManage && (
-            <>
-              <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
-              {containers.length > 0 && (
-                <button onClick={onClearAll} className="h-9 text-xs bg-slate-800 hover:bg-red-900/30 text-red-400 border border-slate-600 px-3 rounded flex items-center gap-1.5">
-                  {t('common.clearAll')}
-                </button>
-              )}
-            </>
-          )}
+      {/* Header */}
+      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border p-4 z-10 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <ContainerIcon size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{t('containers.logisticsContainers')}</h2>
+              <p className="text-xs text-muted-foreground">{filteredContainers.length} {t('common.units')}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {canManage && (
+              <>
+                <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Upload size={14} className="mr-2" />
+                  {t('products.importCsv')}
+                </Button>
+                {containers.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={onClearAll} className="text-destructive hover:text-destructive">
+                    <Trash2 size={14} className="mr-2" />
+                    {t('common.clearAll')}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex-1 flex gap-2">
+
+        <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-            <input
-              type="text"
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
               placeholder={t('common.search') + "..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 text-sm text-slate-200 focus:border-blue-500 outline-none h-10 transition-colors focus:bg-slate-800/80"
+              className="pl-9 h-9"
             />
           </div>
-          <div className="relative w-[180px] shrink-0 hidden sm:block">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-            <select
-              value={selectedTagFilter}
-              onChange={e => setSelectedTagFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 pl-10 pr-8 text-sm text-slate-200 focus:border-blue-500 outline-none appearance-none h-10 cursor-pointer hover:bg-slate-700/50 transition-colors"
-            >
-              <option value="">{t('common.allCaps')}</option>
-              {restrictionTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-            </select>
-            <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={14} />
+          <div className="w-[180px] hidden sm:block">
+            <Select value={selectedTagFilter} onValueChange={setSelectedTagFilter}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={t('common.allCaps')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all_caps">{t('common.allCaps')}</SelectItem>
+                {restrictionTags.map(tag => <SelectItem key={tag} value={tag}>{tag}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-20">
+      <ScrollArea className="flex-1 p-4">
         {containers.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">
+          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-border rounded-xl text-muted-foreground">
             <ContainerIcon size={48} className="mb-2 opacity-50" />
             <p>{t('containers.noContainers')}</p>
             <p className="text-sm">{t('products.useForm')}</p>
           </div>
         )}
 
-        {containers.length > 0 && filteredContainers.length === 0 && <div className="text-center text-slate-500 mt-10 text-sm">{t('products.noMatches')}</div>}
+        {containers.length > 0 && filteredContainers.length === 0 && <div className="text-center text-muted-foreground mt-10 text-sm">{t('products.noMatches')}</div>}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
           {filteredContainers.map(c => {
             const isSelected = selectedContainerIds.has(c.id);
             return (
-              <div
+              <Card
                 key={c.id}
                 onClick={() => toggleContainerSelection(c.id)}
-                className={`relative p-4 rounded-xl border transition-all cursor-pointer group ${isSelected
-                  ? 'bg-blue-900/20 border-blue-500/50 shadow-lg shadow-blue-900/10'
-                  : 'bg-slate-800 border-slate-700 hover:border-slate-500 hover:bg-slate-800/80 hover:shadow-lg'
-                  } ${editingContainerId === c.id ? 'ring-2 ring-blue-500' : ''}`}
+                className={`group cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                  } ${editingContainerId === c.id ? 'ring-2 ring-primary' : ''}`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold text-slate-200">{c.name}</h3>
-                    <div className="flex gap-1 mt-1 flex-wrap">
-                      {Object.entries(c.capacities).map(([ffId, cap]) => {
-                        const ff = formFactors.find(f => f.id === ffId);
-                        if (!ff) return null;
-                        return (
-                          <span key={ffId} className="text-[10px] bg-slate-900 text-slate-400 px-1 rounded border border-slate-700">
-                            {ff.name}: {cap}
-                          </span>
-                        );
-                      })}
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{c.name}</h3>
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {Object.entries(c.capacities).map(([ffId, cap]) => {
+                          const ff = formFactors.find(f => f.id === ffId);
+                          if (!ff) return null;
+                          return (
+                            <div key={ffId} className="contents">
+                              <Badge variant="outline" className="text-[10px] font-normal bg-secondary/50 text-secondary-foreground">
+                                {ff.name}: {cap}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-border bg-background'}`}>
+                      {isSelected && <div className="w-2 h-2 bg-current rounded-sm" />}
                     </div>
                   </div>
-                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-600 bg-slate-900/50'}`}>
-                    {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
+
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin size={12} />
+                      {c.destination || 'No Destination'}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
-                  <div className="flex items-center gap-1">
-                    <MapPin size={12} />
-                    {c.destination || 'No Destination'}
-                  </div>
-                </div>
+                  {c.restrictions.length > 0 && (
+                    <div className="flex gap-1 flex-wrap mt-3">
+                      {c.restrictions.map((r, i) => (
+                        <div key={i} className="contents">
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 gap-1 text-green-600 bg-green-500/10 hover:bg-green-500/20 border-green-500/20">
+                            <ShieldAlert size={8} /> {r}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-
-
-                {c.restrictions.length > 0 && (
-                  <div className="flex gap-1 flex-wrap mb-1">
-                    {c.restrictions.map((r, i) => (
-                      <span key={i} className="text-[10px] bg-green-900/20 text-green-400 px-1.5 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
-                        <ShieldAlert size={8} /> {r}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {canManage && (
-                  <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700 shadow-xl z-20">
-                    <button onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }} className="p-1.5 hover:bg-blue-600 hover:text-white text-slate-400 rounded transition-colors">
-                      <Pencil size={14} />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }} className="p-1.5 hover:bg-red-600 hover:text-white text-slate-400 rounded transition-colors">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {canManage && (
+                    <div className="absolute bottom-2 right-2 hidden group-hover:flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-7 w-7"
+                        onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }}
+                      >
+                        <Pencil size={12} />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-7 w-7"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 };

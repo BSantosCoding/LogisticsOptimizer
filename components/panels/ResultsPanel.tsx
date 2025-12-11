@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer } from '../../types';
+import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { validateLoadedContainer } from '@/services/logisticsEngine';
 
@@ -25,6 +25,7 @@ interface ResultsPanelProps {
   products: Product[];
   selectedProductIds: Set<string>;
   formFactors: any[];
+  csvMapping?: CSVMapping;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -46,7 +47,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   isOptimizing,
   products,
   selectedProductIds,
-  formFactors
+  formFactors,
+  csvMapping
 }) => {
   const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
@@ -749,6 +751,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                 <span className="truncate">{p.destination.split('|')[0]}</span>
                               </div>
                             )}
+                            {/* Display Extra Fields in Sidebar */}
+                            {csvMapping?.displayFields?.map(fieldKey => {
+                              const val = p.extraFields?.[fieldKey];
+                              if (!val) return null;
+                              return (
+                                <div key={fieldKey} className="text-[9px] text-slate-400 mt-0.5 truncate">
+                                  <span className="opacity-70 capitalize">{fieldKey}:</span> {val}
+                                </div>
+                              );
+                            })}
                           </div>
                           <div className="text-red-400 font-bold text-[10px] ml-1 flex-shrink-0">{group.totalQty}</div>
                         </div>
@@ -1083,6 +1095,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                       <div className="flex items-center gap-2 overflow-hidden">
                                         <Box size={14} className="text-blue-400 shrink-0" />
                                         <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                                        {/* Extra Fields in Container */}
+                                        {csvMapping?.displayFields?.map(fieldKey => {
+                                          const val = p.extraFields?.[fieldKey];
+                                          if (!val) return null;
+                                          return (
+                                            <span key={fieldKey} className="text-xs text-slate-500 border-l border-slate-600 pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${val}`}>
+                                              {val}
+                                            </span>
+                                          );
+                                        })}
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
                                         <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">

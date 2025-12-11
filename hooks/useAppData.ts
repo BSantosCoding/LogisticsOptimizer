@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
-import { Product, Container, ProductFormFactor, Shipment, OptimizationResult, CSVMapping } from '../types';
+import { Product, Container, ProductFormFactor, Shipment, OptimizationResult, CSVMapping, OptimizerSettings } from '../types';
 
 const DEFAULT_CSV_MAPPING: CSVMapping = {
     // Core fields
@@ -8,6 +8,7 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     country: "Ship To: Country",
     quantity: "Number of Packages",
     weight: "Gross Weight",
+    formFactor: "Material Description",
     restrictions: ["Temp. Control (Description)"],
     incoterms: ["Incoterms", "Incoterms (Part 2)"],
     groupingFields: ["customerNum", "incoterms", "salesOrg"],
@@ -17,7 +18,9 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
         shipToName: "Ship To: Name",
         salesOrg: "Sales Organization",
         description: "Material Description"
-    }
+    },
+    displayFields: ["customerNum", "shipToName"],
+    shippingAvailableBy: "First Date"
 };
 
 
@@ -32,6 +35,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
     const [shipments, setShipments] = useState<Shipment[]>([]);
     const [restrictionTags, setRestrictionTags] = useState<string[]>([]);
     const [csvMapping, setCsvMapping] = useState<CSVMapping>(DEFAULT_CSV_MAPPING);
+    const [optimizerSettings, setOptimizerSettings] = useState<OptimizerSettings>({ allowUnitSplitting: true, shippingDateGroupingRange: undefined });
     const [isDataLoading, setIsDataLoading] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -105,6 +109,19 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
             } catch (error) {
                 console.warn('import_configs table not found, using default mapping');
                 setCsvMapping(DEFAULT_CSV_MAPPING);
+            }
+
+            // Load Optimizer Settings
+            try {
+                const { data: configData } = await supabase.from('import_configs').select('*').eq('company_id', companyId).eq('config_key', 'optimizer_settings').single();
+                if (configData) {
+                    setOptimizerSettings(configData.config_value);
+                } else {
+                    setOptimizerSettings({ allowUnitSplitting: true, shippingDateGroupingRange: undefined });
+                }
+            } catch (error) {
+                console.warn('optimizer_settings config not found, using default');
+                setOptimizerSettings({ allowUnitSplitting: true, shippingDateGroupingRange: undefined });
             }
 
             // Process loaded data
@@ -283,6 +300,23 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
         }
     };
 
+    const updateOptimizerSettings = async (newSettings: OptimizerSettings) => {
+        if (!companyId) return;
+        setOptimizerSettings(newSettings);
+
+        const { error } = await supabase
+            .from('import_configs')
+            .upsert({
+                company_id: companyId,
+                config_key: 'optimizer_settings',
+                config_value: newSettings
+            }, { onConflict: 'company_id, config_key' });
+
+        if (error) {
+            console.error('Error saving optimizer settings:', error);
+        }
+    };
+
     return {
         products,
         setProducts,
@@ -311,6 +345,8 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
         removeFormFactor,
         addShipment,
         csvMapping,
-        updateCsvMapping
+        updateCsvMapping,
+        optimizerSettings,
+        updateOptimizerSettings
     };
 };

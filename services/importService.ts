@@ -82,6 +82,7 @@ export const parseProductsCSV = (
         csvMapping.quantity,
         csvMapping.weight,
         csvMapping.formFactor,
+        (csvMapping.shippingAvailableBy || ''),
         ...(csvMapping.incoterms || []),
         ...(csvMapping.restrictions || []),
         ...Object.values(csvMapping.customFields || {})
@@ -99,6 +100,15 @@ export const parseProductsCSV = (
         index: getColIndex(field)
     }));
 
+    // Get index for Shipping Available By
+    const shippingDateIdx = getColIndexByHeader(csvMapping.shippingAvailableBy);
+
+    // Pre-calculate indices for all custom fields
+    const customFieldIndices = Object.entries(csvMapping.customFields || {}).map(([key, header]) => ({
+        key,
+        index: getColIndexByHeader(header)
+    }));
+
     // Skip header (index 0)
     for (let i = 1; i < rows.length; i++) {
         const cols = rows[i];
@@ -109,6 +119,16 @@ export const parseProductsCSV = (
 
         const country = getVal(countryIdx)?.trim();
         const shipToName = getVal(shipToNameIdx)?.trim();
+        const shippingDate = getVal(shippingDateIdx)?.trim();
+
+        // Extract extra fields
+        const extraFields: Record<string, string> = {};
+        for (const { key, index } of customFieldIndices) {
+            const val = getVal(index);
+            if (val) {
+                extraFields[key] = val.trim();
+            }
+        }
 
         const formFactorVal = getVal(formFactorIdx)?.trim();
         // If description is not configured, use formFactor column as the product name
@@ -197,7 +217,9 @@ export const parseProductsCSV = (
             restrictions: restrictions,
             readyDate: '',
             shipDeadline: '',
-            arrivalDeadline: ''
+            arrivalDeadline: '',
+            shippingAvailableBy: shippingDate,
+            extraFields: extraFields
         };
 
         newProducts.push(newProduct);

@@ -182,7 +182,8 @@ const packItems = (
   products: Product[],
   templates: Container[],
   maxUtilization: number = 100,
-  weightLimitResolver: (templateId: string) => number | undefined
+  weightLimitResolver: (templateId: string) => number | undefined,
+  allowUnitSplitting: boolean = true
 ): Array<{ template: Container; assigned: Product[] }> => {
 
   if (templates.length === 0) return [];
@@ -231,13 +232,24 @@ const packItems = (
           const maxQtyAllowed = Math.min(maxQtyThatFits, qtyByWeight);
 
           if (maxQtyAllowed > 0) {
-            const take = Math.min(maxQtyAllowed, remainingQty);
-            // Create assigned product with proportional weight
-            const assignedWeight = unitWeight * take;
-            currentInstance.assigned.push({ ...product, quantity: take, weight: assignedWeight });
-            currentInstance.currentUtil += (take / maxCap) * 100;
-            currentInstance.currentWeight += assignedWeight;
-            remainingQty -= take;
+            let take = 0;
+            if (allowUnitSplitting) {
+              take = Math.min(maxQtyAllowed, remainingQty);
+            } else {
+              // only take if ALL remaining fits
+              if (maxQtyAllowed >= remainingQty) {
+                take = remainingQty;
+              }
+            }
+
+            if (take > 0) {
+              // Create assigned product with proportional weight
+              const assignedWeight = unitWeight * take;
+              currentInstance.assigned.push({ ...product, quantity: take, weight: assignedWeight });
+              currentInstance.currentUtil += (take / maxCap) * 100;
+              currentInstance.currentWeight += assignedWeight;
+              remainingQty -= take;
+            }
           }
         }
       }
@@ -258,6 +270,20 @@ const packItems = (
         const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
 
         if (limit !== undefined && unitWeight > limit) return false;
+
+        // If unit splitting disabled, check if WHOLE qty fits
+        if (!allowUnitSplitting) {
+          // We need to check if the new container can hold the ENTIRE remaining quantity
+          // Note: We are finding a NEW container, so capacity is empty (except for base weight if any?)
+          // Capacity for FF
+          const cap = t.capacities[product.formFactorId];
+          if (cap < remainingQty) return false;
+
+          // Weight limit
+          if (limit !== undefined) {
+            if ((unitWeight * remainingQty) > limit) return false;
+          }
+        }
 
         return true;
       });
@@ -287,7 +313,20 @@ const packItems = (
         break;
       }
 
-      const take = Math.min(maxByCapacity, remainingQty); // Can't take more than allowed
+      let take = 0;
+      if (allowUnitSplitting) {
+        take = Math.min(maxByCapacity, remainingQty);
+      } else {
+        // If we are here, we already checked in 'find' loop that it fits, but let's double check
+        if (maxByCapacity >= remainingQty) {
+          take = remainingQty;
+        } else {
+          // Should not happen if filter logic is correct, but safe fallback
+          unassigned.push({ ...product, quantity: remainingQty, weight: unitWeight * remainingQty });
+          break;
+        }
+      }
+
       const assignedWeight = unitWeight * take;
 
       // Create new instance
@@ -315,17 +354,41 @@ export const calculatePacking = (
   minUtilization: number = 70,
   countryCosts: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> cost
   maxUtilization: number = 100,
-  countryWeightLimits: Record<string, Record<string, number>> = {} // countryCode -> containerTemplateId -> weightLimit
+  countryWeightLimits: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> weightLimit
+  allowUnitSplitting: boolean = true,
+  shippingDateGroupingRange: number | undefined = undefined
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // 1. Group Products by Destination ONLY
+  // 1. Group Products by Destination AND Date Buckets (if configured)
   const productGroups: Record<string, { products: Product[], destination: string }> = {};
+
+  // Helper to parse date string "YYYY-MM-DD" safely
+  const parseDate = (d?: string) => d ? new Date(d).getTime() : 0;
 
   products.forEach(p => {
     const destRaw = p.destination || '';
     const destNorm = normalize(destRaw);
-    // Use normalized key for grouping, but handle 'empty' as a valid group
-    const groupKey = destNorm || 'unknown';
+
+    let groupKey = destNorm || 'unknown';
+
+    // If date grouping is enabled, append a date-bucket-key
+    if (shippingDateGroupingRange !== undefined && p.shippingAvailableBy) {
+      const pDate = parseDate(p.shippingAvailableBy);
+      if (!isNaN(pDate) && pDate > 0) {
+        // Simple bucketing using windows
+        // But we want "group together if within X days".
+        // A simple approximation is integer division of days / range?
+        // No, that creates arbitrary boundaries.
+        // Better: We SHOULD group products later?
+        // Or: create distinct keys here.
+
+        // Let's use a simple bucketing for now to keep it efficient O(N) rather than full clustering O(N^2)
+        // Bucket Index = floor(DaysSinceEpoch / Range)
+        const daysSinceEpoch = Math.floor(pDate / (1000 * 60 * 60 * 24));
+        const bucket = Math.floor(daysSinceEpoch / shippingDateGroupingRange);
+        groupKey += `_date_${bucket}`;
+      }
+    }
 
     if (!productGroups[groupKey]) {
       productGroups[groupKey] = {
@@ -400,7 +463,7 @@ export const calculatePacking = (
     };
 
     // 5. Phase 1: Greedy Packing
-    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit);
+    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
@@ -446,7 +509,7 @@ export const calculatePacking = (
         if (smallerTemplates.length > 0) {
           // Re-run packing logic on the combined items with restricted templates
           // Note: The combined items maintain their relative order (Restricted -> Standard) from the previous sort
-          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, getWeightLimit);
+          const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
           const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
           const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);

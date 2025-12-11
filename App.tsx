@@ -111,7 +111,9 @@ const App: React.FC = () => {
     removeFormFactor,
     addShipment,
     csvMapping,
-    updateCsvMapping
+    updateCsvMapping,
+    optimizerSettings,
+    updateOptimizerSettings
   } = useAppData(companyId, session?.user?.id);
 
   // --- App State ---
@@ -159,7 +161,7 @@ const App: React.FC = () => {
     handleDrop,
     handleAddContainer: addContainerInstance,
     handleDeleteContainer: deleteContainerInstance
-  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange);
+  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, optimizerSettings.allowUnitSplitting, optimizerSettings.shippingDateGroupingRange);
 
   // Forms
   const [newTag, setNewTag] = useState('');
@@ -244,7 +246,7 @@ const App: React.FC = () => {
       }]);
     }
 
-    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
+    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', shippingAvailableBy: '', extraFields: {} });
   };
 
   const handleImportProducts = async (csvContent: string) => {
@@ -288,7 +290,9 @@ const App: React.FC = () => {
             weight: p.weight,
             destination: p.destination,
             country: p.country,
-            shipToName: p.shipToName
+            shipToName: p.shipToName,
+            shippingAvailableBy: p.shippingAvailableBy,
+            extraFields: p.extraFields
           },
           form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
@@ -1005,6 +1009,7 @@ const App: React.FC = () => {
                 products={products}
                 selectedProductIds={selectedProductIds}
                 formFactors={formFactors}
+                csvMapping={csvMapping}
               />
             </div>
           ) : (
@@ -1028,6 +1033,7 @@ const App: React.FC = () => {
                       onImport={handleImportProducts}
                       onClearAll={handleClearProducts}
                       formFactors={formFactors}
+                      csvMapping={csvMapping}
                     />
                   </div>
                   <div className="flex-1 overflow-hidden p-6 bg-background">
@@ -1049,6 +1055,7 @@ const App: React.FC = () => {
                       formFactors={formFactors}
                       onSelectAll={toggleSelectAllProducts}
                       allSelected={products.length > 0 && selectedProductIds.size === products.length}
+                      csvMapping={csvMapping}
                     />
                   </div>
                 </div>
@@ -1132,6 +1139,12 @@ const App: React.FC = () => {
                     session={session}
                     companyId={companyId}
                     setRestrictionTags={setRestrictionTags}
+                    allowUnitSplitting={optimizerSettings.allowUnitSplitting}
+                    setAllowUnitSplitting={(val) => updateOptimizerSettings({ ...optimizerSettings, allowUnitSplitting: val })}
+                    shippingDateGroupingRange={optimizerSettings.shippingDateGroupingRange}
+                    setShippingDateGroupingRange={(val) => updateOptimizerSettings({ ...optimizerSettings, shippingDateGroupingRange: val })}
+                    optimizerSettings={optimizerSettings}
+                    updateOptimizerSettings={updateOptimizerSettings}
                   />
                 </div>
               )}

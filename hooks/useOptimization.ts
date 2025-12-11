@@ -8,7 +8,9 @@ export const useOptimization = (
     countries: any[],
     selectedProductIds: Set<string>,
     selectedContainerIds: Set<string>,
-    optimalUtilizationRange: { min: number; max: number }
+    optimalUtilizationRange: { min: number; max: number },
+    allowUnitSplitting: boolean,
+    shippingDateGroupingRange: number | undefined
 ) => {
     const [results, setResults] = useState<Record<OptimizationPriority, OptimizationResult> | null>(null);
     const [activePriority, setActivePriority] = useState<OptimizationPriority>(OptimizationPriority.MANUAL);
@@ -135,7 +137,9 @@ export const useOptimization = (
                 optimalUtilizationRange.min,
                 countryCosts,
                 optimalUtilizationRange.max,
-                countryWeightLimits
+                countryWeightLimits,
+                allowUnitSplitting,
+                shippingDateGroupingRange
             );
 
             // Calculate total cost using country-specific costs when available

@@ -20,6 +20,10 @@ export interface Product {
   arrivalDeadline?: string; // YYYY-MM-DD
   shipmentId?: string | null;
   status?: 'available' | 'shipped';
+
+  // New Fields
+  shippingAvailableBy?: string; // ISO Date String
+  extraFields?: Record<string, string>; // user-defined key/value pairs
 }
 
 export interface Shipment {
@@ -99,4 +103,13 @@ export interface CSVMapping {
   // Custom fields - company-specific additional fields
   // Maps internal key name to CSV header name
   customFields: Record<string, string>;
+
+  // New Fields
+  shippingAvailableBy: string; // CSV header for date
+  displayFields?: string[]; // Keys from customFields to show in UI
+}
+
+export interface OptimizerSettings {
+  allowUnitSplitting: boolean;
+  shippingDateGroupingRange?: number;
 }

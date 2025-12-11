@@ -36,33 +36,48 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 47.4% 11.2%;
+    /* Slate 950 #020617 - aligning with Shadcn default but slightly adjusted for Slate feel */
+    /* Actually user wants Slate 900 #0f172a which is 215 27.9% 16.9% */
+    --background: 215 27.9% 16.9%;
+    /* Slate 900 */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 215.4 16.3% 46.9%;
+    /* Wait, Slate 800 is 215.3 31.8% 17.5% */
+    --card: 215.3 31.8% 17.5%;
+    /* Slate 800 */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 215.3 31.8% 17.5%;
+    /* Slate 800 */
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
+    /* Blue 600 */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 215.3 31.8% 17.5%;
+    /* Slate 800 */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 215.3 31.8% 17.5%;
+    /* Slate 800 */
     --muted-foreground: 215 20.2% 65.1%;
+    /* Slate 400 */
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 215.3 31.8% 17.5%;
+    /* Slate 800 */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 215.3 25% 26.7%;
+    /* Slate 700 */
+    --input: 215.3 25% 26.7%;
+    /* Slate 700 */
+    --ring: 221.2 83.2% 53.3%;
   }
 }
 

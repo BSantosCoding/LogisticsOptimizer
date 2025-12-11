@@ -1,9 +1,17 @@
 import React, { useState, useRef } from 'react';
 import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, Pencil, Trash2, X, Container as ContainerIcon, Search, Filter, Calendar, DollarSign, Clock, Box, AlertTriangle, MapPin, ShieldAlert } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Container as ContainerIcon, Search, Filter, DollarSign, AlertTriangle, MapPin, ShieldAlert, Upload } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { Role, hasRole } from '../../utils/roles';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface ContainerPanelProps {
   viewMode: 'form' | 'list';

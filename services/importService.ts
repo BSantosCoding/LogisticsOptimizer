@@ -1,11 +1,11 @@
 import { Product, ProductFormFactor, CSVMapping } from '../types';
+import Papa from 'papaparse';
 
 export const parseProductsCSV = (
     csvContent: string,
     formFactors: ProductFormFactor[],
     csvMapping: CSVMapping
 ): { products: Product[], productsWithMissingFF: string[], missingHeaders: string[] } => {
-    const lines = csvContent.split('\n');
     const newProducts: Product[] = [];
     const productsWithMissingFF: string[] = [];
     const missingHeaders: string[] = [];
@@ -13,30 +13,20 @@ export const parseProductsCSV = (
     // Sort form factors by length (descending) to match longest name first
     const sortedFormFactors = [...formFactors].sort((a, b) => b.name.length - a.name.length);
 
-    // Helper to parse CSV line handling quotes
-    const parseCSVLine = (text: string) => {
-        const result = [];
-        let cell = '';
-        let inQuotes = false;
+    // Use PapaParse for robust parsing and delimiter auto-detection
+    const parsed = Papa.parse(csvContent, {
+        skipEmptyLines: true,
+        header: false // We read headers manually to use with our mapping logic
+    });
 
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
-                cell = '';
-            } else {
-                cell += char;
-            }
-        }
-        result.push(cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
-        return result;
-    };
+    const rows = parsed.data as string[][];
+
+    if (!rows || rows.length === 0) {
+        return { products: [], productsWithMissingFF: [], missingHeaders: [] };
+    }
 
     // Parse Header Row to find indices
-    const headerLine = lines[0].trim();
-    const headers = parseCSVLine(headerLine).map(h => h.trim());
+    const headers = rows[0].map(h => h.trim());
 
     // Create a map of lowercased header names to their index
     const headerMap = new Map<string, number>();
@@ -106,11 +96,9 @@ export const parseProductsCSV = (
     }));
 
     // Skip header (index 0)
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        const cols = parseCSVLine(line);
+    for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i];
+        if (!cols || cols.length === 0) continue;
 
         // Helper to safely get value
         const getVal = (index: number) => index >= 0 && index < cols.length ? cols[index] : '';
@@ -182,4 +170,3 @@ export const parseProductsCSV = (
 
     return { products: newProducts, productsWithMissingFF, missingHeaders };
 };
-

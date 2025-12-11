@@ -9,19 +9,34 @@ const mockFormFactors: ProductFormFactor[] = [
     { id: 'FF-2', name: 'CSD 210', description: '' },
     { id: 'FF-3', name: 'CSD 200', description: '' },
     { id: 'FF-4', name: 'CSP 25', description: '' },
+    { id: 'FF-5', name: 'IBC 970', description: '' },
+    { id: 'FF-6', name: 'CSD 190', description: '' },
+    { id: 'FF-7', name: 'CSD 170', description: '' },
+    { id: 'FF-8', name: 'CSD 180', description: '' },
+    { id: 'FF-9', name: 'CSD 220', description: '' },
+    { id: 'FF-10', name: 'OSD 200', description: '' },
+    { id: 'FF-11', name: 'OSD 210', description: '' },
+    { id: 'FF-12', name: 'OSP 25', description: '' },
+    { id: 'FF-13', name: 'CSP 20', description: '' },
+    { id: 'FF-14', name: 'IBC 920', description: '' },
+    { id: 'FF-15', name: 'IBC 1030', description: '' },
+    { id: 'FF-16', name: 'CSD 220', description: '' },
 ];
 
 const defaultMapping: CSVMapping = {
-    customerNum: "Ship To: Customer Number",
     country: "Ship To: Country",
-    shipToName: "Ship To: Name",
-    incoterms: "Incoterms",
-    incoterms2: "Incoterms (Part 2)",
-    salesOrg: "Sales Organization",
     quantity: "Number of Packages",
-    description: "Material Description",
-    tempControl: "Temp. Control (Description)",
-    groupingFields: ["customerNum", "incoterms", "incoterms2", "salesOrg"]
+    weight: "Gross Weight",
+    incoterms: ["Incoterms", "Incoterms (Part 2)"],
+    restrictions: ["Temp. Control (Description)", "DG: Hazard Note 1"],
+    groupingFields: ["customerNum", "salesOrg"],
+    customFields: {
+        customerNum: "Ship To: Customer Number",
+        shipToName: "Ship To: Name",
+        salesOrg: "Sales Organization",
+        description: "Material Description",
+        shippingType: "Shipping Type: Description"
+    }
 };
 
 const csvPath = path.join(process.cwd(), 'csv/EXPORT.csv');
@@ -41,7 +56,7 @@ if (result.products.length > 0) {
 // Let's say we want to group by Country as well
 const customMapping: CSVMapping = {
     ...defaultMapping,
-    groupingFields: ["customerNum", "incoterms", "incoterms2", "salesOrg", "country"]
+    groupingFields: [...defaultMapping.groupingFields, "country"]
 };
 
 console.log('\nTesting Custom Mapping (Grouping by Country)...');

@@ -58,10 +58,11 @@ export const parseProductsCSV = (
     const quantityIdx = getColIndex('quantity');
     const weightIdx = getColIndex('weight');
     const formFactorIdx = getColIndex('formFactor');
+    // Description is now purely custom again
+    const descriptionIdx = getColIndex('description');
 
     // Custom field indices
     const shipToNameIdx = getColIndex('shipToName');
-    const descriptionIdx = getColIndex('description');
 
     // Get indices for all Incoterms headers
     const incotermsIndices = (csvMapping.incoterms || []).map(header => ({
@@ -108,7 +109,14 @@ export const parseProductsCSV = (
 
         const country = getVal(countryIdx)?.trim();
         const shipToName = getVal(shipToNameIdx)?.trim();
-        const description = getVal(descriptionIdx);
+
+        const formFactorVal = getVal(formFactorIdx)?.trim();
+        // If description is not configured, use formFactor column as the product name
+        // (User intent: "Material Description" is mapped to formFactor, and it effectively IS the product name)
+        let description = getVal(descriptionIdx)?.trim();
+        if (!description && formFactorVal) {
+            description = formFactorVal;
+        }
 
         // Concatenate Incoterms
         const incotermsParts = incotermsIndices.map(item => getVal(item.index)).filter(Boolean);
@@ -131,32 +139,41 @@ export const parseProductsCSV = (
         const weight = parseFloat(weightStr.replace(/,/g, '')) || undefined;
 
         // 4. Form Factor Matching
-        // If a specific Form Factor column is mapped and has a value, try to match by name exactly first
-        // Otherwise fall back to description substring matching as before
-        const formFactorVal = getVal(formFactorIdx)?.trim();
         let matchedFFId = '';
 
         if (formFactorVal) {
-            // Try exact match on mapped column
+            // Try exact set match from column first (unlikely if column is "Description", but good if purely "ID")
             const exactMatch = formFactors.find(ff => ff.name.toLowerCase() === formFactorVal.toLowerCase());
             if (exactMatch) {
                 matchedFFId = exactMatch.id;
+            } else {
+                // If mapped column value doesn't exactly match a FF name, try checking if the FF name is IN the column value
+                // (e.g. Column="DAOTAN... IBC 1000", FF="IBC 1000")
+                for (const ff of sortedFormFactors) {
+                    if (formFactorVal.toLowerCase().includes(ff.name.toLowerCase())) {
+                        matchedFFId = ff.id;
+                        break;
+                    }
+                }
             }
         }
 
-        // Fallback: description substring matching
-        if (!matchedFFId) {
-            for (const ff of sortedFormFactors) {
-                if (description.toLowerCase().includes(ff.name.toLowerCase())) {
-                    matchedFFId = ff.id;
-                    break;
+        if (!matchedFFId && description) {
+            // Fallback: check if description (if different/distinct) contains FF
+            // (If description == formFactorVal, we already checked it above)
+            if (description !== formFactorVal) {
+                for (const ff of sortedFormFactors) {
+                    if (description.toLowerCase().includes(ff.name.toLowerCase())) {
+                        matchedFFId = ff.id;
+                        break;
+                    }
                 }
             }
         }
 
         if (!matchedFFId) {
-            console.warn(`Could not match form factor for: ${description}`);
-            productsWithMissingFF.push(description);
+            console.warn(`Could not match form factor for: ${description || '(no description)'}`);
+            productsWithMissingFF.push(description || '(no description)');
         }
 
         // 5. Restrictions - check all configured restriction headers
@@ -170,7 +187,7 @@ export const parseProductsCSV = (
 
         const newProduct: Product = {
             id: crypto.randomUUID(),
-            name: description.substring(0, 50),
+            name: (description || formFactorVal || 'Unknown Product').substring(0, 50),
             formFactorId: matchedFFId,
             quantity: quantity,
             weight: weight,

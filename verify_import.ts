@@ -35,7 +35,6 @@ const defaultMapping: CSVMapping = {
         customerNum: "Ship To: Customer Number",
         shipToName: "Ship To: Name",
         salesOrg: "Sales Organization",
-        description: "Material Description",
         shippingType: "Shipping Type: Description"
     }
 };

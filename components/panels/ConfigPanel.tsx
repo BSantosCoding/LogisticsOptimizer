@@ -434,7 +434,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     onClick={() => {
                       const input = document.getElementById('newCustomFieldInput') as HTMLInputElement;
                       const key = input.value.trim();
-                      if (key && !editingMapping.customFields?.[key] && !['country', 'quantity', 'weight'].includes(key)) {
+                      if (key && !editingMapping.customFields?.[key] && !['country', 'quantity', 'weight', 'formFactor'].includes(key)) {
                         setEditingMapping(prev => ({
                           ...prev,
                           customFields: {

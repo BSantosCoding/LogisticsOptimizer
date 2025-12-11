@@ -1,18 +1,24 @@
+
 import React, { useState } from 'react';
 import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
-import { Plus, Save, Pencil, Trash2, X, Globe, DollarSign, Search, Weight } from 'lucide-react';
+import { Plus, Globe, DollarSign, Search, Weight, Trash2 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import ErrorModal from '../modals/ErrorModal';
 import ConfirmModal from '../modals/ConfirmModal';
 import { useTranslation } from 'react-i18next';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Country {
     id: string;
     code: string;
     name: string;
-    containerCosts: Record<string, number>; // containerTemplateId -> cost
-    weightLimits: Record<string, number>; // containerTemplateId -> weight limit in kg
+    containerCosts: Record<string, number>;
+    weightLimits: Record<string, number>;
 }
 
 interface CountryPanelProps {
@@ -36,7 +42,6 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
 }) => {
     const { t } = useTranslation();
     const [searchTerm, setSearchTerm] = useState('');
-    const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
     const [newCountry, setNewCountry] = useState<Omit<Country, 'id'>>({
         code: '',
         name: '',
@@ -143,108 +148,111 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     );
 
     if (viewMode === 'form') {
-        // Only show form to managers and above
-        if (!canManage) {
-            return null;
-        }
+        if (!canManage) return null;
 
         return (
-            <div className="p-4 border-b border-slate-700 bg-slate-800/30">
-                <div className="space-y-3">
-                    <h3 className="text-sm font-bold text-white uppercase mb-3 flex items-center gap-2">
-                        <Plus size={16} className="text-blue-500" /> {t('countries.addCountry')}
-                    </h3>
+            <div className="p-4 border-b border-border bg-muted/20">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-sm uppercase">
+                            <Plus size={16} className="text-primary" /> {t('countries.addCountry')}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <Label className="text-xs text-muted-foreground mb-1 block">{t('countries.code')}</Label>
+                            <Input
+                                value={newCountry.code}
+                                onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
+                                placeholder="CN"
+                                maxLength={2}
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">{t('countries.code')}</label>
-                        <input
-                            value={newCountry.code}
-                            onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                            placeholder="CN"
-                            maxLength={2}
-                        />
-                    </div>
+                        <div>
+                            <Label className="text-xs text-muted-foreground mb-1 block">{t('countries.name')}</Label>
+                            <Input
+                                value={newCountry.name}
+                                onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
+                                placeholder="China"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-xs text-slate-400 mb-1">{t('countries.name')}</label>
-                        <input
-                            value={newCountry.name}
-                            onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-                            placeholder="China"
-                        />
-                    </div>
-
-                    <button
-                        onClick={handleAddCountry}
-                        disabled={!newCountry.code || !newCountry.name}
-                        className="w-full py-2 rounded flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Plus size={16} className="mr-2" /> {t('countries.addCountry')}
-                    </button>
-                </div>
+                        <Button
+                            onClick={handleAddCountry}
+                            disabled={!newCountry.code || !newCountry.name}
+                            className="w-full"
+                        >
+                            <Plus size={16} className="mr-2" /> {t('countries.addCountry')}
+                        </Button>
+                    </CardContent>
+                </Card>
                 <ErrorModal
                     isOpen={errorModal.isOpen}
+                    title={t('modals.errorTitle')}
                     message={errorModal.message}
                     onClose={() => setErrorModal({ isOpen: false, message: '' })}
                 />
-            </div >
+            </div>
         );
     }
 
     // LIST VIEW
     return (
-        <div className="h-full flex flex-col">
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Globe className="text-blue-500" /> {t('countries.configuration')}
-                        <span className="text-sm font-normal text-slate-500 ml-2">({countries.length} {t('nav.countries')})</span>
+        <div className="h-full flex flex-col p-2">
+            <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Globe className="text-primary" /> {t('countries.configuration')}
+                        <Badge variant="outline" className="ml-2">
+                            {countries.length} {t('nav.countries')}
+                        </Badge>
                     </h2>
                 </div>
 
                 {/* Search */}
-                <div className="mb-6 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-                    <input
+                <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+                    <Input
                         type="text"
                         placeholder={t('countries.search')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded px-3 pl-9 text-xs text-slate-200 focus:border-blue-500 outline-none h-9"
+                        className="pl-9 h-9"
                     />
                 </div>
+            </div>
 
-                {/* Country List */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filteredCountries.map(country => (
-                        <div key={country.id} className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        {country.name} <span className="text-sm font-normal text-slate-500">({country.code})</span>
-                                    </h3>
-                                </div>
-                                {canManage && (
-                                    <button
-                                        onClick={() => handleRemoveCountry(country.id)}
-                                        className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-700 transition-colors"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="bg-slate-900/50 rounded p-3 border border-slate-700">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('countries.containerCosts')}</h4>
+            {/* Country List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+                {filteredCountries.map(country => (
+                    <Card key={country.id} className="group">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-base font-bold flex items-center gap-2">
+                                {country.name} <span className="text-xs font-normal text-muted-foreground">({country.code})</span>
+                            </CardTitle>
+                            {canManage && (
+                                <Button
+                                    onClick={() => handleRemoveCountry(country.id)}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Trash2 size={16} />
+                                </Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Container Costs */}
+                            <div className="bg-muted/10 rounded-lg p-3 border">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase mb-3">{t('countries.containerCosts')}</h4>
                                 <div className="space-y-2">
                                     {containerTemplates.map(template => (
                                         <div key={template.id} className="flex items-center justify-between gap-4">
-                                            <span className="text-sm text-slate-300 truncate flex-1">{template.name}</span>
-                                            <div className="flex items-center gap-2 w-32">
-                                                <DollarSign size={14} className="text-slate-500" />
-                                                <input
+                                            <span className="text-sm truncate flex-1">{template.name}</span>
+                                            <div className="flex items-center gap-2 w-32 relative">
+                                                <DollarSign size={12} className="absolute left-2 text-muted-foreground" />
+                                                <Input
                                                     type="number"
                                                     min="0"
                                                     placeholder={t('countries.default')}
@@ -259,7 +267,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                                                         }
                                                         handleUpdateCountry(country.id, { containerCosts: newCosts });
                                                     }}
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 focus:border-blue-500 outline-none text-right"
+                                                    className="h-7 text-right pl-6 text-xs"
                                                 />
                                             </div>
                                         </div>
@@ -267,15 +275,16 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900/50 rounded p-3 border border-slate-700 mt-3">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">{t('countries.weightLimits')}</h4>
+                            {/* Weight Limits */}
+                            <div className="bg-muted/10 rounded-lg p-3 border">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase mb-3">{t('countries.weightLimits')}</h4>
                                 <div className="space-y-2">
                                     {containerTemplates.map(template => (
                                         <div key={template.id} className="flex items-center justify-between gap-4">
-                                            <span className="text-sm text-slate-300 truncate flex-1">{template.name}</span>
-                                            <div className="flex items-center gap-2 w-32">
-                                                <Weight size={14} className="text-slate-500" />
-                                                <input
+                                            <span className="text-sm truncate flex-1">{template.name}</span>
+                                            <div className="flex items-center gap-2 w-32 relative">
+                                                <Weight size={12} className="absolute left-2 text-muted-foreground" />
+                                                <Input
                                                     type="number"
                                                     min="0"
                                                     placeholder={t('countries.noLimit')}
@@ -290,25 +299,27 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                                                         }
                                                         handleUpdateCountry(country.id, { weightLimits: newLimits });
                                                     }}
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200 focus:border-blue-500 outline-none text-right"
+                                                    className="h-7 text-right pl-6 text-xs"
                                                 />
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        </CardContent>
+                    </Card>
+                ))}
 
-                    {filteredCountries.length === 0 && (
-                        <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-700 rounded-xl col-span-full">
-                            {t('countries.noCountries')}
-                        </div>
-                    )}
-                </div>
+                {filteredCountries.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground italic col-span-full border-2 border-dashed rounded-xl bg-muted/5">
+                        {t('countries.noCountries')}
+                    </div>
+                )}
             </div>
+
             <ErrorModal
                 isOpen={errorModal.isOpen}
+                title={t('modals.errorTitle')}
                 message={errorModal.message}
                 onClose={() => setErrorModal({ isOpen: false, message: '' })}
             />

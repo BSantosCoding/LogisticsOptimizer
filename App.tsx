@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Package,
@@ -6,12 +7,10 @@ import {
   Shield,
   Building2,
   Users,
-  RefreshCw,
   LogOut,
   BarChart3,
   ChevronDown,
   Check,
-  Zap,
   Box,
   Globe,
   UserCog
@@ -34,16 +33,36 @@ import ConfirmModal from './components/modals/ConfirmModal';
 import SetupWizard from './components/SetupWizard';
 import PendingApproval from './components/PendingApproval';
 
-import { Container, Product, ProductFormFactor, Shipment, UserProfile } from './types';
+import { Container, Product, Shipment, UserProfile } from './types';
 import { hasRole, getAvailableViewRoles, getRoleLabel } from './utils/roles';
 import { supabase } from './services/supabase';
-import { validateLoadedContainer } from './services/logisticsEngine';
 import { useAuth } from './hooks/useAuth';
 import { useAppData } from './hooks/useAppData';
 import { useOptimization } from './hooks/useOptimization';
 import { parseProductsCSV } from './services/importService';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './components/LanguageSwitcher';
+
+// Shadcn UI
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -73,7 +92,6 @@ const App: React.FC = () => {
     templates,
     setTemplates,
     formFactors,
-    setFormFactors,
     countries,
     setCountries,
     shipments,
@@ -99,32 +117,27 @@ const App: React.FC = () => {
   // --- App State ---
   const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin' | 'user_settings'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [pendingReoptimize, setPendingReoptimize] = useState(false);
 
   // Selection State
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
   const [selectedContainerIds, setSelectedContainerIds] = useState<Set<string>>(new Set());
-  // Load optimal range from localStorage, fallback to default values
   const [optimalUtilizationRange, setOptimalUtilizationRange] = useState<{ min: number; max: number }>(() => {
     try {
       const saved = localStorage.getItem('optimalUtilizationRange');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Validate the parsed data has the correct structure
         if (parsed && typeof parsed.min === 'number' && typeof parsed.max === 'number') {
           return parsed;
         }
       }
     } catch (e) {
       console.error('Failed to parse saved optimal range:', e);
-      // Clear corrupted data
       localStorage.removeItem('optimalUtilizationRange');
     }
     return { min: 85, max: 100 };
   });
 
-  // Save optimal range to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem('optimalUtilizationRange', JSON.stringify(optimalUtilizationRange));
@@ -239,7 +252,6 @@ const App: React.FC = () => {
     try {
       const { products: parsedProducts, productsWithMissingFF, missingHeaders } = parseProductsCSV(csvContent, formFactors, csvMapping);
 
-      // Show warning if configured headers are missing from CSV
       if (missingHeaders.length > 0) {
         setErrorModal({
           isOpen: true,
@@ -419,7 +431,6 @@ const App: React.FC = () => {
     if (!companyId) return;
 
     try {
-      // Build country costs map from countries data (same logic as optimization)
       const countryCosts: Record<string, Record<string, number>> = {};
       countries.forEach((country: any) => {
         if (country.containerCosts) {
@@ -428,10 +439,8 @@ const App: React.FC = () => {
         }
       });
 
-      // Calculate total cost using country-specific costs when available
       const totalCost = result.assignments.reduce((sum: number, a: any) => {
         const country = a.assignedProducts[0]?.country;
-        // Strip the -instance-XX suffix from container ID for cost lookup
         const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
         const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
         return sum + cost;
@@ -560,7 +569,6 @@ const App: React.FC = () => {
               : p
           ));
 
-          // Set flag to trigger re-optimization after state update
           setPendingReoptimize(true);
         } catch (error) {
           console.error('Error loading base plan:', error);
@@ -649,10 +657,8 @@ const App: React.FC = () => {
     );
   };
 
-  // Effect to handle pending re-optimization (triggered after unpacking a shipment)
   useEffect(() => {
     if (pendingReoptimize) {
-      // Check if there are available products to optimize
       const availableProducts = products.filter(p => !p.status || p.status === 'available');
       if (availableProducts.length > 0) {
         setPendingReoptimize(false);
@@ -688,26 +694,6 @@ const App: React.FC = () => {
       setSelectedProductIds(new Set(products.map(p => p.id)));
     }
     setResults(null);
-  };
-
-  // --- Configuration Handlers ---
-  const handleAddTag = async () => {
-    if (newTag && !restrictionTags.includes(newTag) && companyId) {
-      // Note: restrictionTags is managed by useAppData but update is not exposed directly for tags array
-      // We need to refresh data or optimistically update.
-      // Since useAppData exposes restrictionTags but not setRestrictionTags, we should probably add a helper there or just refresh.
-      // For now, let's rely on refreshData or just ignore local update if not critical (it is critical for UI).
-      // I should have added addTag to useAppData.
-      // Let's just update DB and refresh for now, or assume useAppData will fetch it.
-      await supabase.from('tags').insert([{ company_id: companyId, name: newTag }]);
-      setNewTag('');
-      refreshData();
-    }
-  };
-
-  const handleRemoveTag = async (tag: string) => {
-    await supabase.from('tags').delete().eq('name', tag);
-    refreshData();
   };
 
   const handleAddTemplate = async () => {
@@ -748,7 +734,6 @@ const App: React.FC = () => {
     handleTabChange('products');
   };
 
-  // --- Bulk Operations ---
   const handleClearProducts = async () => {
     if (!companyId) return;
 
@@ -791,8 +776,46 @@ const App: React.FC = () => {
     });
   };
 
+  const NavButton = ({ mode, icon: Icon, label, disabled = false, tooltip }: { mode?: string, icon: any, label: string, disabled?: boolean, tooltip?: string }) => {
+    const isActive = mode ? inputMode === mode : false;
+    const isResults = label === t('nav.results');
+    const activeState = isResults && results && viewMode === 'results';
+
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button
+              variant={activeState || isActive ? "secondary" : "ghost"}
+              size="icon"
+              className={`w-12 h-12 rounded-xl transition-all ${activeState ? 'bg-primary text-primary-foreground hover:bg-primary/90' : isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}
+              onClick={() => {
+                if (isResults) {
+                  if (results) setViewMode('results');
+                } else if (mode) {
+                  if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management') {
+                    handleTabChange(mode as any);
+                  } else {
+                    setInputMode(mode as any);
+                    setViewMode('data');
+                  }
+                }
+              }}
+              disabled={disabled}
+            >
+              <Icon size={22} strokeWidth={1.5} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-semibold" sideOffset={10}>
+            {tooltip || label}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
   if (loadingSession) {
-    return <div className="h-screen flex items-center justify-center bg-slate-900 text-slate-400">Loading...</div>;
+    return <div className="h-screen flex items-center justify-center bg-background text-muted-foreground">Loading...</div>;
   }
 
   if (!session) {
@@ -804,12 +827,7 @@ const App: React.FC = () => {
       <PendingApproval
         companyName={companyName}
         onCheckStatus={refreshAuth}
-        onSwitchWorkspace={() => {
-          logout(); // Simple logout to switch for now, or implement switch logic
-          // The original code reset state and set setupMode='join'.
-          // Since we moved auth state to hook, we might need a way to reset it.
-          // Logout is the cleanest way to "switch" in this context.
-        }}
+        onSwitchWorkspace={() => logout()}
         onLogout={logout}
         isDataLoading={isDataLoading}
       />
@@ -826,246 +844,147 @@ const App: React.FC = () => {
     );
   }
 
-  // --- MAIN APP VIEW ---
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden font-sans">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans">
       {/* Sidebar */}
-      <div className="w-20 bg-slate-950 border-r border-slate-800 flex flex-col items-center py-6 gap-6 z-20">
-        <div className="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/30 mb-4">
-          <Package className="text-white" size={24} />
+      <div className="w-18 bg-muted/40 border-r flex flex-col items-center py-4 gap-4 z-20">
+        <div className="bg-primary/10 p-2.5 rounded-xl mb-2">
+          <Package className="text-primary" size={24} />
         </div>
 
-        <nav className="flex flex-col gap-2 w-full px-2">
-          {/* Operational Group */}
-          <button
-            onClick={() => results && setViewMode('results')}
-            disabled={!results}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${results && viewMode === 'results'
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-              : results
-                ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-900 cursor-pointer'
-                : 'text-slate-700 cursor-not-allowed opacity-50'
-              }`}
-            title={results ? "View optimization results" : "Run an optimization to see results"}
-          >
-            <BarChart3 size={18} />
-            <span className="text-[10px] font-medium">{t('nav.results')}</span>
-          </button>
+        <ScrollArea className="flex-1 w-full px-2">
+          <div className="flex flex-col gap-2 items-center pb-4">
+            <NavButton mode={undefined} icon={BarChart3} label={t('nav.results')} disabled={!results} tooltip={results ? t('nav.results') : "Run optimization first"} />
+            <Separator className="w-8 bg-border/60 my-1" />
+            <NavButton mode="shipments" icon={Package} label={t('nav.shipments')} />
+            <NavButton mode="products" icon={Box} label={t('nav.items')} />
+            <NavButton mode="containers" icon={ContainerIcon} label={t('nav.containers')} />
+            <NavButton mode="countries" icon={Globe} label={t('nav.countries')} />
+            <NavButton mode="config" icon={Settings} label={t('nav.config')} />
 
-          {/* Divider */}
-          <div className="h-px bg-slate-800 w-full my-2"></div>
+            {(hasRole(effectiveRole, 'manager')) && (
+              <>
+                <Separator className="w-8 bg-border/60 my-1" />
+                <NavButton mode="management" icon={Users} label={t('nav.team')} />
+              </>
+            )}
 
-          {/* Main Tabs */}
-          <button
-            onClick={() => setInputMode('shipments')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'shipments' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Shipments"
-          >
-            <Package size={18} />
-            <span className="text-[10px] font-medium">{t('nav.shipments')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('products')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'products' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Products"
-          >
-            <Box size={18} />
-            <span className="text-[10px] font-medium">{t('nav.items')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('containers')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'containers' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Containers"
-          >
-            <ContainerIcon size={18} />
-            <span className="text-[10px] font-medium">{t('nav.containers')}</span>
-          </button>
-          <button
-            onClick={() => setInputMode('countries')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'countries' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Countries"
-          >
-            <Globe size={18} />
-            <span className="text-[10px] font-medium">{t('nav.countries')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('config')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'config' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="Configuration"
-          >
-            <Settings size={18} />
-            <span className="text-[10px] font-medium">{t('nav.config')}</span>
-          </button>
+            <NavButton mode="user_settings" icon={UserCog} label={t('nav.userSettings')} />
+          </div>
+        </ScrollArea>
 
-          {/* Divider */}
-          <div className="h-px bg-slate-800 w-full my-2"></div>
-
-          {hasRole(effectiveRole, 'manager') && (
-            <>
-              <button
-                onClick={() => handleTabChange('management')}
-                className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'management' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-                title="Management"
-              >
-                <Users size={18} />
-                <span className="text-[10px] font-medium">{t('nav.team')}</span>
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => setInputMode('user_settings')}
-            className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'user_settings' ? 'bg-slate-800 text-blue-400' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
-            title="User Settings"
-          >
-            <UserCog size={18} />
-            <span className="text-[10px] font-medium">{t('nav.userSettings')}</span>
-          </button>
-        </nav>
-
-        <div className="mt-auto flex flex-col gap-2 items-center">
-          {/* Super Admin Button - Only visible to super admins */}
+        <div className="mt-auto flex flex-col gap-2 items-center pb-4">
           {hasRole(effectiveRole, 'super_admin') && (
-            <button
-              onClick={() => setInputMode('super_admin')}
-              className={`p-2.5 rounded-xl flex flex-col items-center gap-1 transition-all ${inputMode === 'super_admin'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20'
-                : 'text-slate-500 hover:text-purple-400 hover:bg-slate-900'
-                }`}
-              title="Super Admin Panel"
-            >
-              <Building2 size={18} />
-              <span className="text-[10px] font-medium">{t('nav.admin')}</span>
-            </button>
+            <NavButton mode="super_admin" icon={Building2} label={t('nav.admin')} />
           )}
-          <button onClick={() => logout()} className="text-slate-600 hover:text-red-400 transition-colors p-2">
-            <LogOut size={18} />
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => logout()} className="text-muted-foreground hover:text-destructive">
+                  <LogOut size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-background">
         {/* Header */}
-        <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-50 relative">
+        <header className="bg-background/80 backdrop-blur-md border-b px-6 py-3 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold text-white tracking-tight">{companyName}</h1>
-            <span className="text-xs text-slate-500 font-mono flex items-center">ID: {companyId?.substring(0, 8)}</span>
+            <h1 className="text-lg font-bold tracking-tight">{companyName}</h1>
+            <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground">{companyId?.substring(0, 8)}</Badge>
             {hasRole(effectiveRole, 'admin') && (
-              <span className="text-[10px] bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded uppercase font-bold">admin</span>
+              <Badge variant="secondary" className="text-[10px] uppercase">admin</Badge>
             )}
+            <div className="bg-border h-4 w-px mx-1" />
             <LanguageSwitcher />
 
             {/* View As Role Selector */}
             {userRole && hasRole(userRole, 'manager') && getAvailableViewRoles(userRole).length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowRoleMenu(!showRoleMenu)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all border ${showRoleMenu
-                    ? 'bg-blue-900/20 border-blue-500/50 text-blue-200'
-                    : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600 hover:text-white'
-                    }`}
-                >
-                  <span className="text-slate-500">{t('header.viewAs')}:</span>
-                  <span className="font-medium">{viewAsRole ? getRoleLabel(viewAsRole) : t('header.myRole')}</span>
-                  <ChevronDown size={12} className={`transition-transform duration-200 ${showRoleMenu ? 'rotate-180 text-blue-400' : 'text-slate-500'}`} />
-                </button>
-
-                {/* Dropdown */}
-                {showRoleMenu && (
-                  <>
-                    <div className="fixed inset-0 z-[9998]" onClick={() => setShowRoleMenu(false)} />
-                    <div className="absolute top-full right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 min-w-[240px] z-[9999] animate-in fade-in zoom-in-95 duration-100">
-                      <div className="px-2 py-1.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                        Select Role View
-                      </div>
-                      <button
-                        onClick={() => {
-                          setViewAsRole(null);
-                          setShowRoleMenu(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${!viewAsRole ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800'}`}
-                      >
-                        <span className="font-medium">{t('header.myRole')} <span className="opacity-75 font-normal">({getRoleLabel(userRole)})</span></span>
+              <div className="ml-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-2 text-xs">
+                      <span className="text-muted-foreground">{t('header.viewAs')}:</span>
+                      <span className="font-medium">{viewAsRole ? getRoleLabel(viewAsRole) : t('header.myRole')}</span>
+                      <ChevronDown size={12} className="opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuLabel className="text-xs">{t('header.viewAs') || "Switch Role View"}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setViewAsRole(null)}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{t('header.myRole')} <span className="opacity-50 font-normal">({getRoleLabel(userRole)})</span></span>
                         {!viewAsRole && <Check size={14} />}
-                      </button>
-                      <div className="h-px bg-slate-800 my-1.5 mx-1" />
-                      {getAvailableViewRoles(userRole).map(role => (
-                        <div key={role}>
-                          <button
-                            onClick={() => {
-                              if (role === 'standard') {
-                                // Default standard user has no extra permissions
-                                setViewAsRole(role, {
-                                  can_edit_countries: false,
-                                  can_edit_form_factors: false,
-                                  can_edit_containers: false,
-                                  can_edit_templates: false,
-                                  can_edit_tags: false
-                                });
-                              } else {
-                                setViewAsRole(role);
-                              }
-                              if (role !== 'standard') setShowRoleMenu(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${viewAsRole === role ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' : 'text-slate-300 hover:bg-slate-800'}`}
-                          >
-                            <span className="font-medium">{getRoleLabel(role)}</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {getAvailableViewRoles(userRole).map(role => (
+                      <React.Fragment key={role}>
+                        <DropdownMenuItem onClick={() => {
+                          if (role === 'standard') {
+                            setViewAsRole(role, {
+                              can_edit_countries: false,
+                              can_edit_form_factors: false,
+                              can_edit_containers: false,
+                              can_edit_templates: false,
+                              can_edit_tags: false,
+                              can_edit_import_config: false
+                            });
+                          } else {
+                            setViewAsRole(role);
+                          }
+                        }}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{getRoleLabel(role)}</span>
                             {viewAsRole === role && <Check size={14} />}
-                          </button>
-
-                          {/* Permission Toggles for Standard Role */}
-                          {role === 'standard' && viewAsRole === 'standard' && (
-                            <div className="px-3 py-2 space-y-2 bg-slate-950/50 border border-slate-800 rounded-lg mt-1 mb-1 mx-1">
-                              <div className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1">
-                                <Shield size={10} /> Simulated Permissions
-                              </div>
-                              {[
-                                { key: 'can_edit_countries', label: 'Edit Countries' },
-                                { key: 'can_edit_form_factors', label: 'Edit Form Factors' },
-                                { key: 'can_edit_containers', label: 'Edit Containers' },
-                                { key: 'can_edit_templates', label: 'Edit Templates' },
-                                { key: 'can_edit_tags', label: 'Edit Tags' },
-                                { key: 'can_edit_import_config', label: 'Edit Import Config' }
-                              ].map(perm => (
-                                <label key={perm.key} className="flex items-center gap-2 cursor-pointer group select-none">
-                                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${userProfile?.[perm.key as keyof UserProfile] ? 'bg-blue-600 border-blue-500' : 'border-slate-600 bg-slate-900 group-hover:border-slate-500'}`}>
-                                    {userProfile?.[perm.key as keyof UserProfile] && <Check size={10} className="text-white" />}
-                                  </div>
-                                  <input
-                                    type="checkbox"
-                                    className="hidden"
-                                    checked={!!userProfile?.[perm.key as keyof UserProfile]}
-                                    onChange={(e) => {
-                                      const newPerms = {
-                                        ...userProfile,
-                                        [perm.key]: e.target.checked
-                                      };
-                                      setViewAsRole('standard', newPerms);
-                                    }}
-                                  />
-                                  <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{perm.label}</span>
-                                </label>
-                              ))}
+                          </div>
+                        </DropdownMenuItem>
+                        {role === 'standard' && viewAsRole === 'standard' && (
+                          <div className="px-2 py-1.5 space-y-1">
+                            <div className="text-[10px] text-muted-foreground font-bold uppercase flex items-center gap-1 px-2 py-1">
+                              <Shield size={10} /> Simulated Permissions
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
+                            {[
+                              { key: 'can_edit_countries', label: 'Edit Countries' },
+                              { key: 'can_edit_form_factors', label: 'Edit Form Factors' },
+                              { key: 'can_edit_containers', label: 'Edit Containers' },
+                              { key: 'can_edit_templates', label: 'Edit Templates' },
+                              { key: 'can_edit_tags', label: 'Edit Tags' },
+                              { key: 'can_edit_import_config', label: 'Edit Import Config' }
+                            ].map(perm => (
+                              <DropdownMenuCheckboxItem
+                                key={perm.key}
+                                checked={!!userProfile?.[perm.key as keyof UserProfile]}
+                                onCheckedChange={(checked) => {
+                                  const newPerms = { ...userProfile, [perm.key]: checked };
+                                  setViewAsRole('standard', newPerms);
+                                }}
+                                className="text-xs"
+                              >
+                                {perm.label}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Optimize Button */}
-            {/* Optimize Button Removed from here */}
           </div>
         </header>
 
         {/* Content Area */}
         <main className="flex-1 overflow-hidden relative flex">
           {viewMode === 'results' ? (
-            <div className="absolute inset-0 z-30 bg-slate-900 p-6">
+            <div className="absolute inset-0 z-30 bg-background/95 backdrop-blur-3xl p-6">
               <ResultsPanel
                 results={results}
                 activePriority={activePriority}
@@ -1092,7 +1011,7 @@ const App: React.FC = () => {
             <div className="flex-1 flex overflow-hidden">
               {inputMode === 'products' && (
                 <div className="flex-1 flex overflow-hidden">
-                  <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                  <div className="w-80 shrink-0 border-r bg-muted/10 overflow-y-auto">
                     <ProductPanel
                       viewMode="form"
                       products={products}
@@ -1111,7 +1030,7 @@ const App: React.FC = () => {
                       formFactors={formFactors}
                     />
                   </div>
-                  <div className="flex-1 overflow-hidden p-6">
+                  <div className="flex-1 overflow-hidden p-6 bg-background">
                     <ProductPanel
                       viewMode="list"
                       products={products}
@@ -1138,7 +1057,7 @@ const App: React.FC = () => {
               {inputMode === 'containers' && (
                 <div className="flex-1 flex overflow-hidden">
                   {(hasRole(effectiveRole, 'manager') || userProfile?.can_edit_containers) && (
-                    <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                    <div className="w-80 shrink-0 border-r bg-muted/10 overflow-y-auto">
                       <ContainerPanel
                         viewMode="form"
                         containers={containers}
@@ -1160,7 +1079,7 @@ const App: React.FC = () => {
                       />
                     </div>
                   )}
-                  <div className="flex-1 overflow-hidden p-6">
+                  <div className="flex-1 overflow-hidden p-6 bg-background">
                     <ContainerPanel
                       viewMode="list"
                       containers={containers}
@@ -1185,8 +1104,8 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'config' && (
-                <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-                  <div className="w-1/3 min-w-[300px]">
+                <div className="flex-1 flex gap-4 p-4 overflow-hidden bg-background">
+                  <div className="w-1/3 min-w-[320px]">
                     <FormFactorPanel
                       formFactors={formFactors}
                       onAdd={handleAddFormFactor}
@@ -1209,7 +1128,6 @@ const App: React.FC = () => {
                     userProfile={userProfile}
                     csvMapping={csvMapping}
                     onUpdateCsvMapping={updateCsvMapping}
-                    canManageImportConfig={hasRole(effectiveRole, 'manager')}
                     supabase={supabase}
                     session={session}
                     companyId={companyId}
@@ -1219,7 +1137,7 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'user_settings' && (
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden bg-background">
                   <UserSettingsPanel
                     userEmail={session?.user?.email || ''}
                     optimalRange={optimalUtilizationRange}
@@ -1231,7 +1149,7 @@ const App: React.FC = () => {
               {inputMode === 'countries' && (
                 <div className="flex-1 flex overflow-hidden">
                   {(hasRole(effectiveRole, 'manager') || userProfile?.can_edit_countries) && (
-                    <div className="w-80 shrink-0 border-r border-slate-700 overflow-y-auto">
+                    <div className="w-80 shrink-0 border-r bg-muted/10 overflow-y-auto">
                       <CountryPanel
                         viewMode="form"
                         countries={countries}
@@ -1243,7 +1161,7 @@ const App: React.FC = () => {
                       />
                     </div>
                   )}
-                  <div className="flex-1 p-6 overflow-y-auto">
+                  <div className="flex-1 p-6 overflow-y-auto bg-background">
                     <CountryPanel
                       viewMode="list"
                       countries={countries}
@@ -1258,7 +1176,7 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'shipments' && (
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden bg-background">
                   <ShipmentPanel
                     shipments={shipments}
                     onUnpack={handleUnpackShipment}
@@ -1270,15 +1188,17 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'management' && hasRole(effectiveRole, 'manager') && (
-                <ManagementPanel
-                  companyId={companyId}
-                  currentUserRole={effectiveRole}
-                  currentUserId={session?.user?.id || ''}
-                />
+                <div className="flex-1 overflow-hidden bg-background">
+                  <ManagementPanel
+                    companyId={companyId}
+                    currentUserRole={effectiveRole}
+                    currentUserId={session?.user?.id || ''}
+                  />
+                </div>
               )}
 
               {inputMode === 'super_admin' && hasRole(effectiveRole, 'super_admin') && (
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden bg-background">
                   <SuperAdminPanel onRefresh={refreshAuth} />
                 </div>
               )}

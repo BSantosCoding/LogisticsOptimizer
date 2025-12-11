@@ -4,6 +4,7 @@ import { Product, Container, ProductFormFactor, Shipment, OptimizationResult, CS
 
 const DEFAULT_CSV_MAPPING: CSVMapping = {
     // Core fields
+    formFactor: "Form Factor",
     country: "Ship To: Country",
     quantity: "Number of Packages",
     weight: "Gross Weight",
@@ -90,6 +91,11 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     // Ensure weight field exists
                     if (!loadedConfig.weight) {
                         loadedConfig.weight = '';
+                    }
+
+                    // Ensure formFactor field exists
+                    if (!loadedConfig.formFactor) {
+                        loadedConfig.formFactor = "Form Factor";
                     }
 
                     setCsvMapping(loadedConfig);

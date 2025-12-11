@@ -1,45 +1,45 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ErrorModalProps {
     isOpen: boolean;
+    title: string;
     message: string;
     onClose: () => void;
 }
 
-const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, message, onClose }) => {
+const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, title, message, onClose }) => {
     const { t } = useTranslation();
-    if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-slate-800 border border-red-500/50 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-                <div className="flex items-start gap-4">
-                    <div className="bg-red-500/20 p-2 rounded-lg">
-                        <AlertCircle className="text-red-400" size={24} />
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                        <DialogTitle>{title}</DialogTitle>
                     </div>
-                    <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white mb-2">{t('modals.errorTitle')}</h3>
-                        <p className="text-slate-300 text-sm">{message}</p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="text-slate-400 hover:text-white transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-                <div className="mt-6 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
-                    >
+                    <DialogDescription className="text-destructive">
+                        {message}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button onClick={onClose} variant="secondary">
                         {t('modals.close')}
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

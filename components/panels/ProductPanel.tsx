@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Product, ProductFormFactor } from '../../types';
+import { Product, ProductFormFactor, CSVMapping } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { Plus, Save, Pencil, Trash2, X, Box, Search, Filter, MapPin, ChevronDown, Hash, AlertTriangle, Weight } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
@@ -22,6 +22,7 @@ interface ProductPanelProps {
   formFactors: ProductFormFactor[];
   onSelectAll?: () => void;
   allSelected?: boolean;
+  csvMapping?: CSVMapping;
 }
 
 const ProductPanel: React.FC<ProductPanelProps> = ({
@@ -41,7 +42,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   onClearAll,
   formFactors,
   onSelectAll,
-  allSelected
+  allSelected,
+  csvMapping
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -347,10 +349,30 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-3">
-                    <div className="flex items-center gap-1.5"><Hash size={14} className="text-slate-500" /> {p.quantity} {t('common.units')}</div>
-                    {p.weight !== undefined && (
-                      <div className="flex items-center gap-1.5"><Weight size={14} className="text-slate-500" /> {p.weight} kg</div>
+                    <div className="text-xs text-slate-400">
+                      <span className="font-medium text-slate-300">{t('products.quantity')}:</span> {p.quantity}
+                    </div>
+                    {p.weight && (
+                      <div className="text-xs text-slate-400">
+                        <span className="font-medium text-slate-300">{t('products.weight')}:</span> {p.weight} kg
+                      </div>
                     )}
+                    {/* Shipping Date */}
+                    {p.shippingAvailableBy && (
+                      <div className="text-xs text-slate-400">
+                        <span className="font-medium text-slate-300">Avail:</span> {p.shippingAvailableBy}
+                      </div>
+                    )}
+                    {/* Display Extra Fields */}
+                    {csvMapping?.displayFields?.map(fieldKey => {
+                      const val = p.extraFields?.[fieldKey];
+                      if (!val) return null;
+                      return (
+                        <div key={fieldKey} className="text-xs text-slate-400">
+                          <span className="font-medium text-slate-300 capitalize">{fieldKey.replace(/([A-Z])/g, ' $1').trim()}:</span> {val}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {(p.readyDate) && (

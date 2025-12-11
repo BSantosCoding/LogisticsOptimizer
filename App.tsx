@@ -124,6 +124,9 @@ const App: React.FC = () => {
     return { min: 85, max: 100 };
   });
 
+  const [allowUnitSplitting, setAllowUnitSplitting] = useState<boolean>(true);
+  const [shippingDateGroupingRange, setShippingDateGroupingRange] = useState<number | undefined>(undefined);
+
   // Save optimal range to localStorage whenever it changes
   useEffect(() => {
     try {
@@ -146,7 +149,7 @@ const App: React.FC = () => {
     handleDrop,
     handleAddContainer: addContainerInstance,
     handleDeleteContainer: deleteContainerInstance
-  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange);
+  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, allowUnitSplitting, shippingDateGroupingRange);
 
   // Forms
   const [newTag, setNewTag] = useState('');
@@ -231,7 +234,7 @@ const App: React.FC = () => {
       }]);
     }
 
-    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
+    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', shippingAvailableBy: '', extraFields: {} });
   };
 
   const handleImportProducts = async (csvContent: string) => {
@@ -276,7 +279,9 @@ const App: React.FC = () => {
             weight: p.weight,
             destination: p.destination,
             country: p.country,
-            shipToName: p.shipToName
+            shipToName: p.shipToName,
+            shippingAvailableBy: p.shippingAvailableBy,
+            extraFields: p.extraFields
           },
           form_factor_id: p.formFactorId || null,
           quantity: p.quantity,
@@ -1214,6 +1219,10 @@ const App: React.FC = () => {
                     session={session}
                     companyId={companyId}
                     setRestrictionTags={setRestrictionTags}
+                    allowUnitSplitting={allowUnitSplitting}
+                    setAllowUnitSplitting={setAllowUnitSplitting}
+                    shippingDateGroupingRange={shippingDateGroupingRange}
+                    setShippingDateGroupingRange={setShippingDateGroupingRange}
                   />
                 </div>
               )}

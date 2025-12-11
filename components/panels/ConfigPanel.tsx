@@ -23,6 +23,10 @@ interface ConfigPanelProps {
   session: any; // Assuming 'any' type for session, adjust if a specific type is available
   companyId: string;
   setRestrictionTags: (tags: string[]) => void;
+  allowUnitSplitting: boolean;
+  setAllowUnitSplitting: (v: boolean) => void;
+  shippingDateGroupingRange: number | undefined;
+  setShippingDateGroupingRange: (v: number | undefined) => void;
 }
 
 const ConfigPanel: React.FC<ConfigPanelProps> = ({
@@ -41,7 +45,11 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   supabase,
   session,
   companyId,
-  setRestrictionTags
+  setRestrictionTags,
+  allowUnitSplitting,
+  setAllowUnitSplitting,
+  shippingDateGroupingRange,
+  setShippingDateGroupingRange
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,9 +60,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Sync local state when prop changes (if not editing?)
-  // Actually, we want to initialize it. If prop updates from DB, we might overwrite changes if we are not careful.
-  // But since we are the only editor, it's fine to sync on mount or when prop changes if we haven't touched it.
-  // For simplicity, let's just sync when prop changes if !hasUnsavedChanges
   React.useEffect(() => {
     if (!hasUnsavedChanges) {
       setEditingMapping(csvMapping);
@@ -89,7 +94,6 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   const canManageTemplates = hasRole(userRole, 'manager') || userProfile?.can_edit_templates;
   const canManageTags = hasRole(userRole, 'manager') || userProfile?.can_edit_tags;
   const canManageImportConfig = hasRole(userRole, 'manager') || userProfile?.can_edit_import_config;
-  const canManageConfig = canManageTemplates || canManageTags || canManageImportConfig; // Fallback for general UI, but specific actions should check specific flags
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -138,61 +142,55 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             </div>
           )}
         </div>
-
       </div>
     );
   }
 
-  // LIST VIEW - Templates left, Optimal Range + Tags stacked right
+  // LIST VIEW
   return (
     <div className="flex gap-4 h-full">
-      {/* Product Templates Panel - Takes most space */}
-      <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
+      {/* Product Templates Panel - Smaller Width (w-80 or w-1/4) */}
+      <div className="w-80 flex-none bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Copy className="text-blue-400" size={20} />
             {t('config.productTemplates')}
           </h2>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
-              {filteredTemplates.length}
-            </span>
-            <div className="relative w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
-              <input
-                type="text"
-                placeholder={t('common.search') + "..."}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 pl-9 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-8"
-              />
-            </div>
+          <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded-full">
+            {filteredTemplates.length}
+          </span>
+        </div>
+
+        <div className="px-4 py-2 border-b border-slate-700 bg-slate-800/30">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+            <input
+              type="text"
+              placeholder={t('common.search')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 pl-9 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-8"
+            />
           </div>
         </div>
 
-        {/* Template Creation Form - For Managers and Admins */}
+        {/* Template Creation Form */}
         {canManageTemplates && (
           <div className="p-4 border-b border-slate-700 bg-slate-800/30">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.templateName')}</label>
                 <input
-                  placeholder="e.g. Standard Product"
+                  placeholder="New Template Name"
                   value={newTemplate.name}
                   onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 px-3 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 />
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('config.restrictions')}</label>
-                <RestrictionSelector
-                  availableOptions={restrictionTags}
-                  selected={newTemplate.restrictions || []}
-                  onChange={r => setNewTemplate({ ...newTemplate, restrictions: r })}
-                />
-              </div>
-
+              <RestrictionSelector
+                availableOptions={restrictionTags}
+                selected={newTemplate.restrictions || []}
+                onChange={r => setNewTemplate({ ...newTemplate, restrictions: r })}
+              />
               <button
                 onClick={handleAddTemplate}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm font-medium"
@@ -244,9 +242,58 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         </div>
       </div>
 
+      {/* Settings Column (New) */}
+      <div className="w-80 flex-none flex flex-col gap-4">
+        {/* Optimization Settings */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+          <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2">
+            <Settings size={16} className="text-purple-400" /> Optimization
+          </h3>
+          <div className="space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer group p-3 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors">
+              <div className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors ${allowUnitSplitting ? 'bg-blue-600 border-blue-600' : 'border-slate-500 bg-slate-800'}`}>
+                {allowUnitSplitting && <Check size={12} className="text-white" />}
+              </div>
+              <div className="flex-1">
+                <span className="block text-sm font-medium text-slate-200">Split Product Units</span>
+                <span className="block text-xs text-slate-500 mt-1">Allow products to be split across multiple containers if needed.</span>
+              </div>
+              <input type="checkbox" className="hidden" checked={allowUnitSplitting} onChange={(e) => setAllowUnitSplitting(e.target.checked)} />
+            </label>
+          </div>
+        </div>
 
+        {/* Grouping Settings */}
+        <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+          <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2">
+            <Filter size={16} className="text-yellow-400" /> Grouping
+          </h3>
+          <div className="space-y-4">
+            <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+              <label className="block text-xs font-medium text-slate-400 mb-2">Shipping Available Date Grouping</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Don't group by date"
+                  value={shippingDateGroupingRange === undefined ? '' : shippingDateGroupingRange}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setShippingDateGroupingRange(val === '' ? undefined : parseInt(val));
+                  }}
+                  className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <span className="text-sm text-slate-500">Days</span>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">
+                Products with dates more than X days apart will be grouped separately. Leave empty to ignore dates.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* CSV Import Configuration */}
+      {/* CSV Import Configuration (Flex-1) */}
       <div className="flex-1 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col min-h-[400px]">
         <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -276,21 +323,25 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               {/* Core Fields */}
               <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-1">Core Fields (CSV Header Names)</h3>
 
-              {[
-                { key: 'country', label: 'Country' },
-                { key: 'quantity', label: 'Quantity' },
-                { key: 'weight', label: t('products.weight') },
-                { key: 'formFactor', label: t('config.formFactorLabel') },
-              ].map(({ key, label }) => (
-                <div key={key}>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
-                  <input
-                    value={(editingMapping as any)[key] || ''}
-                    onChange={e => handleMappingChange(key as keyof CSVMapping, e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              ))}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: 'country', label: 'Country' },
+                  { key: 'quantity', label: 'Quantity' },
+                  { key: 'weight', label: t('products.weight') },
+                  { key: 'formFactor', label: t('config.formFactorLabel') },
+                  // New Field
+                  { key: 'shippingAvailableBy', label: 'Shipping Available By (Date)' }
+                ].map(({ key, label }) => (
+                  <div key={key}>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+                    <input
+                      value={(editingMapping as any)[key] || ''}
+                      onChange={e => handleMappingChange(key as keyof CSVMapping, e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Incoterms Headers */}
               <div className="pt-2 border-t border-slate-700 mt-2">
@@ -434,7 +485,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     onClick={() => {
                       const input = document.getElementById('newCustomFieldInput') as HTMLInputElement;
                       const key = input.value.trim();
-                      if (key && !editingMapping.customFields?.[key] && !['country', 'quantity', 'weight', 'formFactor'].includes(key)) {
+                      if (key && !editingMapping.customFields?.[key] && !['country', 'quantity', 'weight', 'formFactor', 'shippingAvailableBy'].includes(key)) {
                         setEditingMapping(prev => ({
                           ...prev,
                           customFields: {
@@ -484,11 +535,48 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 ))}
               </div>
             </div>
+
+            <div className="pt-4">
+              <h3 className="text-xs font-bold text-slate-500 uppercase border-b border-slate-700 pb-2 mb-3">Product Display Fields</h3>
+              <p className="text-[10px] text-slate-500 mb-3">
+                Select which extra fields should be shown on the Product cards and Results.
+              </p>
+              <div className="space-y-2">
+                {[
+                  // Custom fields only for display? Or allow core too? Usually custom.
+                  ...Object.keys(editingMapping.customFields || {})
+                ].map(field => (
+                  <label key={field} className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${editingMapping.displayFields?.includes(field)
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-slate-600 group-hover:border-slate-500'
+                      }`}>
+                      {editingMapping.displayFields?.includes(field) && <Check size={10} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={editingMapping.displayFields?.includes(field) || false}
+                      onChange={() => {
+                        setEditingMapping(prev => {
+                          const current = prev.displayFields || [];
+                          const next = current.includes(field)
+                            ? current.filter(f => f !== field)
+                            : [...current, field];
+                          return { ...prev, displayFields: next };
+                        });
+                        setHasUnsavedChanges(true);
+                      }}
+                    />
+                    <span className="text-sm text-slate-300 capitalize">{field.replace(/([A-Z])/g, ' $1').trim()}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-
-
     </div>
   );
 };

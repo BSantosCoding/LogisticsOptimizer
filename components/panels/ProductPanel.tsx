@@ -101,36 +101,36 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
   if (viewMode === 'form') {
     return (
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-4 py-3 border-b border-border">
-          <CardTitle className="text-sm font-medium flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              {editingProductId ? <><Pencil size={16} className="text-primary" /> {t('products.editing')}</> : <><Plus size={16} className="text-primary" /> {t('products.addProduct')}</>}
-            </span>
-            {editingProductId && (
-              <Button variant="ghost" size="sm" onClick={handleCancelProductEdit} className="h-6 text-xs">
-                <X size={12} className="mr-1" /> {t('common.cancel')}
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 space-y-4">
+      <div className="h-full flex flex-col gap-4">
+        <div className="px-1 py-3 border-b border-border flex items-center justify-between">
+          <span className="flex items-center gap-2 font-medium text-sm text-foreground">
+            {editingProductId ? <><Pencil size={16} className="text-primary" /> {t('products.editing')}</> : <><Plus size={16} className="text-primary" /> {t('products.addProduct')}</>}
+          </span>
+          {editingProductId && (
+            <Button variant="ghost" size="sm" onClick={handleCancelProductEdit} className="h-6 text-xs text-muted-foreground hover:text-foreground">
+              <X size={12} className="mr-1" /> {t('common.cancel')}
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-4 px-1">
           <div className="space-y-2">
-            <Label>{t('products.namePlaceholder')}</Label>
+            <Label className="text-xs text-muted-foreground font-medium">{t('products.namePlaceholder')}</Label>
             <Input
               value={newProduct.name}
               onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
               placeholder={t('products.namePlaceholder')}
+              className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>{t('products.destination')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('products.destination')}</Label>
               <div className="relative">
-                <MapPin className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  className="pl-8"
+                  className="pl-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
                   value={newProduct.destination || ''}
                   onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
                   placeholder={t('products.destination')}
@@ -138,23 +138,24 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t('products.country')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('products.country')}</Label>
               <Input
                 value={newProduct.country || ''}
                 onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
                 placeholder="e.g. CN"
+                className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>{t('products.formFactor')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('products.formFactor')}</Label>
               <Select
                 value={newProduct.formFactorId || ''}
                 onValueChange={(val) => setNewProduct({ ...newProduct, formFactorId: val })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted/50 border-input/50 focus:bg-background transition-colors">
                   <SelectValue placeholder={t('products.selectFormFactor')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,14 +166,14 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('common.units')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('common.units')}</Label>
               <div className="relative">
                 <Input
                   type="number"
                   min="1"
                   value={newProduct.quantity}
                   onChange={e => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 1 })}
-                  className="pr-8"
+                  className="pr-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
                 />
                 <span className="absolute right-3 top-2.5 text-xs text-muted-foreground">#</span>
               </div>
@@ -180,7 +181,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label>{t('products.weight')} (kg)</Label>
+            <Label className="text-xs text-muted-foreground font-medium">{t('products.weight')} (kg)</Label>
             <div className="relative">
               <Input
                 type="number"
@@ -189,14 +190,14 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 placeholder="-"
                 value={newProduct.weight ?? ''}
                 onChange={e => setNewProduct({ ...newProduct, weight: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="pr-8"
+                className="pr-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
               />
-              <Weight className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Weight className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>{t('products.restrictions')}</Label>
+            <Label className="text-xs text-muted-foreground font-medium">{t('products.restrictions')}</Label>
             <RestrictionSelector
               availableOptions={restrictionTags}
               selected={newProduct.restrictions}
@@ -204,15 +205,17 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             />
           </div>
 
-          <Button
-            onClick={handleSaveProduct}
-            className="w-full"
-            variant={editingProductId ? "default" : "secondary"}
-          >
-            {editingProductId ? <><Save size={16} className="mr-2" /> {t('products.updateProduct')}</> : <><Plus size={16} className="mr-2" /> {t('products.addProduct')}</>}
-          </Button>
-        </CardContent>
-      </Card>
+          <div className="pt-2">
+            <Button
+              onClick={handleSaveProduct}
+              className="w-full font-medium"
+              variant={editingProductId ? "secondary" : "default"}
+            >
+              {editingProductId ? <><Save size={16} className="mr-2" /> {t('products.updateProduct')}</> : <><Plus size={16} className="mr-2" /> {t('products.addProduct')}</>}
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 

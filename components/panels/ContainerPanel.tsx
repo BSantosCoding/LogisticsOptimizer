@@ -95,33 +95,36 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
     }
 
     return (
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-4 py-3 border-b border-border">
-          <CardTitle className="text-sm font-medium flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              {editingContainerId ? <><Pencil size={16} className="text-primary" /> {t('containers.editing')}</> : <><Plus size={16} className="text-primary" /> {t('containers.addContainer')}</>}
-            </span>
-            {editingContainerId && (
-              <Button variant="ghost" size="sm" onClick={handleCancelContainerEdit} className="h-6 text-xs">
-                <X size={12} className="mr-1" /> {t('common.cancel')}
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 space-y-4">
-          <Input
-            placeholder={t('containers.namePlaceholder')}
-            value={newContainer.name}
-            onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
-          />
+      <div className="h-full flex flex-col gap-4">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <span className="flex items-center gap-2 font-medium text-sm text-foreground">
+            {editingContainerId ? <><Pencil size={16} className="text-primary" /> {t('containers.editing')}</> : <><Plus size={16} className="text-primary" /> {t('containers.addContainer')}</>}
+          </span>
+          {editingContainerId && (
+            <Button variant="ghost" size="sm" onClick={handleCancelContainerEdit} className="h-6 text-xs text-muted-foreground hover:text-foreground">
+              <X size={12} className="mr-1" /> {t('common.cancel')}
+            </Button>
+          )}
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4 px-4 pb-4 overflow-y-auto">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground font-medium">{t('containers.namePlaceholder')}</Label>
+            <Input
+              placeholder={t('containers.namePlaceholder')}
+              value={newContainer.name}
+              onChange={e => setNewContainer({ ...newContainer, name: e.target.value })}
+              className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>{t('containers.destination')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('containers.destination')}</Label>
               <div className="relative">
-                <ContainerIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <ContainerIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  className="pl-9"
+                  className="pl-9 bg-muted/50 border-input/50 focus:bg-background transition-colors"
                   value={newContainer.destination}
                   onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })}
                   placeholder={t('containers.destinationPlaceholder')}
@@ -129,13 +132,13 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t('containers.cost')}</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('containers.cost')}</Label>
               <div className="relative">
-                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <DollarSign className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   type="number"
                   min="0"
-                  className="pl-9"
+                  className="pl-9 bg-muted/50 border-input/50 focus:bg-background transition-colors"
                   value={newContainer.cost}
                   onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
                   placeholder={t('containers.costPlaceholder')}
@@ -144,7 +147,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             </div>
           </div>
 
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4">
+          <div className="rounded-lg border border-input/50 bg-muted/20 p-4">
             <Label className="text-xs uppercase text-muted-foreground font-bold mb-3 block">{t('containers.capacities')}</Label>
             {formFactors.length === 0 ? (
               <div className="text-xs text-destructive">{t('containers.noFormFactors')}</div>
@@ -159,7 +162,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                       placeholder="0"
                       value={newContainer.capacities[ff.id] || 0}
                       onChange={e => handleCapacityChange(ff.id, e.target.value)}
-                      className="h-8"
+                      className="h-8 bg-background/50 border-input/50"
                     />
                   </div>
                 ))}
@@ -176,15 +179,17 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             />
           </div>
 
-          <Button
-            onClick={handleSaveContainer}
-            className="w-full"
-            variant={editingContainerId ? "default" : "secondary"}
-          >
-            {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
-          </Button>
-        </CardContent>
-      </Card>
+          <div className="pt-2">
+            <Button
+              onClick={handleSaveContainer}
+              className="w-full font-medium"
+              variant={editingContainerId ? "secondary" : "default"}
+            >
+              {editingContainerId ? <><Save size={16} className="mr-2" /> {t('containers.updateContainer')}</> : <><Plus size={16} className="mr-2" /> {t('containers.addContainer')}</>}
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 

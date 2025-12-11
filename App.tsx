@@ -754,9 +754,9 @@ const App: React.FC = () => {
 
     setConfirmModal({
       isOpen: true,
-      title: 'Clear All Products',
-      message: 'Are you sure you want to delete ALL products? This cannot be undone.',
-      confirmText: 'Delete All',
+      title: t('modals.clearProductsTitle'),
+      message: t('modals.clearProductsMessage'),
+      confirmText: t('modals.deleteAll'),
       isDestructive: true,
       onConfirm: async () => {
         setProducts([]);
@@ -777,9 +777,9 @@ const App: React.FC = () => {
 
     setConfirmModal({
       isOpen: true,
-      title: 'Clear All Containers',
-      message: 'Are you sure you want to delete ALL containers? This cannot be undone.',
-      confirmText: 'Delete All',
+      title: t('modals.clearContainersTitle'),
+      message: t('modals.clearContainersMessage'),
+      confirmText: t('modals.deleteAll'),
       isDestructive: true,
       onConfirm: async () => {
         setContainers([]);

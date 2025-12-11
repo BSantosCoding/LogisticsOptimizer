@@ -55,8 +55,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
     const handleRemoveUser = async (userId: string) => {
         setConfirmModal({
             isOpen: true,
-            title: t('team.confirmRemove', 'Remove User'),
-            message: t('team.confirmRemoveMessage', 'Are you sure you want to remove this user?'),
+            title: t('modals.removeUserTitle'),
+            message: t('modals.removeUserMessage'),
             isDestructive: true,
             onConfirm: async () => {
                 setActionLoading(userId);

@@ -115,8 +115,8 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
     const handleRemoveCountry = async (id: string) => {
         setConfirmModal({
             isOpen: true,
-            title: t('countries.confirmDelete', 'Delete Country'),
-            message: t('countries.confirmDeleteMessage', 'Are you sure you want to delete this country?'),
+            title: t('modals.deleteCountryTitle'),
+            message: t('modals.deleteCountryMessage'),
             onConfirm: async () => {
                 try {
                     const { error } = await supabase

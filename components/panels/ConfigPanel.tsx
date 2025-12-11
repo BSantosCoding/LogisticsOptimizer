@@ -279,8 +279,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               {[
                 { key: 'country', label: 'Country' },
                 { key: 'quantity', label: 'Quantity' },
-                { key: 'weight', label: 'Weight (kg)' },
-                { key: 'formFactor', label: 'Form Factor (Or Description for partial match)' },
+                { key: 'weight', label: t('products.weight') },
+                { key: 'formFactor', label: t('config.formFactorLabel') },
               ].map(({ key, label }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>

@@ -705,7 +705,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     return (
                       <div
                         key={groupKey}
-                        className={`bg-card p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-primary bg-primary/10 shadow-[0_0_10px_rgba(139,92,246,0.1)]' : 'border-border hover:border-primary/50'
+                        className={`bg-popover p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-primary bg-primary/10 shadow-[0_0_10px_rgba(139,92,246,0.1)]' : 'border-border hover:border-primary/50'
                           }`}
                       >
                         <div className="flex flex-col items-center gap-1">
@@ -1004,11 +1004,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             key={loadedContainer.container.id}
                             onDragOver={handleDragOver}
                             onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
-                            className={`bg-card rounded-lg border transition-all duration-200 
+                            className={`bg-popover rounded-lg border transition-all duration-200 
                     ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-destructive' : 'border-border'}
 `}
                           >
-                            <div className={`p-3 border-b border-border flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-destructive/20' : 'bg-muted/50'
+                            <div className={`p-3 border-b border-border flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-destructive/20' : 'bg-card/80'
                               } `}>
                               <div>
                                 <div className="font-semibold text-white flex items-center gap-2">

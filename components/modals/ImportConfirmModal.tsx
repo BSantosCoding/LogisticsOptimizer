@@ -4,7 +4,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
@@ -27,7 +26,7 @@ const ImportConfirmModal: React.FC<ImportConfirmModalProps> = ({ onConfirm, onCa
                         Would you like to save these products to your company database?
                     </DialogDescription>
                 </DialogHeader>
-                <DialogFooter className="flex-col gap-2 sm:flex-col">
+                <div className="flex flex-col gap-2 w-full pt-4">
                     <Button onClick={() => onConfirm(true)} className="w-full">
                         <Database size={18} className="mr-2" />
                         Save to Database
@@ -39,7 +38,7 @@ const ImportConfirmModal: React.FC<ImportConfirmModalProps> = ({ onConfirm, onCa
                     <Button onClick={onCancel} variant="outline" className="w-full">
                         Cancel Import
                     </Button>
-                </DialogFooter>
+                </div>
             </DialogContent>
         </Dialog>
     );

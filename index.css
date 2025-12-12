@@ -4,73 +4,94 @@
 
 @layer base {
   :root {
+    /* Light Mode - Material Design Indigo */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 220 13% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 13% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 13% 18%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Indigo 500 */
+    --primary: 231 48% 48%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Blue Grey 100 */
+    --secondary: 200 18% 94%;
+    --secondary-foreground: 220 13% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Blue Grey 50 */
+    --muted: 200 18% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Teal 500 */
+    --accent: 174 100% 29%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive: Red 500 */
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 231 48% 48%;
+
+    /* Status Colors */
+    --success: 122 39% 49%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 100% 50%;
+    --warning-foreground: 0 0% 100%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Background: Slate 900 */
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode - Material Design Dark Theme with Indigo accent */
 
-    /* Card: Slate 800 - provides contrast against background */
-    --card: 217.2 32.6% 17.5%;
-    --card-foreground: 210 40% 98%;
+    /* Background: Blue Grey 900 (#263238) */
+    --background: 200 18% 18%;
+    --foreground: 200 15% 94%;
 
-    /* Popover: Slate 800 */
-    --popover: 217.2 32.6% 17.5%;
-    --popover-foreground: 210 40% 98%;
+    /* Card: Blue Grey 800 (#37474F) - provides hierarchy */
+    --card: 200 18% 26%;
+    --card-foreground: 200 15% 94%;
 
-    /* Primary: Blue 600 */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    /* Popover: Blue Grey 800 */
+    --popover: 200 18% 26%;
+    --popover-foreground: 200 15% 94%;
 
-    /* Secondary: Slate 700 */
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Primary: Indigo 400 (brighter for dark mode) */
+    --primary: 231 68% 63%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Muted: Slate 800 */
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Secondary: Blue Grey 700 */
+    --secondary: 200 18% 33%;
+    --secondary-foreground: 200 15% 94%;
 
-    /* Accent: Slate 700 */
-    --accent: 215.4 16.3% 26.7%;
-    --accent-foreground: 210 40% 98%;
+    /* Muted: Blue Grey 700/800 blend */
+    --muted: 200 18% 30%;
+    --muted-foreground: 200 15% 70%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Accent: Teal 400 (brighter for dark mode) */
+    --accent: 174 63% 40%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Border: Slate 700 */
-    --border: 217.2 32.6% 26.7%;
-    --input: 217.2 32.6% 26.7%;
-    --ring: 221.2 83.2% 53.3%;
+    /* Destructive: Red 400 */
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border: Blue Grey 600 */
+    --border: 200 18% 40%;
+    --input: 200 18% 35%;
+    --ring: 231 68% 63%;
+
+    /* Status Colors */
+    --success: 122 50% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 100% 55%;
+    --warning-foreground: 0 0% 0%;
   }
 }
 
@@ -80,6 +101,26 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-success {
+    color: hsl(var(--success));
+  }
+
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+
+  .bg-warning {
+    background-color: hsl(var(--warning));
   }
 }

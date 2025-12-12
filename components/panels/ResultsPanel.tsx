@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping } from '../../types';
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { validateLoadedContainer } from '@/services/logisticsEngine';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ResultsPanelProps {
   results: Record<OptimizationPriority, OptimizationResult> | null;
@@ -414,20 +417,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-slate-800">
+      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">{t('results.title')}</h2>
+            <h2 className="text-2xl font-bold">{t('results.title')}</h2>
             <div className="flex items-center gap-3">
               {/* Warnings / Info */}
               <div className="flex flex-col items-end mr-2">
-                <div className="text-xs text-slate-400 flex items-center gap-1">
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
                   <Box size={12} />
                   <span>{t('results.productsSelected', { count: selectedCount })}</span>
                 </div>
                 {warnings.length > 0 && (
-                  <div className="text-[10px] text-orange-400 flex items-center gap-1">
+                  <div className="text-[10px] text-warning flex items-center gap-1">
                     <AlertTriangle size={10} />
                     {warnings[0]}
                   </div>
@@ -435,47 +438,35 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               </div>
 
               {/* Optimize Button */}
-              <button
+              <Button
                 onClick={onRunOptimization}
                 disabled={hasNoProducts || hasNoContainers || isOptimizing}
-                className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${!hasNoProducts && !hasNoContainers
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  }`}
               >
                 {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
                 {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
-              </button>
+              </Button>
 
-              <div className="h-6 w-px bg-slate-700 mx-1"></div>
+              <Separator orientation="vertical" className="h-6" />
 
-              <button
-                onClick={() => setIsSaving(true)}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded flex items-center gap-2 text-sm font-medium transition-colors border border-slate-700"
-              >
+              <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
                 <Save size={16} /> {t('common.save')}
-              </button>
-              <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2">
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onClose}>
                 <X size={24} />
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Priority Tabs */}
-          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
-            {Object.values(OptimizationPriority).map((priority) => (
-              <button
-                key={priority}
-                onClick={() => setActivePriority(priority)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activePriority === priority
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
-              >
-                {priority}
-              </button>
-            ))}
-          </div>
+          <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
+            <TabsList>
+              {Object.values(OptimizationPriority).map((priority) => (
+                <TabsTrigger key={priority} value={priority}>
+                  {priority}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 

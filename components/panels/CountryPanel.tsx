@@ -151,42 +151,43 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
         if (!canManage) return null;
 
         return (
-            <div className="p-4 border-b border-border bg-muted/20">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-sm uppercase">
-                            <Plus size={16} className="text-primary" /> {t('countries.addCountry')}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <Label className="text-xs text-muted-foreground mb-1 block">{t('countries.code')}</Label>
-                            <Input
-                                value={newCountry.code}
-                                onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
-                                placeholder="CN"
-                                maxLength={2}
-                            />
-                        </div>
+            <div className="h-full flex flex-col">
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                    <span className="flex items-center gap-2 font-medium text-sm">
+                        <Plus size={16} className="text-primary" /> {t('countries.addCountry')}
+                    </span>
+                </div>
 
-                        <div>
-                            <Label className="text-xs text-muted-foreground mb-1 block">{t('countries.name')}</Label>
-                            <Input
-                                value={newCountry.name}
-                                onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
-                                placeholder="China"
-                            />
-                        </div>
+                <div className="space-y-4 p-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground font-medium">{t('countries.code')}</Label>
+                        <Input
+                            value={newCountry.code}
+                            onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
+                            placeholder="CN"
+                            maxLength={2}
+                            className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
+                        />
+                    </div>
 
-                        <Button
-                            onClick={handleAddCountry}
-                            disabled={!newCountry.code || !newCountry.name}
-                            className="w-full"
-                        >
-                            <Plus size={16} className="mr-2" /> {t('countries.addCountry')}
-                        </Button>
-                    </CardContent>
-                </Card>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground font-medium">{t('countries.name')}</Label>
+                        <Input
+                            value={newCountry.name}
+                            onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
+                            placeholder="China"
+                            className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
+                        />
+                    </div>
+
+                    <Button
+                        onClick={handleAddCountry}
+                        disabled={!newCountry.code || !newCountry.name}
+                        className="w-full"
+                    >
+                        <Plus size={16} className="mr-2" /> {t('countries.addCountry')}
+                    </Button>
+                </div>
                 <ErrorModal
                     isOpen={errorModal.isOpen}
                     title={t('modals.errorTitle')}

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { User, Mail, Lock, Key, Settings as SettingsIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from 'react-i18next';
 
 interface UserSettingsPanelProps {
@@ -99,51 +102,51 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
     return (
         <div className="h-full flex flex-col gap-6 overflow-y-auto p-6">
             {/* Page Header */}
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-700">
-                <div className="bg-blue-600 p-3 rounded-xl">
-                    <User size={24} className="text-white" />
+            <div className="flex items-center gap-3 pb-4 border-b border-border">
+                <div className="bg-primary/10 p-3 rounded-xl">
+                    <User size={24} className="text-primary" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">{t('userSettings.title')}</h1>
-                    <p className="text-sm text-slate-400">{userEmail}</p>
+                    <h1 className="text-2xl font-bold">{t('userSettings.title')}</h1>
+                    <p className="text-sm text-muted-foreground">{userEmail}</p>
                 </div>
             </div>
 
             {/* Account Management Section */}
-            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="p-4 border-b border-slate-700 bg-slate-800/50">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <Key className="text-purple-400" size={20} />
+            <Card>
+                <CardHeader className="p-4 py-3 border-b border-border bg-muted/20">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                        <Key className="text-primary" size={16} />
                         {t('userSettings.accountManagement')}
-                    </h2>
-                </div>
+                    </CardTitle>
+                </CardHeader>
 
-                <div className="p-6 space-y-6">
+                <CardContent className="p-6 space-y-6">
                     {/* Current Email Display */}
-                    <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
                             {t('userSettings.currentEmail')}
-                        </label>
-                        <div className="flex items-center gap-2 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3">
-                            <Mail size={16} className="text-slate-500" />
-                            <span className="text-slate-200">{userEmail}</span>
+                        </Label>
+                        <div className="flex items-center gap-2 bg-muted/30 border border-border rounded-lg px-4 py-3">
+                            <Mail size={16} className="text-muted-foreground" />
+                            <span>{userEmail}</span>
                         </div>
                     </div>
 
                     {/* Reset Password */}
-                    <div className="pt-4 border-t border-slate-700">
-                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                            <Lock size={16} className="text-blue-400" />
+                    <div className="pt-4 border-t border-border">
+                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                            <Lock size={16} className="text-primary" />
                             {t('userSettings.resetPassword')}
                         </h3>
-                        <p className="text-xs text-slate-400 mb-3">
+                        <p className="text-xs text-muted-foreground mb-3">
                             {t('userSettings.resetPasswordDesc')}
                         </p>
 
                         {resetPasswordMessage && (
                             <div className={`mb-3 p-3 rounded-lg border flex items-center gap-2 text-sm ${resetPasswordMessage.type === 'success'
-                                ? 'bg-green-900/30 border-green-500/50 text-green-200'
-                                : 'bg-red-900/30 border-red-500/50 text-red-200'
+                                ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                                : 'bg-destructive/10 border-destructive/30 text-destructive'
                                 }`}>
                                 {resetPasswordMessage.type === 'success' ? (
                                     <CheckCircle size={16} />
@@ -156,24 +159,24 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
 
                         <Button
                             onClick={handleResetPassword}
-                            isLoading={resetPasswordLoading}
+                            disabled={resetPasswordLoading}
                             className="w-full sm:w-auto"
                         >
-                            {t('userSettings.sendResetLink')}
+                            {resetPasswordLoading ? 'Sending...' : t('userSettings.sendResetLink')}
                         </Button>
                     </div>
 
                     {/* Change Email */}
-                    <div className="pt-4 border-t border-slate-700">
-                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                            <Mail size={16} className="text-green-400" />
+                    <div className="pt-4 border-t border-border">
+                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                            <Mail size={16} className="text-primary" />
                             {t('userSettings.changeEmail')}
                         </h3>
 
                         {changeEmailMessage && (
                             <div className={`mb-3 p-3 rounded-lg border flex items-center gap-2 text-sm ${changeEmailMessage.type === 'success'
-                                ? 'bg-green-900/30 border-green-500/50 text-green-200'
-                                : 'bg-red-900/30 border-red-500/50 text-red-200'
+                                ? 'bg-green-500/10 border-green-500/30 text-green-500'
+                                : 'bg-destructive/10 border-destructive/30 text-destructive'
                                 }`}>
                                 {changeEmailMessage.type === 'success' ? (
                                     <CheckCircle size={16} />
@@ -185,73 +188,73 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
                         )}
 
                         <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">
                                     {t('userSettings.newEmail')}
-                                </label>
-                                <input
+                                </Label>
+                                <Input
                                     type="email"
                                     value={newEmail}
                                     onChange={(e) => setNewEmail(e.target.value)}
                                     placeholder="new.email@example.com"
-                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="bg-muted/30 border-input/50"
                                 />
                             </div>
 
                             <Button
                                 onClick={handleChangeEmail}
-                                isLoading={changeEmailLoading}
+                                disabled={changeEmailLoading}
                                 className="w-full sm:w-auto"
                             >
-                                {t('userSettings.updateEmail')}
+                                {changeEmailLoading ? 'Updating...' : t('userSettings.updateEmail')}
                             </Button>
                         </div>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* User Preferences Section */}
-            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                <div className="p-4 border-b border-slate-700 bg-slate-800/50">
-                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <SettingsIcon className="text-green-400" size={20} />
+            <Card>
+                <CardHeader className="p-4 py-3 border-b border-border bg-muted/20">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                        <SettingsIcon className="text-primary" size={16} />
                         {t('userSettings.userPreferences')}
-                    </h2>
-                </div>
+                    </CardTitle>
+                </CardHeader>
 
-                <div className="p-6">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                <CardContent className="p-6">
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">
                             {t('userSettings.optimalRange')}
-                        </label>
+                        </Label>
                         <div className="flex items-center gap-3 mb-2">
-                            <input
+                            <Input
                                 type="number"
                                 min="0"
                                 max="100"
                                 value={optimalRange.min}
                                 onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
-                                className="w-24 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                className="w-24 bg-muted/30 border-input/50"
                                 placeholder="Min"
                             />
-                            <span className="text-slate-500">-</span>
-                            <input
+                            <span className="text-muted-foreground">-</span>
+                            <Input
                                 type="number"
                                 min="0"
                                 max="100"
                                 value={optimalRange.max}
                                 onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
-                                className="w-24 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                className="w-24 bg-muted/30 border-input/50"
                                 placeholder="Max"
                             />
-                            <span className="text-slate-400 text-sm">%</span>
+                            <span className="text-muted-foreground text-sm">%</span>
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                             {t('userSettings.rangeDesc')}
                         </p>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };

@@ -786,35 +786,26 @@ const App: React.FC = () => {
     const activeState = isResults && results && viewMode === 'results';
 
     return (
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={activeState || isActive ? "secondary" : "ghost"}
-              size="icon"
-              className={`w-12 h-12 rounded-xl transition-all ${activeState ? 'bg-primary text-primary-foreground hover:bg-primary/90' : isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50'}`}
-              onClick={() => {
-                if (isResults) {
-                  if (results) setViewMode('results');
-                } else if (mode) {
-                  if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management') {
-                    handleTabChange(mode as any);
-                  } else {
-                    setInputMode(mode as any);
-                    setViewMode('data');
-                  }
-                }
-              }}
-              disabled={disabled}
-            >
-              <Icon size={22} strokeWidth={1.5} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="font-semibold" sideOffset={10}>
-            {tooltip || label}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button
+        variant={activeState || isActive ? "secondary" : "ghost"}
+        className={`w-full h-auto py-2 px-2 flex flex-col items-center gap-1 rounded-lg transition-all ${activeState ? 'bg-primary text-primary-foreground hover:bg-primary/90' : isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}`}
+        onClick={() => {
+          if (isResults) {
+            if (results) setViewMode('results');
+          } else if (mode) {
+            if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management') {
+              handleTabChange(mode as any);
+            } else {
+              setInputMode(mode as any);
+              setViewMode('data');
+            }
+          }
+        }}
+        disabled={disabled}
+      >
+        <Icon size={18} strokeWidth={1.5} />
+        <span className="text-[9px] font-medium leading-tight text-center">{label}</span>
+      </Button>
     );
   };
 
@@ -851,15 +842,15 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans">
       {/* Sidebar */}
-      <div className="w-18 bg-muted/40 border-r flex flex-col items-center py-4 gap-4 z-20">
+      <div className="w-20 bg-card border-r border-border flex flex-col items-center py-4 gap-2 z-20">
         <div className="bg-primary/10 p-2.5 rounded-xl mb-2">
           <Package className="text-primary" size={24} />
         </div>
 
-        <ScrollArea className="flex-1 w-full px-2">
-          <div className="flex flex-col gap-2 items-center pb-4">
+        <ScrollArea className="flex-1 w-full px-1.5">
+          <div className="flex flex-col gap-1 items-center pb-4">
             <NavButton mode={undefined} icon={BarChart3} label={t('nav.results')} disabled={!results} tooltip={results ? t('nav.results') : "Run optimization first"} />
-            <Separator className="w-8 bg-border/60 my-1" />
+            <Separator className="w-10 bg-border/60 my-1" />
             <NavButton mode="shipments" icon={Package} label={t('nav.shipments')} />
             <NavButton mode="products" icon={Box} label={t('nav.items')} />
             <NavButton mode="containers" icon={ContainerIcon} label={t('nav.containers')} />
@@ -868,7 +859,7 @@ const App: React.FC = () => {
 
             {(hasRole(effectiveRole, 'manager')) && (
               <>
-                <Separator className="w-8 bg-border/60 my-1" />
+                <Separator className="w-10 bg-border/60 my-1" />
                 <NavButton mode="management" icon={Users} label={t('nav.team')} />
               </>
             )}
@@ -877,20 +868,14 @@ const App: React.FC = () => {
           </div>
         </ScrollArea>
 
-        <div className="mt-auto flex flex-col gap-2 items-center pb-4">
+        <div className="mt-auto flex flex-col gap-1 items-center pb-4 w-full px-1.5">
           {hasRole(effectiveRole, 'super_admin') && (
             <NavButton mode="super_admin" icon={Building2} label={t('nav.admin')} />
           )}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => logout()} className="text-muted-foreground hover:text-destructive">
-                  <LogOut size={20} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Logout</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="ghost" size="sm" onClick={() => logout()} className="w-full h-auto py-2 flex flex-col items-center gap-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+            <LogOut size={18} />
+            <span className="text-[9px] font-medium">Logout</span>
+          </Button>
         </div>
       </div>
 

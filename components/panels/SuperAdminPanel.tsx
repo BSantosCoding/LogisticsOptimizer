@@ -215,7 +215,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
 
                                             <div className="flex items-center gap-3">
                                                 {/* Status Badge */}
-                                                <Badge variant={isPending ? "outline" : isApproved ? "default" : "destructive"} className={`uppercase ${isPending ? 'border-orange-500 text-orange-500' : isApproved ? 'bg-green-500' : ''}`}>
+                                                <Badge variant={isPending ? "outline" : isApproved ? "default" : "destructive"} className={`uppercase text-xs ${isPending ? 'border-amber-500 text-amber-500 bg-amber-500/10' : isApproved ? 'bg-green-600 hover:bg-green-600' : ''}`}>
                                                     {company.approval_status}
                                                 </Badge>
 
@@ -226,9 +226,9 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                             onClick={() => handleApprove(company.id)}
                                                             disabled={isProcessing}
                                                             size="sm"
-                                                            className="bg-green-600 hover:bg-green-500"
+                                                            className="h-8 bg-green-600 hover:bg-green-500 text-white"
                                                         >
-                                                            <Check size={16} className="mr-1" />
+                                                            <Check size={14} className="mr-1" />
                                                             Approve
                                                         </Button>
                                                         <Button
@@ -236,8 +236,9 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                             disabled={isProcessing}
                                                             variant="destructive"
                                                             size="sm"
+                                                            className="h-8"
                                                         >
-                                                            <X size={16} className="mr-1" />
+                                                            <X size={14} className="mr-1" />
                                                             Reject
                                                         </Button>
                                                     </div>
@@ -249,8 +250,9 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                         disabled={isProcessing}
                                                         variant="secondary"
                                                         size="sm"
+                                                        className="h-8"
                                                     >
-                                                        <X size={16} className="mr-1" />
+                                                        <X size={14} className="mr-1" />
                                                         Revoke
                                                     </Button>
                                                 )}
@@ -261,8 +263,9 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                         disabled={isProcessing}
                                                         variant="secondary"
                                                         size="sm"
+                                                        className="h-8"
                                                     >
-                                                        <Check size={16} className="mr-1" />
+                                                        <Check size={14} className="mr-1" />
                                                         Approve
                                                     </Button>
                                                 )}

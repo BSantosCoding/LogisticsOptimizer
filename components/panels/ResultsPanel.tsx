@@ -462,25 +462,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </div>
 
           {/* Priority Tabs */}
-          <div className="flex items-center gap-2 border-b border-slate-700 pb-1">
+          <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
             {Object.values(OptimizationPriority).map((priority) => (
               <button
                 key={priority}
                 onClick={() => setActivePriority(priority)}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${activePriority === priority
-                  ? 'text-blue-400 bg-slate-800 border-t border-x border-slate-700'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activePriority === priority
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
                   }`}
               >
                 {priority}
-                {activePriority === priority && (
-                  <div className="absolute bottom-[-5px] left-0 right-0 h-[5px] bg-slate-800" />
-                )}
               </button>
             ))}
           </div>
         </div>
-      </div >
+      </div>
 
       {/* Move Quantity Modal */}
       {

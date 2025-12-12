@@ -5,6 +5,7 @@ import { OptimizationResult, Container, Product, OptimizationPriority, LoadedCon
 import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { validateLoadedContainer } from '@/services/logisticsEngine';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -601,24 +602,24 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.totalContainers')}</div>
-          <div className="text-xl font-bold text-white">{result.assignments.length}</div>
+        <div className="bg-card p-3 rounded-xl border border-border">
+          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalContainers')}</div>
+          <div className="text-xl font-bold">{result.assignments.length}</div>
         </div>
-        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.totalCost')}</div>
-          <div className="text-xl font-bold text-green-400">${result.totalCost.toLocaleString()}</div>
+        <div className="bg-card p-3 rounded-xl border border-border">
+          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalCost')}</div>
+          <div className="text-xl font-bold text-success">${result.totalCost.toLocaleString()}</div>
         </div>
-        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700">
-          <div className="text-[10px] text-slate-400 mb-0.5">{t('results.unassignedItems')}</div>
-          <div className="text-xl font-bold text-red-400">{result.unassignedProducts.length}</div>
+        <div className="bg-card p-3 rounded-xl border border-border">
+          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.unassignedItems')}</div>
+          <div className="text-xl font-bold text-destructive">{result.unassignedProducts.length}</div>
         </div>
       </div>
 
       {/* Reasoning */}
-      <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mb-6">
-        <h3 className="text-sm font-bold text-slate-300 mb-2">Optimization Strategy</h3>
-        <p className="text-sm text-slate-400 whitespace-pre-line">{result.reasoning}</p>
+      <div className="bg-card p-4 rounded-xl border border-border mb-6">
+        <h3 className="text-sm font-bold mb-2">Optimization Strategy</h3>
+        <p className="text-sm text-muted-foreground whitespace-pre-line">{result.reasoning}</p>
       </div>
 
       {/* Split Content Area */}
@@ -627,44 +628,45 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden gap-2">
           {/* Sticky Add Container Button */}
           {activePriority === OptimizationPriority.MANUAL && (
-            <button
+            <Button
               onClick={() => setAddContainerModal(true)}
-              className="flex-shrink-0 w-full bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium transition-colors border border-slate-600"
+              variant="secondary"
+              className="flex-shrink-0 w-full"
             >
               <Box size={14} /> Add Container
-            </button>
+            </Button>
           )}
 
           {/* Search Bar */}
-          <input
+          <Input
             type="text"
             placeholder="Search items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-shrink-0 w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            className="flex-shrink-0 h-8 text-xs"
           />
 
           {/* Unassigned Items Header */}
-          <div className="flex-shrink-0 flex items-center gap-2 text-xs font-semibold text-white">
-            <AlertTriangle size={14} className="text-red-400" />
+          <div className="flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
+            <AlertTriangle size={14} className="text-destructive" />
             Unassigned Items
           </div>
 
           {/* Scrollable Products List */}
           <div
-            className="flex-1 bg-slate-800/50 rounded-lg border border-slate-700 p-2 overflow-y-auto scrollbar-hide min-h-0"
+            className="flex-1 bg-card rounded-xl border border-border p-2 overflow-y-auto scrollbar-hide min-h-0"
             onDragOver={(e) => {
               e.preventDefault();
-              e.currentTarget.classList.add('bg-slate-800');
-              e.currentTarget.classList.add('border-blue-500');
+              e.currentTarget.classList.add('bg-primary/10');
+              e.currentTarget.classList.add('border-primary');
             }}
             onDragLeave={(e) => {
-              e.currentTarget.classList.remove('bg-slate-800');
-              e.currentTarget.classList.remove('border-blue-500');
+              e.currentTarget.classList.remove('bg-primary/10');
+              e.currentTarget.classList.remove('border-primary');
             }}
             onDrop={(e) => {
-              e.currentTarget.classList.remove('bg-slate-800');
-              e.currentTarget.classList.remove('border-blue-500');
+              e.currentTarget.classList.remove('bg-primary/10');
+              e.currentTarget.classList.remove('border-primary');
               onDropWrapper(e, 'unassigned');
             }}
           >

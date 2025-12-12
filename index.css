@@ -4,94 +4,94 @@
 
 @layer base {
   :root {
-    /* Light Mode - Material Design Indigo */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
+    /* Light Mode - Material Design 3 */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover-foreground: 0 0% 10%;
 
-    /* Primary: Indigo 500 */
-    --primary: 231 48% 48%;
+    /* Primary: Deep Purple 500 */
+    --primary: 262 52% 47%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Blue Grey 100 */
-    --secondary: 200 18% 94%;
-    --secondary-foreground: 220 13% 18%;
+    /* Secondary: Neutral surface */
+    --secondary: 260 5% 95%;
+    --secondary-foreground: 0 0% 10%;
 
-    /* Muted: Blue Grey 50 */
-    --muted: 200 18% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted */
+    --muted: 260 5% 92%;
+    --muted-foreground: 0 0% 45%;
 
     /* Accent: Teal 500 */
     --accent: 174 100% 29%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive: Red 500 */
-    --destructive: 4 90% 58%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 231 48% 48%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 262 52% 47%;
 
-    /* Status Colors */
-    --success: 122 39% 49%;
-    --success-foreground: 0 0% 100%;
-    --warning: 36 100% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Dark Mode - Material Design Dark Theme with Indigo accent */
+    /* 
+     * Material Design 3 Dark Theme
+     * Based on M3 surface container system with Deep Purple as primary
+     * Surface levels: surface < surface-container-low < surface-container < surface-container-high
+     */
 
-    /* Background: Blue Grey 900 (#263238) */
-    --background: 200 18% 18%;
-    --foreground: 200 15% 94%;
+    /* Background: Surface (#121212 equivalent - very dark with slight warmth) */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
 
-    /* Card: Blue Grey 800 (#37474F) - provides hierarchy */
-    --card: 200 18% 26%;
-    --card-foreground: 200 15% 94%;
+    /* Card: Surface Container (#1E1E1E) - slightly elevated */
+    --card: 240 6% 10%;
+    --card-foreground: 0 0% 95%;
 
-    /* Popover: Blue Grey 800 */
-    --popover: 200 18% 26%;
-    --popover-foreground: 200 15% 94%;
+    /* Popover: Surface Container High (#2C2C2C) - most elevated */
+    --popover: 240 5% 15%;
+    --popover-foreground: 0 0% 95%;
 
-    /* Primary: Indigo 400 (brighter for dark mode) */
-    --primary: 231 68% 63%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Deep Purple 200 (bright for dark mode) */
+    --primary: 262 83% 75%;
+    --primary-foreground: 262 52% 15%;
 
-    /* Secondary: Blue Grey 700 */
-    --secondary: 200 18% 33%;
-    --secondary-foreground: 200 15% 94%;
+    /* Secondary: Surface Container (#1E1E1E) */
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 90%;
 
-    /* Muted: Blue Grey 700/800 blend */
-    --muted: 200 18% 30%;
-    --muted-foreground: 200 15% 70%;
+    /* Muted: Surface Container Low (#171717) */
+    --muted: 240 6% 10%;
+    --muted-foreground: 0 0% 60%;
 
-    /* Accent: Teal 400 (brighter for dark mode) */
-    --accent: 174 63% 40%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Teal 200 (bright for dark mode) */
+    --accent: 174 72% 56%;
+    --accent-foreground: 174 100% 10%;
 
-    /* Destructive: Red 400 */
-    --destructive: 0 65% 51%;
+    /* Destructive: Error color */
+    --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border: Blue Grey 600 */
-    --border: 200 18% 40%;
-    --input: 200 18% 35%;
-    --ring: 231 68% 63%;
+    /* Border: Outline variant (#49454F in M3) */
+    --border: 260 10% 25%;
+    --input: 260 10% 20%;
+    --ring: 262 83% 75%;
 
-    /* Status Colors */
-    --success: 122 50% 45%;
+    /* Custom accent colors */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 36 100% 55%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
   }
 }
 
@@ -106,7 +106,7 @@
   }
 }
 
-/* Custom utility classes */
+/* Custom status colors */
 @layer utilities {
   .text-success {
     color: hsl(var(--success));
@@ -116,11 +116,40 @@
     color: hsl(var(--warning));
   }
 
+  .text-info {
+    color: hsl(var(--info));
+  }
+
   .bg-success {
     background-color: hsl(var(--success));
   }
 
   .bg-warning {
     background-color: hsl(var(--warning));
+  }
+
+  .bg-info {
+    background-color: hsl(var(--info));
+  }
+
+  /* Surface elevation helpers */
+  .surface-container-lowest {
+    background-color: hsl(240 10% 4%);
+  }
+
+  .surface-container-low {
+    background-color: hsl(240 6% 8%);
+  }
+
+  .surface-container {
+    background-color: hsl(240 6% 10%);
+  }
+
+  .surface-container-high {
+    background-color: hsl(240 5% 15%);
+  }
+
+  .surface-container-highest {
+    background-color: hsl(240 4% 20%);
   }
 }

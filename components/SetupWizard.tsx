@@ -91,15 +91,15 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ session, onComplete, onLogout
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="bg-card p-8 rounded-2xl shadow-2xl border border-border w-full max-w-md">
                 <div className="flex justify-center mb-6">
                     <div className="bg-purple-600 p-3 rounded-xl shadow-lg shadow-purple-900/30">
                         <Building2 className="text-white" size={32} />
                     </div>
                 </div>
                 <h2 className="text-2xl font-bold text-white text-center mb-2">Welcome Aboard</h2>
-                <p className="text-slate-400 text-sm text-center mb-6">
+                <p className="text-muted-foreground text-sm text-center mb-6">
                     {setupMode === 'create' ? 'Create a new workspace' : 'Join an existing workspace'}
                 </p>
 
@@ -117,14 +117,14 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ session, onComplete, onLogout
                                 placeholder="Company Name"
                                 value={setupCompanyName}
                                 onChange={(e) => setSetupCompanyName(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-blue-500 outline-none transition-colors"
+                                className="w-full bg-background border border-border rounded-lg py-3 px-4 text-foreground focus:border-primary outline-none transition-colors"
                                 required
                             />
                         ) : (
                             <select
                                 value={selectedCompanyId}
                                 onChange={(e) => setSelectedCompanyId(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 px-4 text-slate-200 focus:border-blue-500 outline-none transition-colors cursor-pointer"
+                                className="w-full bg-background border border-border rounded-lg py-3 px-4 text-foreground focus:border-primary outline-none transition-colors cursor-pointer"
                                 required
                             >
                                 <option value="" disabled>Choose a company...</option>
@@ -142,7 +142,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ session, onComplete, onLogout
                             onClick={() => setSetupMode('create')}
                             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${setupMode === 'create'
                                 ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                 }`}
                         >
                             Create New
@@ -152,7 +152,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ session, onComplete, onLogout
                             onClick={() => setSetupMode('join')}
                             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${setupMode === 'join'
                                 ? 'bg-blue-600 text-white'
-                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                 }`}
                         >
                             Join Existing
@@ -161,7 +161,7 @@ const SetupWizard: React.FC<SetupWizardProps> = ({ session, onComplete, onLogout
                     <Button type="submit" isLoading={isSettingUp} className="w-full py-3 mt-2">
                         {setupMode === 'create' ? 'Create & Start' : 'Request to Join'}
                     </Button>
-                    <button type="button" onClick={onLogout} className="w-full mt-4 text-sm text-slate-500">Sign Out</button>
+                    <button type="button" onClick={onLogout} className="w-full mt-4 text-sm text-muted-foreground">Sign Out</button>
                 </form>
             </div>
         </div>

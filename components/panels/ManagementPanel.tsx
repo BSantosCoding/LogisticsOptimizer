@@ -203,7 +203,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                         <CardContent className="p-4 flex flex-col gap-3 h-full">
                                             <div className="flex items-center gap-3">
                                                 <Avatar>
-                                                    <AvatarFallback className={`${isSuperAdmin ? 'bg-indigo-600 text-white' : isAdmin ? 'bg-blue-600 text-white' : isManager ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'}`}>
+                                                    <AvatarFallback className={`${isSuperAdmin ? 'bg-indigo-600 text-white' : isAdmin ? 'bg-blue-600 text-white' : isManager ? 'bg-purple-600 text-white' : 'bg-muted text-foreground'}`}>
                                                         {member.email.substring(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>

@@ -30,8 +30,8 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
   selectedCount = 0
 }) => {
   return (
-    <div className="bg-slate-800 border-t border-slate-700 p-4 shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] z-20">
-      <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block flex justify-between">
+    <div className="bg-card border-t border-border p-4 shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] z-20">
+      <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block flex justify-between">
         <span>Safety Margin</span>
         <span className="text-blue-400">{marginPercentage}%</span>
       </label>
@@ -39,25 +39,25 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
         type="range" min="0" max="50" step="1"
         value={marginPercentage}
         onChange={(e) => setMarginPercentage(Number(e.target.value))}
-        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer mb-4 accent-blue-500 block"
+        className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mb-4 accent-primary block"
       />
 
       <div className="mb-4">
-        <label className="text-[10px] text-slate-500 uppercase font-bold mb-1 block flex items-center gap-1">
+        <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block flex items-center gap-1">
           <EyeOff size={10} /> Ignore Constraints
         </label>
         <div className="flex gap-1">
           <button
             onClick={() => setIgnoreWeight(!ignoreWeight)}
             title="Ignore Weight Limit"
-            className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreWeight ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
+            className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreWeight ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-background border-border text-muted-foreground'}`}
           >
             Weight
           </button>
           <button
             onClick={() => setIgnoreVolume(!ignoreVolume)}
             title="Ignore Volume Limit"
-            className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreVolume ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-slate-900 border-slate-700 text-slate-500'}`}
+            className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreVolume ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-background border-border text-muted-foreground'}`}
           >
             Volume
           </button>

@@ -385,7 +385,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   if (!results || !result) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-500 bg-slate-800/50 rounded-xl border border-slate-800 border-dashed min-h-[400px]">
+      <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-card/50 rounded-xl border border-border border-dashed min-h-[400px]">
         <Box size={48} className="mb-4 opacity-50" />
         <p className="mb-6">{t('results.noResults')}</p>
         <button
@@ -393,7 +393,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           disabled={products.length === 0 || containers.length === 0 || isOptimizing}
           className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            : 'bg-muted text-muted-foreground cursor-not-allowed'
             }`}
         >
           {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
@@ -475,16 +475,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {
         moveModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-80 shadow-2xl">
+            <div className="bg-card p-6 rounded-xl border border-border w-80 shadow-2xl">
               <h3 className="text-lg font-bold text-white mb-2">{t('results.moveItems')}</h3>
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 {t('results.moveItemsDescription', { productName: moveModal.productName })}
               </p>
 
               <div className="flex items-center gap-4 mb-6">
                 <button
                   onClick={() => setMoveQty(Math.max(1, moveQty - 1))}
-                  className="w-8 h-8 rounded bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600"
+                  className="w-8 h-8 rounded bg-muted text-foreground flex items-center justify-center hover:bg-muted/80"
                 >
                   -
                 </button>
@@ -495,11 +495,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     onChange={(e) => setMoveQty(Math.max(1, Math.min(moveModal.maxQty, parseInt(e.target.value) || 1)))}
                     className="w-full bg-transparent text-center text-2xl font-bold text-blue-400 outline-none"
                   />
-                  <div className="text-xs text-slate-500">{t('results.ofAvailable', { maxQty: moveModal.maxQty })}</div>
+                  <div className="text-xs text-muted-foreground">{t('results.ofAvailable', { maxQty: moveModal.maxQty })}</div>
                 </div>
                 <button
                   onClick={() => setMoveQty(Math.min(moveModal.maxQty, moveQty + 1))}
-                  className="w-8 h-8 rounded bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600"
+                  className="w-8 h-8 rounded bg-muted text-foreground flex items-center justify-center hover:bg-muted/80"
                 >
                   +
                 </button>
@@ -508,7 +508,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setMoveModal(null)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t('common.cancel')}
                 </button>
@@ -528,19 +528,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {
         deleteContainerModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl">
+            <div className="bg-card p-6 rounded-xl border border-border w-96 shadow-2xl">
               <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                 <Trash2 size={20} className="text-red-400" />
                 {t('containers.deleteTitle')}
               </h3>
-              <p className="text-sm text-slate-400 mb-6">
+              <p className="text-sm text-muted-foreground mb-6">
                 {t('containers.deleteConfirmation')}
               </p>
 
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setDeleteContainerModal(null)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t('common.cancel')}
                 </button>
@@ -561,23 +561,23 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {
         isSaving && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-xl">
+            <div className="bg-card p-6 rounded-xl border border-border w-96 shadow-xl">
               <h3 className="text-lg font-bold text-white mb-4">{t('results.saveShipment')}</h3>
               <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-1">{t('results.shipmentName')}</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t('results.shipmentName')}</label>
                 <input
                   autoFocus
                   type="text"
                   value={shipmentName}
                   onChange={(e) => setShipmentName(e.target.value)}
                   placeholder={t('results.shipmentNamePlaceholder')}
-                  className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm text-foreground focus:border-primary outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setIsSaving(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {t('common.cancel')}
                 </button>
@@ -672,7 +672,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           >
             <div className="space-y-1.5">
               {result.unassignedProducts.length === 0 ? (
-                <div className="text-center text-slate-500 py-4 italic text-[10px]">
+                <div className="text-center text-muted-foreground py-4 italic text-[10px]">
                   Drag items here to unassign
                 </div>
               ) : (
@@ -705,7 +705,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     return (
                       <div
                         key={groupKey}
-                        className={`bg-slate-800 p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]' : 'border-slate-700 hover:border-slate-600'
+                        className={`bg-card p-2 rounded-lg border flex items-center gap-3 transition-all ${isPreviewing ? 'border-primary bg-primary/10 shadow-[0_0_10px_rgba(139,92,246,0.1)]' : 'border-border hover:border-primary/50'
                           }`}
                       >
                         <div className="flex flex-col items-center gap-1">
@@ -719,11 +719,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               const val = parseInt(e.target.value) || 0;
                               handleQuantityChange(groupKey, val, group.totalQty);
                             }}
-                            className="w-12 h-7 bg-slate-900 border border-slate-600 rounded text-center text-xs text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
+                            className="w-12 h-7 bg-background border border-border rounded text-center text-xs text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
                           />
                           <button
                             onClick={() => handleQuantityChange(groupKey, group.totalQty, group.totalQty)}
-                            className="text-[9px] font-bold text-slate-500 hover:text-blue-400 uppercase tracking-wider transition-colors hover:bg-slate-700/50 px-1 rounded"
+                            className="text-[9px] font-bold text-muted-foreground hover:text-primary uppercase tracking-wider transition-colors hover:bg-muted px-1 rounded"
                           >
                             Max
                           </button>
@@ -734,9 +734,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           className="flex-1 flex justify-between items-center cursor-grab active:cursor-grabbing min-w-0"
                         >
                           <div className="flex flex-col min-w-0">
-                            <div className="font-medium text-slate-300 truncate text-[11px]">{p.name}</div>
+                            <div className="font-medium text-foreground truncate text-[11px]">{p.name}</div>
                             {p.destination && (
-                              <div className="flex items-center gap-1 text-[9px] text-slate-500 mt-0.5">
+                              <div className="flex items-center gap-1 text-[9px] text-muted-foreground mt-0.5">
                                 <MapPin size={8} />
                                 <span className="truncate">{p.destination.split('|')[0]}</span>
                               </div>
@@ -746,7 +746,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               const val = p.extraFields?.[fieldKey];
                               if (!val) return null;
                               return (
-                                <div key={fieldKey} className="text-[9px] text-slate-400 mt-0.5 truncate">
+                                <div key={fieldKey} className="text-[9px] text-muted-foreground mt-0.5 truncate">
                                   <span className="opacity-70 capitalize">{fieldKey}:</span> {val}
                                 </div>
                               );
@@ -763,7 +763,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
           {/* Utilization Preview - Always Visible */}
           {utilizationPreview && (
-            <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+            <div className="flex-shrink-0 p-2 bg-card/50 rounded-lg border border-border">
               <h4 className="text-[10px] font-semibold text-white mb-1.5">
                 Previewing: {utilizationPreview.totalUnits} unit{utilizationPreview.totalUnits !== 1 ? 's' : ''}
                 {utilizationPreview.filterDestination && (
@@ -789,9 +789,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   // Determine color scheme based on compatibility and fit
                   let bgColor, borderColor, textColor;
                   if (!preview.meetsRequirements) {
-                    bgColor = 'bg-slate-700/30';
-                    borderColor = 'border-slate-600';
-                    textColor = 'text-slate-500';
+                    bgColor = 'bg-muted/30';
+                    borderColor = 'border-border';
+                    textColor = 'text-muted-foreground';
                   } else if (preview.fits) {
                     bgColor = 'bg-green-500/10';
                     borderColor = 'border-green-500/30';
@@ -816,7 +816,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         </span>
                       </div>
                       {!preview.meetsRequirements && (
-                        <div className="text-slate-500 text-[9px] mt-0.5">Missing capabilities</div>
+                        <div className="text-muted-foreground text-[9px] mt-0.5">Missing capabilities</div>
                       )}
                       {preview.meetsRequirements && !preview.fits && preview.utilization > 100 && (
                         <div className="text-red-300 text-[9px] mt-0.5">Too large</div>
@@ -832,7 +832,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         {/* Main Content - Containers (RIGHT, 80%) */}
         < div className="flex-1 flex flex-col overflow-hidden" >
           {/* Sticky Collapse All Button */}
-          < div className="flex-shrink-0 pb-3 flex justify-end sticky top-0 bg-slate-900 z-10" >
+          < div className="flex-shrink-0 pb-3 flex justify-end sticky top-0 bg-background z-10" >
             <button
               onClick={() => {
                 if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
@@ -841,7 +841,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
                 }
               }}
-              className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
             >
               {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
             </button>
@@ -856,13 +856,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               {
                 addContainerModal && (
                   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[500px] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                    <div className="bg-card p-6 rounded-xl border border-border w-[500px] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
                       <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
 
                       {/* Unassigned Products Summary */}
                       {result && result.unassignedProducts.length > 0 && (
-                        <div className="mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
-                          <h4 className="text-xs font-semibold text-slate-400 mb-2">
+                        <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-border">
+                          <h4 className="text-xs font-semibold text-muted-foreground mb-2">
                             Unassigned Items ({result.unassignedProducts.length})
                           </h4>
                           <div className="max-h-32 overflow-y-auto scrollbar-hide space-y-1">
@@ -870,13 +870,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               const p = group.products[0];
                               return (
                                 <div key={idx} className="flex justify-between text-xs">
-                                  <span className="text-slate-300 truncate flex-1">{p.name}</span>
+                                  <span className="text-foreground truncate flex-1">{p.name}</span>
                                   <span className="text-red-400 font-bold ml-2">{group.totalQty}</span>
                                 </div>
                               );
                             })}
                             {Object.keys(groupedUnassigned).length > 10 && (
-                              <div className="text-xs text-slate-500 italic">
+                              <div className="text-xs text-muted-foreground italic">
                                 +{Object.keys(groupedUnassigned).length - 10} more...
                               </div>
                             )}
@@ -890,22 +890,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           <button
                             key={container.id}
                             onClick={() => handleAddContainer(container)}
-                            className="w-full text-left p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600 transition-colors flex justify-between items-center group"
+                            className="w-full text-left p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border transition-colors flex justify-between items-center group"
                           >
                             <div>
-                              <div className="font-medium text-slate-200">{container.name}</div>
-                              <div className="text-xs text-slate-400 mt-1">
+                              <div className="font-medium text-foreground">{container.name}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
                                 {container.destination || 'No Destination'} • ${container.cost.toLocaleString()}
                               </div>
                             </div>
-                            <ChevronRight size={16} className="text-slate-500 group-hover:text-white" />
+                            <ChevronRight size={16} className="text-muted-foreground group-hover:text-foreground" />
                           </button>
                         ))}
                       </div>
                       <div className="mt-4 flex justify-end">
                         <button
                           onClick={() => setAddContainerModal(false)}
-                          className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+                          className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                           Cancel
                         </button>
@@ -933,35 +933,35 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     ? 'text-red-400'
                     : hasUtilizationWarning
                       ? 'text-yellow-400'
-                      : 'text-slate-200';
+                      : 'text-foreground';
 
                   const borderColorClass = hasIssues
                     ? 'border-red-900/50'
                     : hasUtilizationWarning
                       ? 'border-yellow-900/50'
-                      : 'border-slate-700';
+                      : 'border-border';
 
                   return (
-                    <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-slate-800/50' : ''}`}>
+                    <div key={destination} className={`space-y-4 rounded-xl border p-4 ${borderColorClass} ${isCollapsed && (hasIssues || hasUtilizationWarning) ? 'bg-card/50' : ''}`}>
                       <div
                         className="flex items-center gap-2 cursor-pointer group"
                         onClick={() => toggleDestination(destination)}
                       >
-                        {isCollapsed ? <ChevronRight size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
+                        {isCollapsed ? <ChevronRight size={20} className="text-muted-foreground" /> : <ChevronDown size={20} className="text-muted-foreground" />}
                         <h3 className={`text-lg font-bold flex items-center gap-2 ${headerColorClass}`}>
                           <MapPin size={18} />
                           {destination === 'Unspecified Destination' ? 'Unspecified Destination' : destination.split('|')[0]}
                           {assignments[0]?.assignedProducts[0]?.shipToName && (
-                            <span className="text-sm font-normal text-slate-400 ml-1">
+                            <span className="text-sm font-normal text-muted-foreground ml-1">
                               - {assignments[0].assignedProducts[0].shipToName}
                             </span>
                           )}
                           {assignments[0]?.assignedProducts[0]?.country && (
-                            <span className="text-sm font-normal text-slate-400 ml-1">
+                            <span className="text-sm font-normal text-muted-foreground ml-1">
                               ({assignments[0].assignedProducts[0].country})
                             </span>
                           )}
-                          <span className="text-sm font-normal text-slate-500 ml-2">
+                          <span className="text-sm font-normal text-muted-foreground ml-2">
                             ({assignments.length} Containers)
                           </span>
                           <span className="text-sm font-normal text-green-400 ml-2">
@@ -978,7 +978,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             </span>
                           )}
                         </h3>
-                        <div className="h-px bg-slate-700 flex-1 ml-4 group-hover:bg-slate-600 transition-colors" />
+                        <div className="h-px bg-border flex-1 ml-4 group-hover:bg-primary/30 transition-colors" />
                       </div>
 
                       {!isCollapsed && assignments.map((loadedContainer) => {
@@ -1004,22 +1004,22 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             key={loadedContainer.container.id}
                             onDragOver={handleDragOver}
                             onDrop={(e) => onDropWrapper(e, loadedContainer.container.id)}
-                            className={`bg-slate-800 rounded-lg border transition-all duration-200 
-                    ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-red-500' : 'border-slate-700'}
+                            className={`bg-card rounded-lg border transition-all duration-200 
+                    ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'border-destructive' : 'border-border'}
 `}
                           >
-                            <div className={`p-3 border-b border-slate-700 flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-red-900/20' : 'bg-slate-900/50'
+                            <div className={`p-3 border-b border-border flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-destructive/20' : 'bg-muted/50'
                               } `}>
                               <div>
                                 <div className="font-semibold text-white flex items-center gap-2">
-                                  {loadedContainer.container.name} {instanceNumber && <span className="text-slate-500 text-sm font-normal">{instanceNumber}</span>}
+                                  {loadedContainer.container.name} {instanceNumber && <span className="text-muted-foreground text-sm font-normal">{instanceNumber}</span>}
                                   {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
                                     <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">
                                       <AlertTriangle size={12} /> Issues Found
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-xs text-slate-400 mt-0.5 flex gap-3">
+                                <div className="text-xs text-muted-foreground mt-0.5 flex gap-3">
                                   <span>{loadedContainer.container.destination || 'No Dest'}</span>
                                   <span>•</span>
                                   <span>{loadedContainer.container.restrictions.join(', ') || 'No Restrictions'}</span>
@@ -1032,7 +1032,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                       return (
                                         <>
                                           <span>•</span>
-                                          <span className={`${limit && weight > limit ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
+                                          <span className={`${limit && weight > limit ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
                                             {weight.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg
                                             {limit ? ` / ${limit.toLocaleString()} kg` : ''}
                                           </span>
@@ -1046,7 +1046,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               <div className="text-right flex items-center gap-3">
                                 <button
                                   onClick={() => setDeleteContainerModal(loadedContainer.container.id)}
-                                  className="text-slate-400 hover:text-red-400 transition-colors p-1 rounded hover:bg-red-500/10"
+                                  className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-destructive/10"
                                   title="Delete container"
                                 >
                                   <Trash2 size={16} />
@@ -1055,13 +1055,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                   <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
                                     {loadedContainer.totalUtilization.toFixed(1)}%
                                   </div>
-                                  <div className="text-xs text-slate-500">Utilization</div>
+                                  <div className="text-xs text-muted-foreground">Utilization</div>
                                 </div>
                               </div>
                             </div>
 
                             {/* Progress Bar */}
-                            <div className="h-2 bg-slate-900 w-full">
+                            <div className="h-2 bg-muted w-full">
                               <div
                                 className={`h-full transition-all duration-500 ${isLowUtilization ? 'bg-yellow-500' : isOptimal ? 'bg-green-500' : 'bg-blue-500'}`}
                                 style={{ width: `${Math.min(loadedContainer.totalUtilization, 100)}%` }}
@@ -1071,7 +1071,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             {/* Products List */}
                             <div className="p-3 space-y-2">
                               {loadedContainer.assignedProducts.length === 0 ? (
-                                <div className="text-center py-4 text-slate-600 text-sm italic">Empty Container</div>
+                                <div className="text-center py-4 text-muted-foreground text-sm italic">Empty Container</div>
                               ) : (
                                 groupedProducts.map((group, idx) => {
                                   const p = group.products[0]; // Representative product
@@ -1080,24 +1080,24 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                       key={`${p.id} -${idx} `}
                                       draggable
                                       onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
-                                      className="bg-slate-700/50 p-2 rounded border border-slate-600/50 flex justify-between items-center text-sm hover:bg-slate-700 cursor-grab active:cursor-grabbing group"
+                                      className="bg-muted/50 p-2 rounded border border-border/50 flex justify-between items-center text-sm hover:bg-muted cursor-grab active:cursor-grabbing group"
                                     >
                                       <div className="flex items-center gap-2 overflow-hidden">
-                                        <Box size={14} className="text-blue-400 shrink-0" />
-                                        <span className="truncate text-slate-300" title={p.name}>{p.name}</span>
+                                        <Box size={14} className="text-primary shrink-0" />
+                                        <span className="truncate text-foreground" title={p.name}>{p.name}</span>
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.map(fieldKey => {
                                           const val = p.extraFields?.[fieldKey];
                                           if (!val) return null;
                                           return (
-                                            <span key={fieldKey} className="text-xs text-slate-500 border-l border-slate-600 pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${val}`}>
+                                            <span key={fieldKey} className="text-xs text-muted-foreground border-l border-border pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${val}`}>
                                               {val}
                                             </span>
                                           );
                                         })}
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-slate-400 text-xs bg-slate-800 px-2 py-0.5 rounded">
+                                        <span className="text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded">
                                           {group.totalQty} units
                                         </span>
                                         <button
@@ -1118,7 +1118,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
                               {/* Validation Issues */}
                               {loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-slate-700">
+                                <div className="mt-3 pt-3 border-t border-border">
                                   <div className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
                                     <AlertTriangle size={14} />
                                     Validation Issues:

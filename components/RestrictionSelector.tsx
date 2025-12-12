@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 interface RestrictionSelectorProps {
   availableOptions: string[];
@@ -17,21 +18,26 @@ const RestrictionSelector: React.FC<RestrictionSelectorProps> = ({ availableOpti
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5 mt-2">
+    <div className="flex flex-wrap gap-1.5">
       {availableOptions.map(opt => {
         const isActive = selected.includes(opt);
         return (
           <button
             key={opt}
+            type="button"
             onClick={() => toggle(opt)}
-            className={`text-[10px] px-2 py-1 rounded-md border transition-all duration-200 flex items-center gap-1 ${
-              isActive 
-                ? 'bg-blue-600 border-blue-500 text-white shadow-sm shadow-blue-900/20' 
-                : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
-            }`}
+            className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-md"
           >
-            {isActive && <Check size={10} />}
-            {opt}
+            <Badge
+              variant={isActive ? "default" : "outline"}
+              className={`cursor-pointer transition-all duration-200 flex items-center gap-1 text-[10px] px-2 py-1 ${isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+            >
+              {isActive && <Check size={10} />}
+              {opt}
+            </Badge>
           </button>
         );
       })}

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Box, Lock, Mail, ArrowRight } from 'lucide-react';
-import Button from './Button';
+import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 
 const Auth: React.FC = () => {

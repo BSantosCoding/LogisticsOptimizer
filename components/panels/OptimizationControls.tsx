@@ -2,7 +2,7 @@
 import React from 'react';
 import { EyeOff, Check, Zap } from 'lucide-react';
 
-import Button from '../Button';
+import { Button } from "@/components/ui/button";
 
 interface OptimizationControlsProps {
   marginPercentage: number;

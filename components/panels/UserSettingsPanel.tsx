@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Key, Settings as SettingsIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../services/supabase';
-import Button from '../Button';
+import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 
 interface UserSettingsPanelProps {
@@ -142,8 +142,8 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
 
                         {resetPasswordMessage && (
                             <div className={`mb-3 p-3 rounded-lg border flex items-center gap-2 text-sm ${resetPasswordMessage.type === 'success'
-                                    ? 'bg-green-900/30 border-green-500/50 text-green-200'
-                                    : 'bg-red-900/30 border-red-500/50 text-red-200'
+                                ? 'bg-green-900/30 border-green-500/50 text-green-200'
+                                : 'bg-red-900/30 border-red-500/50 text-red-200'
                                 }`}>
                                 {resetPasswordMessage.type === 'success' ? (
                                     <CheckCircle size={16} />
@@ -172,8 +172,8 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
 
                         {changeEmailMessage && (
                             <div className={`mb-3 p-3 rounded-lg border flex items-center gap-2 text-sm ${changeEmailMessage.type === 'success'
-                                    ? 'bg-green-900/30 border-green-500/50 text-green-200'
-                                    : 'bg-red-900/30 border-red-500/50 text-red-200'
+                                ? 'bg-green-900/30 border-green-500/50 text-green-200'
+                                : 'bg-red-900/30 border-red-500/50 text-red-200'
                                 }`}>
                                 {changeEmailMessage.type === 'success' ? (
                                     <CheckCircle size={16} />

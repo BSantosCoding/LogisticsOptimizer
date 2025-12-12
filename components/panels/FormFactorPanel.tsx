@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Box, Pencil, Save, X } from 'lucide-react';
-import Button from '../Button';
+import { Button } from "@/components/ui/button";
 import { ProductFormFactor, UserProfile } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
 

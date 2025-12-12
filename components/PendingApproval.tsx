@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, RefreshCw, Repeat, LogOut } from 'lucide-react';
-import Button from './Button';
+import { Button } from "@/components/ui/button";
 
 interface PendingApprovalProps {
     companyName: string;

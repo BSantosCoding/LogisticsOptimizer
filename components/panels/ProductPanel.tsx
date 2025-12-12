@@ -102,7 +102,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   if (viewMode === 'form') {
     return (
       <div className="h-full flex flex-col gap-4">
-        <div className="px-1 py-3 border-b border-border flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <span className="flex items-center gap-2 font-medium text-sm text-foreground">
             {editingProductId ? <><Pencil size={16} className="text-primary" /> {t('products.editing')}</> : <><Plus size={16} className="text-primary" /> {t('products.addProduct')}</>}
           </span>
@@ -113,7 +113,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           )}
         </div>
 
-        <div className="space-y-4 px-1">
+        <div className="space-y-4 px-4 pb-4 overflow-y-auto">
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground font-medium">{t('products.namePlaceholder')}</Label>
             <Input
@@ -181,7 +181,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground font-medium">{t('products.weight')} (kg)</Label>
+            <Label className="text-xs text-muted-foreground font-medium">{t('products.weight')}</Label>
             <div className="relative">
               <Input
                 type="number"
@@ -337,14 +337,14 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               <Card
                 key={p.id}
                 className={`transform transition-all duration-200 hover:shadow-md border bg-card text-card-foreground group relative overflow-hidden ${hasMissingFF ? 'border-yellow-500/50 bg-yellow-500/5' :
-                    isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
+                  isSelected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
                   } ${editingProductId === p.id ? 'ring-2 ring-primary' : ''}`}
                 onClick={() => toggleProductSelection(p.id)}
               >
                 <div onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-20">
                   <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
                     }`} onClick={() => toggleProductSelection(p.id)}>
                     {isSelected && <div className="w-2.5 h-2.5 bg-current rounded-sm" />}
                   </div>

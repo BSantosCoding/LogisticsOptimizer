@@ -80,7 +80,18 @@
         "csvMapping": "CSV Import Configuration",
         "formFactorLabel": "Name / Form Factor",
         "restrictedAccessCSV": "CSV configuration is restricted to managers and authorized users.",
-        "newFieldKey": "New Field Key (e.g. region)"
+        "newFieldKey": "New Field Key (e.g. region)",
+        "formFactors": "Form Factors",
+        "addFormFactor": "Add Form Factor",
+        "noFormFactors": "No form factors defined.",
+        "name": "Name",
+        "description": "Description",
+        "palletWeight": "Pallet Weight (kg)",
+        "palletWeightPlaceholder": "Weight per pallet",
+        "unitsPerPallet": "Units per Pallet",
+        "unitsPerPalletPlaceholder": "Units that fit on one pallet",
+        "palletConfig": "Pallet Configuration",
+        "noPalletConfig": "No pallet config"
     },
     "team": {
         "overview": "Team Overview",

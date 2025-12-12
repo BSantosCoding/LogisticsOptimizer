@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Box, Pencil, Save, X } from 'lucide-react';
+import { Plus, Trash2, Box, Pencil, Save, X, Weight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +10,9 @@ import { useTranslation } from 'react-i18next';
 
 interface FormFactorPanelProps {
     formFactors: ProductFormFactor[];
-    onAdd: (name: string, description: string) => void;
+    onAdd: (name: string, description: string, palletWeight?: number, unitsPerPallet?: number) => void;
     onRemove: (id: string) => void;
-    onEdit: (id: string, name: string, description: string) => void;
+    onEdit: (id: string, name: string, description: string, palletWeight?: number, unitsPerPallet?: number) => void;
     userRole: Role | null;
     userProfile: UserProfile | null;
 }
@@ -21,17 +21,27 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
     const { t } = useTranslation();
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
+    const [newPalletWeight, setNewPalletWeight] = useState('');
+    const [newUnitsPerPallet, setNewUnitsPerPallet] = useState('');
+
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editDesc, setEditDesc] = useState('');
+    const [editPalletWeight, setEditPalletWeight] = useState('');
+    const [editUnitsPerPallet, setEditUnitsPerPallet] = useState('');
+
     const canManage = hasRole(userRole, 'manager') || userProfile?.can_edit_form_factors;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (newName) {
-            onAdd(newName, newDesc);
+            const palletWeight = newPalletWeight ? parseFloat(newPalletWeight) : undefined;
+            const unitsPerPallet = newUnitsPerPallet ? parseInt(newUnitsPerPallet) : undefined;
+            onAdd(newName, newDesc, palletWeight, unitsPerPallet);
             setNewName('');
             setNewDesc('');
+            setNewPalletWeight('');
+            setNewUnitsPerPallet('');
         }
     };
 
@@ -39,11 +49,15 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
         setEditingId(ff.id);
         setEditName(ff.name);
         setEditDesc(ff.description || '');
+        setEditPalletWeight(ff.pallet_weight?.toString() || '');
+        setEditUnitsPerPallet(ff.units_per_pallet?.toString() || '');
     };
 
     const saveEdit = () => {
         if (editingId && editName) {
-            onEdit(editingId, editName, editDesc);
+            const palletWeight = editPalletWeight ? parseFloat(editPalletWeight) : undefined;
+            const unitsPerPallet = editUnitsPerPallet ? parseInt(editUnitsPerPallet) : undefined;
+            onEdit(editingId, editName, editDesc, palletWeight, unitsPerPallet);
             setEditingId(null);
         }
     };
@@ -52,6 +66,15 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
         setEditingId(null);
         setEditName('');
         setEditDesc('');
+        setEditPalletWeight('');
+        setEditUnitsPerPallet('');
+    };
+
+    const formatPalletConfig = (ff: ProductFormFactor) => {
+        if (ff.pallet_weight && ff.units_per_pallet) {
+            return `${ff.pallet_weight}kg / ${ff.units_per_pallet} ${t('common.units')}`;
+        }
+        return null;
     };
 
     return (
@@ -71,26 +94,53 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
             {canManage && (
                 <div className="p-4 border-b border-border bg-muted/5">
                     <form onSubmit={handleSubmit} className="space-y-3">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">{t('config.name', 'Name')}</Label>
-                            <Input
-                                type="text"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="e.g. OSB, IBC"
-                                className="h-8 bg-muted/30 border-input/50"
-                            />
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">{t('config.name', 'Name')}</Label>
+                                <Input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="e.g. OSB, IBC"
+                                    className="h-8 bg-muted/30 border-input/50"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">{t('config.description', 'Description')}</Label>
+                                <Input
+                                    type="text"
+                                    value={newDesc}
+                                    onChange={(e) => setNewDesc(e.target.value)}
+                                    placeholder="Optional"
+                                    className="h-8 bg-muted/30 border-input/50"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">{t('config.description', 'Description')}</Label>
-                            <Input
-                                type="text"
-                                value={newDesc}
-                                onChange={(e) => setNewDesc(e.target.value)}
-                                placeholder="Optional description"
-                                className="h-8 bg-muted/30 border-input/50"
-                            />
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">{t('config.palletWeight')}</Label>
+                                <Input
+                                    type="number"
+                                    step="0.1"
+                                    value={newPalletWeight}
+                                    onChange={(e) => setNewPalletWeight(e.target.value)}
+                                    placeholder={t('config.palletWeightPlaceholder')}
+                                    className="h-8 bg-muted/30 border-input/50"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-muted-foreground">{t('config.unitsPerPallet')}</Label>
+                                <Input
+                                    type="number"
+                                    value={newUnitsPerPallet}
+                                    onChange={(e) => setNewUnitsPerPallet(e.target.value)}
+                                    placeholder={t('config.unitsPerPalletPlaceholder')}
+                                    className="h-8 bg-muted/30 border-input/50"
+                                />
+                            </div>
                         </div>
+
                         <Button type="submit" disabled={!newName} className="w-full h-8" size="sm">
                             <Plus size={14} className="mr-1" /> {t('config.addFormFactor', 'Add Form Factor')}
                         </Button>
@@ -108,26 +158,46 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                         <div key={ff.id} className="bg-muted/30 border border-border/50 rounded-lg p-3 group hover:border-primary/30 hover:bg-muted/50 transition-all">
                             {editingId === ff.id ? (
                                 <div className="space-y-2">
-                                    <Input
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        className="h-7 bg-background border-input/50 text-sm"
-                                    />
-                                    <Input
-                                        type="text"
-                                        value={editDesc}
-                                        onChange={(e) => setEditDesc(e.target.value)}
-                                        placeholder="Description"
-                                        className="h-7 bg-background border-input/50 text-xs"
-                                    />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            placeholder={t('config.name')}
+                                            className="h-7 bg-background border-input/50 text-sm"
+                                        />
+                                        <Input
+                                            type="text"
+                                            value={editDesc}
+                                            onChange={(e) => setEditDesc(e.target.value)}
+                                            placeholder={t('config.description')}
+                                            className="h-7 bg-background border-input/50 text-xs"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            value={editPalletWeight}
+                                            onChange={(e) => setEditPalletWeight(e.target.value)}
+                                            placeholder={t('config.palletWeight')}
+                                            className="h-7 bg-background border-input/50 text-xs"
+                                        />
+                                        <Input
+                                            type="number"
+                                            value={editUnitsPerPallet}
+                                            onChange={(e) => setEditUnitsPerPallet(e.target.value)}
+                                            placeholder={t('config.unitsPerPallet')}
+                                            className="h-7 bg-background border-input/50 text-xs"
+                                        />
+                                    </div>
                                     <div className="flex gap-2">
                                         <Button
                                             onClick={saveEdit}
                                             size="sm"
                                             className="flex-1 h-7 text-xs"
                                         >
-                                            <Save size={12} className="mr-1" /> Save
+                                            <Save size={12} className="mr-1" /> {t('common.save')}
                                         </Button>
                                         <Button
                                             onClick={cancelEdit}
@@ -135,7 +205,7 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                                             size="sm"
                                             className="flex-1 h-7 text-xs"
                                         >
-                                            <X size={12} className="mr-1" /> Cancel
+                                            <X size={12} className="mr-1" /> {t('common.cancel')}
                                         </Button>
                                     </div>
                                 </div>
@@ -144,6 +214,12 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                                     <div>
                                         <div className="font-medium text-sm">{ff.name}</div>
                                         {ff.description && <div className="text-xs text-muted-foreground">{ff.description}</div>}
+                                        {formatPalletConfig(ff) && (
+                                            <div className="text-xs text-primary/70 flex items-center gap-1 mt-1">
+                                                <Weight size={10} />
+                                                {formatPalletConfig(ff)}
+                                            </div>
+                                        )}
                                     </div>
                                     {canManage && (
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

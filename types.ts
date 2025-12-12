@@ -3,6 +3,8 @@ export interface ProductFormFactor {
   id: string;
   name: string;
   description?: string;
+  pallet_weight?: number;     // Weight of one pallet in kg
+  units_per_pallet?: number;  // How many units of this form factor fit per pallet
 }
 
 export interface Product {

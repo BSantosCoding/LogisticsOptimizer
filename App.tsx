@@ -406,17 +406,19 @@ const App: React.FC = () => {
     setEditingContainerId(null);
   };
 
-  const handleAddFormFactor = async (name: string, description: string) => {
+  const handleAddFormFactor = async (name: string, description: string, palletWeight?: number, unitsPerPallet?: number) => {
     if (!companyId) return;
     const newId = `FF-${Date.now()}`;
-    const newFF = { id: newId, name, description };
+    const newFF = { id: newId, name, description, pallet_weight: palletWeight, units_per_pallet: unitsPerPallet };
     addFormFactor(newFF);
 
     await supabase.from('form_factors').insert([{
       id: newId,
       company_id: companyId,
       name,
-      description
+      description,
+      pallet_weight: palletWeight || null,
+      units_per_pallet: unitsPerPallet || null
     }]);
   };
 
@@ -425,9 +427,14 @@ const App: React.FC = () => {
     await supabase.from('form_factors').delete().eq('id', id);
   };
 
-  const handleEditFormFactor = async (id: string, name: string, description: string) => {
-    updateFormFactor({ id, name, description });
-    await supabase.from('form_factors').update({ name, description }).eq('id', id);
+  const handleEditFormFactor = async (id: string, name: string, description: string, palletWeight?: number, unitsPerPallet?: number) => {
+    updateFormFactor({ id, name, description, pallet_weight: palletWeight, units_per_pallet: unitsPerPallet });
+    await supabase.from('form_factors').update({
+      name,
+      description,
+      pallet_weight: palletWeight || null,
+      units_per_pallet: unitsPerPallet || null
+    }).eq('id', id);
   };
 
   // --- Shipment Handlers ---

@@ -81,7 +81,18 @@
         "formFactorLabel": "Nome / Formato",
         "restrictedAccessCSV": "A configuração CSV é restrita a gestores e utilizadores autorizados.",
         "customFields": "Campos Personalizados",
-        "newFieldKey": "Nova Chave de Campo (ex: regiao)"
+        "newFieldKey": "Nova Chave de Campo (ex: regiao)",
+        "formFactors": "Formatos",
+        "addFormFactor": "Adicionar Formato",
+        "noFormFactors": "Nenhum formato definido.",
+        "name": "Nome",
+        "description": "Descrição",
+        "palletWeight": "Peso da Palete (kg)",
+        "palletWeightPlaceholder": "Peso por palete",
+        "unitsPerPallet": "Unidades por Palete",
+        "unitsPerPalletPlaceholder": "Unidades que cabem numa palete",
+        "palletConfig": "Configuração de Palete",
+        "noPalletConfig": "Sem configuração de palete"
     },
     "team": {
         "overview": "Visão Geral da Equipa",

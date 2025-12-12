@@ -118,32 +118,18 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">{t('containers.destination')}</Label>
-              <div className="relative">
-                <ContainerIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  className="pl-9 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                  value={newContainer.destination}
-                  onChange={e => setNewContainer({ ...newContainer, destination: e.target.value })}
-                  placeholder={t('containers.destinationPlaceholder')}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">{t('containers.cost')}</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  type="number"
-                  min="0"
-                  className="pl-9 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                  value={newContainer.cost}
-                  onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
-                  placeholder={t('containers.costPlaceholder')}
-                />
-              </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground font-medium">{t('containers.cost')}</Label>
+            <div className="relative">
+              <DollarSign className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                type="number"
+                min="0"
+                className="pl-9 bg-muted/50 border-input/50 focus:bg-background transition-colors"
+                value={newContainer.cost}
+                onChange={e => setNewContainer({ ...newContainer, cost: parseFloat(e.target.value) || 0 })}
+                placeholder={t('containers.costPlaceholder')}
+              />
             </div>
           </div>
 

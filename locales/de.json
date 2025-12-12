@@ -82,7 +82,18 @@
         "restrictedAccessCSV": "Die CSV-Konfiguration ist auf Manager und autorisierte Benutzer beschränkt.",
         "customFields": "Benutzerdefinierte Felder",
         "newFieldKey": "Neuer Feldschlüssel (z.B. region)",
-        "weight": "Gewicht"
+        "weight": "Gewicht",
+        "formFactors": "Formfaktoren",
+        "addFormFactor": "Formfaktor hinzufügen",
+        "noFormFactors": "Keine Formfaktoren definiert.",
+        "name": "Name",
+        "description": "Beschreibung",
+        "palletWeight": "Palettengewicht (kg)",
+        "palletWeightPlaceholder": "Gewicht pro Palette",
+        "unitsPerPallet": "Einheiten pro Palette",
+        "unitsPerPalletPlaceholder": "Einheiten, die auf eine Palette passen",
+        "palletConfig": "Palettenkonfiguration",
+        "noPalletConfig": "Keine Palettenkonfiguration"
     },
     "team": {
         "overview": "Teamübersicht",

@@ -954,6 +954,7 @@ const App: React.FC = () => {
                                   const newPerms = { ...userProfile, [perm.key]: checked };
                                   setViewAsRole('standard', newPerms);
                                 }}
+                                onSelect={(e) => e.preventDefault()}
                                 className="text-xs"
                               >
                                 {perm.label}

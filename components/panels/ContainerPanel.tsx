@@ -211,11 +211,6 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
           <div className="flex gap-2">
             {canManage && (
               <>
-                <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileChange} />
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                  <Upload size={14} className="mr-2" />
-                  {t('products.importCsv')}
-                </Button>
                 {containers.length > 0 && (
                   <Button variant="outline" size="sm" onClick={onClearAll} className="text-destructive hover:text-destructive">
                     <Trash2 size={14} className="mr-2" />
@@ -274,8 +269,8 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
               >
                 <div onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-20">
                   <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${isSelected
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-muted-foreground/30 hover:border-primary/50 bg-background/50'
                     }`} onClick={() => toggleContainerSelection(c.id)}>
                     {isSelected && <div className="w-2.5 h-2.5 bg-current rounded-sm" />}
                   </div>

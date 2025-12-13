@@ -186,7 +186,7 @@
         "optimization_complete": "Optimierung abgeschlossen.",
         "containers_used": "{{count}} Container verwendet (durchschn. {{averageUtilization}}% voll).",
         "items_unassigned": "{{count}} Artikel nicht zugewiesen.",
-        "cost_saving_reasoning": "Könnte ${{costDifference}} sparen, indem die Stückteilung zugelassen wird.",
+        "cost_saving_reasoning": "Könnte €{{costDifference}} sparen, indem die Stückteilung zugelassen wird.",
         "utilization_saving_reasoning": "Könnte die Containerauslastung um {{utilizationDifference}}% verbessern, indem die Stückteilung zugelassen wird."
     },
     "userSettings": {

@@ -193,7 +193,7 @@
         "optimization_complete": "Optimization complete.",
         "containers_used": "{{count}} containers used (avg {{averageUtilization}}% full).",
         "items_unassigned": "{{count}} items unassigned.",
-        "cost_saving_reasoning": "Could save ${{costDifference}} by allowing unit splitting.",
+        "cost_saving_reasoning": "Could save €{{costDifference}} by allowing unit splitting.",
         "utilization_saving_reasoning": "Could improve container utilization by {{utilizationDifference}}% allowing unit splitting."
     },
     "userSettings": {

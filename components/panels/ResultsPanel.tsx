@@ -608,7 +608,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         </div>
         <div className="bg-card p-3 rounded-xl border border-border">
           <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalCost')}</div>
-          <div className="text-xl font-bold text-success">${result.totalCost.toLocaleString()}</div>
+          <div className="text-xl font-bold text-success">€{result.totalCost.toLocaleString()}</div>
         </div>
         <div className="bg-card p-3 rounded-xl border border-border">
           <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.unassignedItems')}</div>

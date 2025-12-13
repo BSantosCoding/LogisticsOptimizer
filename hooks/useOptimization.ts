@@ -142,24 +142,54 @@ export const useOptimization = (
                 shippingDateGroupingRange
             );
 
-            // Calculate total cost using country-specific costs when available
-            const totalCost = assignments.reduce((sum, a) => {
+            const assignmentsAlternative = calculatePacking(
+                productsToUse,
+                containersToUse,
+                priority,
+                optimalUtilizationRange.min,
+                countryCosts,
+                optimalUtilizationRange.max,
+                countryWeightLimits,
+                !allowUnitSplitting,
+                shippingDateGroupingRange
+            );
+
+            let costFunc = (sum, a) => {
                 const country = a.assignedProducts[0]?.country;
                 // Strip the -instance-XX suffix from container ID for cost lookup
                 const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
                 const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
                 return sum + cost;
-            }, 0);
+            };
 
+            // Calculate total cost using country-specific costs when available
+            const totalCost = assignments.reduce(costFunc, 0);
+            const totalCostAlternative = assignmentsAlternative.assignments.reduce(costFunc, 0);
+
+            // Calculate average utilization
             const avgUtilization = assignments.length > 0
                 ? assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignments.length
                 : 0;
+
+            const avgUtilizationAlternative = assignmentsAlternative.assignments.length > 0
+                ? assignmentsAlternative.assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / assignmentsAlternative.assignments.length
+                : 0;
+
+            // Calculate cost difference and utilization difference
+            const costDifference = totalCostAlternative - totalCost;
+            const utilizationDifference = avgUtilizationAlternative - avgUtilization;
+
+            // Build reasoning string with the differences: Save X cost by allowing unit splitting or Save X% utilization by allowing unit splitting
+            const costSavingReasoning = costDifference > 0 && !allowUnitSplitting ? `Could save ${costDifference.toFixed(2)} cost by allowing unit splitting` : '';
+            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could save ${utilizationDifference.toFixed(1)}% utilization by allowing unit splitting` : '';
+
+            const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n\n${costSavingReasoning}\n${utilizationSavingReasoning}`;
 
             const automaticResult: OptimizationResult = {
                 assignments,
                 unassignedProducts: unassigned,
                 totalCost,
-                reasoning: `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.`
+                reasoning
             };
 
             const newResults: Record<OptimizationPriority, OptimizationResult> = {

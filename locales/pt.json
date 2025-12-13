@@ -181,7 +181,12 @@
         "totalContainers": "Total de Contentores",
         "breakdown": "Discriminação",
         "export": "Exportar Relatório",
-        "noResults": "Nenhum resultado disponível. Execute a otimização para ver os dados."
+        "noResults": "Nenhum resultado disponível. Execute a otimização para ver os dados.",
+        "optimization_complete": "Otimização concluída.",
+        "containers_used": "{{count}} contentores utilizados (média de {{averageUtilization}}% cheios).",
+        "items_unassigned": "{{count}} itens não atribuídos.",
+        "cost_saving_reasoning": "Poderia poupar ${{costDifference}} ao permitir a divisão de unidades.",
+        "utilization_saving_reasoning": "Poderia melhorar a utilização do contentor em {{utilizationDifference}}% ao permitir a divisão de unidades."
     },
     "userSettings": {
         "title": "Definições de Utilizador",

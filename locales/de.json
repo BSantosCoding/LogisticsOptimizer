@@ -182,7 +182,12 @@
         "totalContainers": "Gesamtcontainer",
         "breakdown": "Aufschlüsselung",
         "export": "Bericht exportieren",
-        "noResults": "Keine Ergebnisse verfügbar. Optimierung starten, um Daten zu sehen."
+        "noResults": "Keine Ergebnisse verfügbar. Optimierung starten, um Daten zu sehen.",
+        "optimization_complete": "Optimierung abgeschlossen.",
+        "containers_used": "{{count}} Container verwendet (durchschn. {{averageUtilization}}% voll).",
+        "items_unassigned": "{{count}} Artikel nicht zugewiesen.",
+        "cost_saving_reasoning": "Könnte ${{costDifference}} sparen, indem die Stückteilung zugelassen wird.",
+        "utilization_saving_reasoning": "Könnte die Containerauslastung um {{utilizationDifference}}% verbessern, indem die Stückteilung zugelassen wird."
     },
     "userSettings": {
         "title": "Benutzereinstellungen",

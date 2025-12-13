@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Product, Container, OptimizationPriority, OptimizationResult, LoadedContainer } from '../types';
 import { validateLoadedContainer, calculatePacking } from '../services/logisticsEngine';
 
@@ -12,6 +13,7 @@ export const useOptimization = (
     allowUnitSplitting: boolean,
     shippingDateGroupingRange: number | undefined
 ) => {
+    const { t } = useTranslation();
     const [results, setResults] = useState<Record<OptimizationPriority, OptimizationResult> | null>(null);
     const [activePriority, setActivePriority] = useState<OptimizationPriority>(OptimizationPriority.MANUAL);
     const [isOptimizing, setIsOptimizing] = useState(false);
@@ -179,10 +181,20 @@ export const useOptimization = (
             const costDifference = totalCostAlternative - totalCost;
             const utilizationDifference = avgUtilizationAlternative - avgUtilization;
 
-            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save $${Math.abs(costDifference).toLocaleString()} by allowing unit splitting.` : '';
-            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could improve container utilization by ${utilizationDifference.toFixed(1)}% allowing unit splitting.` : '';
+            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting
+                ? t('results.cost_saving_reasoning', { costDifference: Math.abs(costDifference).toLocaleString() })
+                : '';
 
-            const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n${costSavingReasoning}\n${utilizationSavingReasoning}`;
+            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting
+                ? t('results.utilization_saving_reasoning', { utilizationDifference: utilizationDifference.toFixed(1) })
+                : '';
+
+            // Using string concatenation for the final reasoning as it combines multiple translated phrases.
+            const reasoning = `${t('results.optimization_complete')}\n` +
+                `${t('results.containers_used', { count: assignments.length, averageUtilization: avgUtilization.toFixed(1) })} ` +
+                `${t('results.items_unassigned', { count: unassigned.length })}\n` +
+                `${costSavingReasoning}\n` +
+                `${utilizationSavingReasoning}`;
 
             const automaticResult: OptimizationResult = {
                 assignments,

@@ -179,7 +179,7 @@ export const useOptimization = (
             const costDifference = totalCostAlternative - totalCost;
             const utilizationDifference = avgUtilizationAlternative - avgUtilization;
 
-            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save ${costDifference.toLocaleString()} by allowing unit splitting.` : '';
+            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save $${Math.abs(costDifference).toLocaleString()} by allowing unit splitting.` : '';
             const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could improve container utilization by ${utilizationDifference.toFixed(1)}% allowing unit splitting.` : '';
 
             const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n${costSavingReasoning}\n${utilizationSavingReasoning}`;

@@ -180,10 +180,10 @@ export const useOptimization = (
             const utilizationDifference = avgUtilizationAlternative - avgUtilization;
 
             // Build reasoning string with the differences: 
-            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save ${Math.abs(costDifference).toFixed(2)} cost by allowing unit splitting` : '';
-            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could save ${utilizationDifference.toFixed(1)}% utilization by allowing unit splitting` : '';
+            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save ${Math.abs(costDifference).toFixed(2)} cost by allowing unit splitting.` : '';
+            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could save ${utilizationDifference.toFixed(1)}% utilization by allowing unit splitting.` : '';
 
-            const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n\n${costSavingReasoning}\n${utilizationSavingReasoning}`;
+            const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n${costSavingReasoning}\n${utilizationSavingReasoning}`;
 
             const automaticResult: OptimizationResult = {
                 assignments,

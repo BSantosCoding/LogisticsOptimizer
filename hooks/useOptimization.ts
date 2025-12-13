@@ -179,6 +179,8 @@ export const useOptimization = (
             const costDifference = totalCostAlternative - totalCost;
             const utilizationDifference = avgUtilizationAlternative - avgUtilization;
 
+            console.log(costDifference, utilizationDifference);
+
             // Build reasoning string with the differences: Save X cost by allowing unit splitting or Save X% utilization by allowing unit splitting
             const costSavingReasoning = costDifference > 0 && !allowUnitSplitting ? `Could save ${costDifference.toFixed(2)} cost by allowing unit splitting` : '';
             const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could save ${utilizationDifference.toFixed(1)}% utilization by allowing unit splitting` : '';

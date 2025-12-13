@@ -418,7 +418,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
+      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-border">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-center justify-between">
@@ -457,6 +457,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               </Button>
             </div>
           </div>
+
+          <Separator orientation="horizontal" className="h-6" />
 
           {/* Priority Tabs */}
           <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>

@@ -179,17 +179,8 @@ export const useOptimization = (
             const costDifference = totalCostAlternative - totalCost;
             const utilizationDifference = avgUtilizationAlternative - avgUtilization;
 
-            // Build reasoning string with the differences: Format costs with i18n and add currency symbol
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'EUR', // Assuming USD, adjust as needed based on user settings or context
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-            });
-
-            const formattedCostDifference = formatter.format(Math.abs(costDifference));
-            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save ${formattedCostDifference} by allowing unit splitting.` : '';
-            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could save ${utilizationDifference.toFixed(1)}% utilization by allowing unit splitting.` : '';
+            const costSavingReasoning = costDifference < 0 && !allowUnitSplitting ? `Could save ${costDifference.toLocaleString()} by allowing unit splitting.` : '';
+            const utilizationSavingReasoning = utilizationDifference > 0 && !allowUnitSplitting ? `Could improve container utilization by ${utilizationDifference.toFixed(1)}% allowing unit splitting.` : '';
 
             const reasoning = `Optimization complete.\n${assignments.length} containers used (avg ${avgUtilization.toFixed(1)}% full). ${unassigned.length} items unassigned.\n${costSavingReasoning}\n${utilizationSavingReasoning}`;
 

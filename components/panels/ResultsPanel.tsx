@@ -458,8 +458,6 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             </div>
           </div>
 
-          <Separator orientation="horizontal" className="h-6" />
-
           {/* Priority Tabs */}
           <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
             <TabsList>

@@ -328,10 +328,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     if (!templateProd) return;
 
     // Calculate total quantity of identical items in source
-    const identicalProducts = productsInSource.filter(p =>
-      p.id === productId ||
-      (p.name === templateProd.name && p.formFactorId === templateProd.formFactorId)
-    );
+    // Calculate total quantity of identical items in source
+    const identicalProducts = productsInSource.filter(p => {
+      // Must match name and form factor
+      if (p.name !== templateProd.name || p.formFactorId !== templateProd.formFactorId) return false;
+
+      // Must also match stricter grouping criteria (Destination, ShipTo, Date)
+      // to avoid merging different shipments
+      if (p.destination !== templateProd.destination) return false;
+      if (p.shipToName !== templateProd.shipToName) return false;
+      if (p.shippingAvailableBy !== templateProd.shippingAvailableBy) return false;
+
+      return true;
+    });
 
     const totalQty = identicalProducts.reduce((sum, p) => sum + p.quantity, 0);
 

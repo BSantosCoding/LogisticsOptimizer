@@ -1088,8 +1088,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.map(fieldKey => {
                                           console.log('fieldKey', fieldKey);
-                                          console.log('p', p);
+
                                           const val = p.extraFields?.[fieldKey];
+                                          console.log('val', val);
                                           if (!val) return null;
                                           return (
                                             <span key={fieldKey} className="text-xs text-muted-foreground border-l border-border pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${val}`}>

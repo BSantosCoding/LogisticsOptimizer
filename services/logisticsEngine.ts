@@ -451,6 +451,7 @@ export const calculatePacking = (
   }
 
   const productGroups = groupProductsByDestinationAndFlexibleDate(products, shippingDateGroupingRange);
+  console.log(productGroups)
 
   let allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];

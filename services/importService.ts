@@ -1,5 +1,6 @@
 import { Product, ProductFormFactor, CSVMapping } from '../types';
 import Papa from 'papaparse';
+import { parseLocaleNumber } from '../utils/numberParser';
 
 export const parseProductsCSV = (
     csvContent: string,
@@ -152,11 +153,11 @@ export const parseProductsCSV = (
         const destination = destinationParts.join('|');
 
         // 2. Quantity
-        const quantity = parseInt(numPackagesStr.replace(/,/g, ''), 10) || 0;
+        const quantity = Math.round(parseLocaleNumber(numPackagesStr) || 0);
         if (quantity <= 0) continue;
 
         // 3. Weight (parse, allow decimals)
-        const weight = parseFloat(weightStr.replace(/,/g, '')) || undefined;
+        const weight = parseLocaleNumber(weightStr);
 
         // 4. Form Factor Matching
         let matchedFFId = '';

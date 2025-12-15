@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product, UserProfile, CSVMapping } from '../../types';
 import { Role, hasRole } from '../../utils/roles';
-import { Copy, Plus, Trash2, Lock, Search, Settings, Save, Check, Filter, Info } from 'lucide-react';
+import { Copy, Plus, Trash2, Lock, Search, Settings, Save, Filter } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 
 interface ConfigPanelProps {
   viewMode: 'form' | 'list';
@@ -49,7 +48,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
   userProfile,
   csvMapping,
   onUpdateCsvMapping,
-  setRestrictionTags,
+  _setRestrictionTags,
   allowUnitSplitting,
   setAllowUnitSplitting,
   shippingDateGroupingRange,
@@ -57,7 +56,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('');
+  const [_selectedTagFilter, setSelectedTagFilter] = useState<string>('');
 
   // Local state for CSV mapping editing
   const [editingMapping, setEditingMapping] = useState<CSVMapping>(csvMapping);
@@ -100,7 +99,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTag = selectedTagFilter ? t.restrictions.includes(selectedTagFilter) : true;
+    const matchesTag = _selectedTagFilter ? t.restrictions.includes(_selectedTagFilter) : true;
     return matchesSearch && matchesTag;
   });
 

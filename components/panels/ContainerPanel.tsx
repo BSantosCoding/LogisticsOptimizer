@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Container, ProductFormFactor, UserProfile } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, Pencil, Trash2, X, Container as ContainerIcon, Search, Filter, DollarSign, AlertTriangle, MapPin, ShieldAlert, Upload } from 'lucide-react';
+import { Plus, Save, Pencil, Trash2, X, Container as ContainerIcon, Search, DollarSign, MapPin, ShieldAlert } from 'lucide-react';
 import RestrictionSelector from '../RestrictionSelector';
 import { Role, hasRole } from '../../utils/roles';
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 
 interface ContainerPanelProps {
   viewMode: 'form' | 'list';
@@ -55,20 +54,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all_caps');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const canManage = hasRole(userRole, 'manager') || userProfile?.can_edit_containers;
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const content = evt.target?.result as string;
-      if (content) onImport(content);
-    };
-    reader.readAsText(file);
-    e.target.value = ''; // Reset
-  };
 
   const filteredContainers = containers.filter(c => {
     const textMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

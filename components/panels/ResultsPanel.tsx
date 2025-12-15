@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
-import { validateLoadedContainer } from '@/services/logisticsEngine';
+import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping, ProductFormFactor } from '../../types';
+import { AlertTriangle, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +13,7 @@ interface ResultsPanelProps {
   activePriority: OptimizationPriority;
   setActivePriority: (p: OptimizationPriority) => void;
   containers: Container[];
-  countries: any[];
+  countries: CountryData[];
   handleDragStart: (e: React.DragEvent, productId: string, sourceId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, targetId: string, quantity?: number) => void;
@@ -28,8 +27,14 @@ interface ResultsPanelProps {
   isOptimizing: boolean;
   products: Product[];
   selectedProductIds: Set<string>;
-  formFactors: any[];
+  formFactors: ProductFormFactor[];
   csvMapping?: CSVMapping;
+}
+
+interface CountryData {
+  code?: string;
+  name?: string;
+  containerCosts?: Record<string, number>;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -41,7 +46,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   handleDragStart,
   handleDragOver,
   handleDrop,
-  draggedProductId,
+  _draggedProductId,
   onClose,
   onSaveShipment,
   optimalRange = { min: 85, max: 100 },
@@ -51,7 +56,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   isOptimizing,
   products,
   selectedProductIds,
-  formFactors,
+  _formFactors,
   csvMapping
 }) => {
   const { t } = useTranslation();
@@ -418,56 +423,56 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-border">
-        {/* Header */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">{t('results.title')}</h2>
-            <div className="flex items-center gap-3">
-              {/* Warnings / Info */}
-              <div className="flex flex-col items-end mr-2">
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Box size={12} />
-                  <span>{t('results.productsSelected', { count: selectedCount })}</span>
-                </div>
-                {warnings.length > 0 && (
-                  <div className="text-[10px] text-warning flex items-center gap-1">
-                    <AlertTriangle size={10} />
-                    {warnings[0]}
-                  </div>
-                )}
-              </div>
-
-              {/* Optimize Button */}
-              <Button
-                onClick={onRunOptimization}
-                disabled={hasNoProducts || hasNoContainers || isOptimizing}
-              >
-                {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
-                {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
-              </Button>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
-                <Save size={16} /> {t('common.save')}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X size={24} />
-              </Button>
-            </div>
+      <div className="flex-shrink-0 px-6 pt-4 pb-2 border-border">
+        {/* Header Row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold">{t('results.title')}</h2>
+            {/* Priority Tabs - Inline */}
+            <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
+              <TabsList className="h-7">
+                {Object.values(OptimizationPriority).map((priority) => (
+                  <TabsTrigger key={priority} value={priority} className="text-xs px-3 py-1 h-6">
+                    {priority}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
+          <div className="flex items-center gap-3">
+            {/* Warnings / Info */}
+            <div className="flex flex-col items-end mr-2">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Box size={12} />
+                <span>{t('results.productsSelected', { count: selectedCount })}</span>
+              </div>
+              {warnings.length > 0 && (
+                <div className="text-[10px] text-warning flex items-center gap-1">
+                  <AlertTriangle size={10} />
+                  {warnings[0]}
+                </div>
+              )}
+            </div>
 
-          {/* Priority Tabs */}
-          <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
-            <TabsList>
-              {Object.values(OptimizationPriority).map((priority) => (
-                <TabsTrigger key={priority} value={priority}>
-                  {priority}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+            {/* Optimize Button */}
+            <Button
+              onClick={onRunOptimization}
+              disabled={hasNoProducts || hasNoContainers || isOptimizing}
+              size="sm"
+            >
+              {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
+              {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
+            </Button>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
+              <Save size={14} /> {t('common.save')}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X size={20} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -600,42 +605,52 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         )
       }
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalContainers')}</div>
-          <div className="text-xl font-bold">{result.assignments.length}</div>
+      {/* Compact Summary Stats - Inline */}
+      <div className="flex items-center gap-4 mb-3 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.totalContainers')}:</span>
+          <span className="text-sm font-bold">{result.assignments.length}</span>
         </div>
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalCost')}</div>
-          <div className="text-xl font-bold text-success">€{result.totalCost.toLocaleString()}</div>
+        <div className="h-3 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.totalCost')}:</span>
+          <span className="text-sm font-bold text-success">€{result.totalCost.toLocaleString()}</span>
         </div>
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.unassignedItems')}</div>
-          <div className="text-xl font-bold text-destructive">{result.unassignedProducts.length}</div>
+        <div className="h-3 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.unassignedItems')}:</span>
+          <span className="text-sm font-bold text-destructive">{result.unassignedProducts.length}</span>
         </div>
-      </div>
-
-      {/* Reasoning */}
-      <div className="bg-card p-4 rounded-xl border border-border mb-6">
-        <h3 className="text-sm font-bold mb-2">Optimization Strategy</h3>
-        <p className="text-sm text-muted-foreground whitespace-pre-line">{result.reasoning}</p>
+        {result.reasoning && (
+          <>
+            <div className="h-3 w-px bg-border" />
+            <div className="relative group cursor-help">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                <Info size={14} />
+                <span className="hidden sm:inline">Strategy</span>
+              </div>
+              {/* Tooltip on hover */}
+              <div className="absolute left-0 top-full mt-2 z-50 hidden group-hover:block w-80 p-3 bg-popover border border-border rounded-lg shadow-xl">
+                <div className="text-xs font-semibold text-foreground mb-1">Optimization Strategy</div>
+                <div className="text-xs text-muted-foreground whitespace-pre-line">{result.reasoning}</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Split Content Area */}
-      <div className="flex-1 flex gap-6 overflow-hidden">
+      <div className="flex-1 flex gap-4 overflow-hidden">
         {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
         <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden gap-2">
           {/* Sticky Add Container Button */}
-          {activePriority === OptimizationPriority.MANUAL && (
-            <Button
-              onClick={() => setAddContainerModal(true)}
-              variant="secondary"
-              className="flex-shrink-0 w-full"
-            >
-              <Box size={14} /> Add Container
-            </Button>
-          )}
+          <Button
+            onClick={() => setAddContainerModal(true)}
+            variant="secondary"
+            className="flex-shrink-0 w-full"
+          >
+            <Box size={14} /> Add Container
+          </Button>
 
           {/* Search Bar */}
           <Input
@@ -1055,7 +1070,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               <div className="text-right flex items-center gap-3">
                                 <button
                                   onClick={() => setDeleteContainerModal(loadedContainer.container.id)}
-                                  className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-destructive/10"
+                                  className="text-destructive hover:text-destructive/80 transition-colors p-1 rounded hover:bg-destructive/10"
                                   title="Delete container"
                                 >
                                   <Trash2 size={16} />

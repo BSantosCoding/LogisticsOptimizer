@@ -104,12 +104,20 @@ export const checkCompatibility = (
 export const validateLoadedContainer = (
   container: Container,
   products: Product[],
-  weightLimit?: number
+  weightLimit?: number,
+  shippingDateGroupingRange?: number
 ): LoadedContainer => {
 
   let totalUtilization = 0;
   let totalWeight = 0;
   const issues: string[] = [];
+
+  // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
+  const parseDate = (d?: string): number => {
+    if (!d) return 0;
+    const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
+    return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+  };
 
   // Calculate Utilization and Weight
   products.forEach(p => {
@@ -140,6 +148,29 @@ export const validateLoadedContainer = (
   // Check weight limit
   if (weightLimit !== undefined && totalWeight > weightLimit) {
     issues.push(`Weight limit exceeded: ${totalWeight.toFixed(1)}kg > ${weightLimit}kg`);
+  }
+
+  // Check shipping date grouping (dates too far apart)
+  if (shippingDateGroupingRange !== undefined && products.length > 1) {
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const groupingRangeMs = shippingDateGroupingRange * MS_PER_DAY;
+
+    // Get all valid dates from products
+    const productDates = products
+      .map(p => ({ name: p.name, dateMs: parseDate(p.shippingAvailableBy) }))
+      .filter(p => p.dateMs > 0);
+
+    if (productDates.length > 1) {
+      // Find min and max dates
+      const minDate = Math.min(...productDates.map(p => p.dateMs));
+      const maxDate = Math.max(...productDates.map(p => p.dateMs));
+      const dateSpread = maxDate - minDate;
+
+      if (dateSpread > groupingRangeMs) {
+        const daysDiff = Math.ceil(dateSpread / MS_PER_DAY);
+        issues.push(`Shipping dates span ${daysDiff} days (configured max: ${shippingDateGroupingRange} days)`);
+      }
+    }
   }
 
   return {
@@ -380,7 +411,7 @@ export const calculatePacking = (
     allProducts.forEach(p => {
       const destRaw = p.destination || '';
       const destNorm = normalize(destRaw); // Your existing normalize function
-      let groupKey = destNorm || 'unknown'; // This 'groupKey' is purely for the destination at this stage
+      const groupKey = destNorm || 'unknown'; // This 'groupKey' is purely for the destination at this stage
 
       if (!intermediateDestinationGroupedProducts[groupKey]) {
         intermediateDestinationGroupedProducts[groupKey] = {
@@ -401,7 +432,7 @@ export const calculatePacking = (
     const groupingRangeMs = shippingDateGroupingRangeDays * MS_PER_DAY;
 
     for (const destinationGroupKey in intermediateDestinationGroupedProducts) {
-      if (intermediateDestinationGroupedProducts.hasOwnProperty(destinationGroupKey)) {
+      if (Object.prototype.hasOwnProperty.call(intermediateDestinationGroupedProducts, destinationGroupKey)) {
         const { products: productsForThisDestination, destination: actualDestination } =
           intermediateDestinationGroupedProducts[destinationGroupKey];
 
@@ -461,7 +492,7 @@ export const calculatePacking = (
 
   const productGroups = groupProductsByDestinationAndFlexibleDate(products, shippingDateGroupingRange);
 
-  let allAssignments: LoadedContainer[] = [];
+  const allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];
   let instanceCounter = 0;
 
@@ -525,7 +556,7 @@ export const calculatePacking = (
     };
 
     // 5. Phase 1: Greedy Packing
-    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
+    const packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {

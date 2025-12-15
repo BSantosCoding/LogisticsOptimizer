@@ -38,49 +38,15 @@ export const useOptimization = (
                 }
             });
         } else {
-            // Update Manual mode's unassigned products when products change
-            // Note: This is a bit tricky. If we just reset unassigned to all products, we lose assignments.
-            // But the original code did:
-            /*
-            setResults(prev => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                [OptimizationPriority.MANUAL]: {
-                  ...prev[OptimizationPriority.MANUAL],
-                  unassignedProducts: [...products]
-                }
-              };
-            });
-            */
-            // This seems to imply that manual mode resets unassigned products to ALL products?
-            // But what about assigned ones?
-            // The original code in App.tsx line 1072 does exactly that.
-            // It seems flawed if assignments exist, but let's replicate existing behavior for now or fix it.
-            // Actually, if products change (e.g. added/removed), we probably want to sync.
-            // But if we have assignments, we shouldn't overwrite unassigned with ALL products, only those not assigned?
-            // The original code seems to assume manual mode starts fresh or something?
-            // Wait, line 1079: `unassignedProducts: [...products]`.
-            // If I have assignments, and I add a product, `products` has everything.
-            // So `unassignedProducts` gets everything.
-            // This means assignments might be pointing to products that are also in unassigned?
-            // That would be a bug in the original code or I'm misunderstanding.
-            // Let's stick to the original logic for now to avoid breaking changes, but maybe add a TODO.
-            // Actually, looking at `handleDrop`, it moves items between assignments and unassigned.
-            // If `products` updates (e.g. new product added), we want it to appear in unassigned.
-            // But we don't want to duplicate assigned ones.
-            // Let's keep the original logic for now as this is a refactor, not a bug fix (unless critical).
-
+            // Sync unassigned products when products list changes
+            // TODO: Consider filtering out already-assigned products to avoid duplicates
             setResults(prev => {
                 if (!prev) return prev;
-                // We only want to update unassigned if we are NOT in the middle of an operation that manages it?
-                // Or maybe we should filter out assigned ones?
-                // For safety in refactor, I will copy the logic but maybe it's worth checking.
                 return {
                     ...prev,
                     [OptimizationPriority.MANUAL]: {
                         ...prev[OptimizationPriority.MANUAL],
-                        unassignedProducts: [...products] // This looks suspicious but keeping it for now.
+                        unassignedProducts: [...products]
                     }
                 };
             });
@@ -156,7 +122,7 @@ export const useOptimization = (
                 shippingDateGroupingRange
             );
 
-            let costFunc = (sum, a) => {
+            const costFunc = (sum, a) => {
                 const country = a.assignedProducts[0]?.country;
                 // Strip the -instance-XX suffix from container ID for cost lookup
                 const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
@@ -251,7 +217,7 @@ export const useOptimization = (
 
             // Helper to process a list of products
             const processList = (list: Product[]) => {
-                let primaryIndex = list.findIndex(p => p.id === productId);
+                const primaryIndex = list.findIndex(p => p.id === productId);
 
                 if (primaryIndex === -1) {
                     return list;
@@ -300,7 +266,7 @@ export const useOptimization = (
                         ...sourceContainer.container,
                         destination: updatedProducts.length > 0 ? updatedProducts[0].destination : sourceContainer.container.destination
                     };
-                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts);
+                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
                     newAssignments[sourceContainerIndex] = revalidatedSource;
                 }
             }
@@ -337,7 +303,7 @@ export const useOptimization = (
             if (targetContainerIndex === -1) {
                 const freshContainer = containers.find(d => d.id === targetId);
                 if (freshContainer) {
-                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert);
+                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert, undefined, shippingDateGroupingRange);
                     newLoadedContainer.container.destination = productsToInsert[0].destination;
                     newAssignments.push(newLoadedContainer);
                 }
@@ -345,21 +311,37 @@ export const useOptimization = (
                 const targetContainer = newAssignments[targetContainerIndex];
                 const updatedProducts = [...targetContainer.assignedProducts, ...productsToInsert];
                 const updatedContainer = { ...targetContainer.container, destination: productsToInsert[0].destination };
-                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts);
+                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
                 newAssignments[targetContainerIndex] = revalidatedTarget;
             }
         }
 
         setDraggedProductId(null);
 
-        const nonEmptyAssignments = newAssignments.filter((a: LoadedContainer) => a.assignedProducts.length > 0);
-        const totalCost = nonEmptyAssignments.reduce((sum, a) => sum + a.container.cost, 0);
+        // Transform countries data into countryCosts map for accurate cost calculation
+        const countryCosts: Record<string, Record<string, number>> = {};
+        countries.forEach((country: any) => {
+            if (country.containerCosts) {
+                if (country.code) countryCosts[country.code] = country.containerCosts;
+                if (country.name) countryCosts[country.name] = country.containerCosts;
+            }
+        });
+
+        // Calculate total cost using country-specific costs when available
+        // Only count non-empty containers for cost (empty containers have no cost)
+        const totalCost = newAssignments.reduce((sum, a) => {
+            if (a.assignedProducts.length === 0) return sum; // Don't count empty containers
+            const country = a.assignedProducts[0]?.country;
+            const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
+            const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
+            return sum + cost;
+        }, 0);
 
         setResults({
             ...results,
             [activePriority]: {
                 ...currentResult,
-                assignments: nonEmptyAssignments,
+                assignments: newAssignments, // Keep all containers including empty ones
                 unassignedProducts: newUnassigned,
                 totalCost
             }
@@ -370,10 +352,9 @@ export const useOptimization = (
         if (!results) return;
 
         const currentResult = results[activePriority];
-        if (activePriority !== OptimizationPriority.MANUAL) return;
 
         const newContainer = { ...container, id: `${container.id}-instance-${Date.now()}` };
-        const newLoadedContainer = validateLoadedContainer(newContainer, []);
+        const newLoadedContainer = validateLoadedContainer(newContainer, [], undefined, shippingDateGroupingRange);
 
         const newAssignments = [...currentResult.assignments, newLoadedContainer];
 

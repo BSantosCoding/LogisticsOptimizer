@@ -365,7 +365,6 @@ export const calculatePacking = (
     }
 
     const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
-    console.log(parsedDate);
     return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
   };
 
@@ -461,7 +460,6 @@ export const calculatePacking = (
   }
 
   const productGroups = groupProductsByDestinationAndFlexibleDate(products, shippingDateGroupingRange);
-  console.log(productGroups)
 
   let allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];

@@ -619,8 +619,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         {result.reasoning && (
           <>
             <div className="h-3 w-px bg-border" />
-            <div className="flex-1 text-xs text-muted-foreground truncate" title={result.reasoning}>
-              {result.reasoning.split('\n')[0]}
+            <div className="relative group cursor-help">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                <Info size={14} />
+                <span className="hidden sm:inline">Strategy</span>
+              </div>
+              {/* Tooltip on hover */}
+              <div className="absolute left-0 top-full mt-2 z-50 hidden group-hover:block w-80 p-3 bg-popover border border-border rounded-lg shadow-xl">
+                <div className="text-xs font-semibold text-foreground mb-1">Optimization Strategy</div>
+                <div className="text-xs text-muted-foreground whitespace-pre-line">{result.reasoning}</div>
+              </div>
             </div>
           </>
         )}

@@ -1027,7 +1027,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         // Group products for display
                         const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
                         loadedContainer.assignedProducts.forEach(p => {
-                          const key = `${p.name} -${p.formFactorId} `;
+                          const key = `${p.name}-${p.formFactorId}-${p.destination || ''}-${p.shipToName || ''}-${p.shippingAvailableBy || ''}`;
                           if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
                           productGroups[key].products.push(p);
                           productGroups[key].totalQty += p.quantity;

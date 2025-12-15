@@ -60,7 +60,6 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  console.log(products)
   // Helper to manage destination components
   const updateDestinationPart = (index: number, value: string) => {
     const parts = (newProduct.destination || '').split('|');

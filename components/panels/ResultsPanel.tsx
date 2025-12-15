@@ -743,11 +743,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             )}
                             {/* Display Extra Fields in Sidebar */}
                             {csvMapping?.displayFields?.map(fieldKey => {
-                              const val = p.extraFields?.[fieldKey];
-                              if (!val) return null;
+                              let val: any;
+                              if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
+                                val = (p as any)[fieldKey];
+                              } else {
+                                val = p.extraFields?.[fieldKey];
+                              }
+
+                              if (val === undefined || val === null || val === '') return null; // Only hide if truly empty or not found
+
+                              // Ensure val is a string for display consistency, handle booleans specifically if needed
+                              const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
                               return (
                                 <div key={fieldKey} className="text-[9px] text-muted-foreground mt-0.5 truncate">
-                                  <span className="opacity-70 capitalize">{fieldKey}:</span> {val}
+                                  <span className="opacity-70 capitalize">{fieldKey}:</span> {displayVal}
                                 </div>
                               );
                             })}

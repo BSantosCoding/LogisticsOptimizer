@@ -1087,14 +1087,21 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                         <span className="truncate text-foreground" title={p.name}>{p.name}</span>
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.map(fieldKey => {
-                                          console.log('fieldKey', fieldKey);
+                                          let val: any;
+                                          if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
+                                            val = (p as any)[fieldKey];
+                                          } else {
+                                            val = p.extraFields?.[fieldKey];
+                                          }
 
-                                          const val = p.extraFields?.[fieldKey];
-                                          console.log('val', val);
-                                          if (!val) return null;
+                                          if (val === undefined || val === null || val === '') return null; // Only hide if truly empty or not found
+
+                                          // Ensure val is a string for display consistency, handle booleans specifically if needed
+                                          const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+
                                           return (
-                                            <span key={fieldKey} className="text-xs text-muted-foreground border-l border-border pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${val}`}>
-                                              {val}
+                                            <span key={fieldKey} className="text-xs text-muted-foreground border-l border-border pl-2 ml-2 truncate max-w-[100px]" title={`${fieldKey}: ${displayVal}`}>
+                                              {displayVal}
                                             </span>
                                           );
                                         })}

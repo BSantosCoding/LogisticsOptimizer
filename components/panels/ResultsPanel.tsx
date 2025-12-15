@@ -418,56 +418,56 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   return (
     <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header - Fixed at top */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-border">
-        {/* Header */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">{t('results.title')}</h2>
-            <div className="flex items-center gap-3">
-              {/* Warnings / Info */}
-              <div className="flex flex-col items-end mr-2">
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Box size={12} />
-                  <span>{t('results.productsSelected', { count: selectedCount })}</span>
-                </div>
-                {warnings.length > 0 && (
-                  <div className="text-[10px] text-warning flex items-center gap-1">
-                    <AlertTriangle size={10} />
-                    {warnings[0]}
-                  </div>
-                )}
-              </div>
-
-              {/* Optimize Button */}
-              <Button
-                onClick={onRunOptimization}
-                disabled={hasNoProducts || hasNoContainers || isOptimizing}
-              >
-                {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
-                {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
-              </Button>
-
-              <Separator orientation="vertical" className="h-6" />
-
-              <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
-                <Save size={16} /> {t('common.save')}
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X size={24} />
-              </Button>
-            </div>
+      <div className="flex-shrink-0 px-6 pt-4 pb-2 border-border">
+        {/* Header Row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold">{t('results.title')}</h2>
+            {/* Priority Tabs - Inline */}
+            <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
+              <TabsList className="h-7">
+                {Object.values(OptimizationPriority).map((priority) => (
+                  <TabsTrigger key={priority} value={priority} className="text-xs px-3 py-1 h-6">
+                    {priority}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
+          <div className="flex items-center gap-3">
+            {/* Warnings / Info */}
+            <div className="flex flex-col items-end mr-2">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Box size={12} />
+                <span>{t('results.productsSelected', { count: selectedCount })}</span>
+              </div>
+              {warnings.length > 0 && (
+                <div className="text-[10px] text-warning flex items-center gap-1">
+                  <AlertTriangle size={10} />
+                  {warnings[0]}
+                </div>
+              )}
+            </div>
 
-          {/* Priority Tabs */}
-          <Tabs value={activePriority} onValueChange={(value) => setActivePriority(value as OptimizationPriority)}>
-            <TabsList>
-              {Object.values(OptimizationPriority).map((priority) => (
-                <TabsTrigger key={priority} value={priority}>
-                  {priority}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+            {/* Optimize Button */}
+            <Button
+              onClick={onRunOptimization}
+              disabled={hasNoProducts || hasNoContainers || isOptimizing}
+              size="sm"
+            >
+              {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
+              {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
+            </Button>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
+              <Save size={14} /> {t('common.save')}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X size={20} />
+            </Button>
+          </div>
         </div>
       </div>
 

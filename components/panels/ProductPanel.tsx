@@ -134,208 +134,194 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
           )}
         </div>
 
-        <div className="space-y-4 px-4 pb-4 overflow-y-auto">
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground font-medium">{t('products.namePlaceholder')}</Label>
-            <Input
-              value={newProduct.name}
-              onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-              placeholder={t('products.namePlaceholder')}
-              className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-            />
-          </div>
+        <div className="flex-1 overflow-hidden relative">
+          <ScrollArea className="h-full pr-4 -mr-4">
+            <div className="space-y-3 px-4 pb-4">
+              {/* Header: Name */}
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{t('products.namePlaceholder')}</Label>
+                <Input
+                  value={newProduct.name}
+                  onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                  placeholder={t('products.namePlaceholder')}
+                  className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                />
+              </div>
 
-          {/* Destination Breakdown */}
-          {(!csvMapping ? (
-            // Fallback if no mapping provided
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-medium">{t('products.destination')}</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              {/* Destination Section */}
+              <div className="bg-muted/10 p-3 rounded-lg border border-border/40 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin size={12} className="text-primary" />
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{t('products.destination')}</Label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Destination Parts Breakdown */}
+                  {csvMapping?.groupingFields.map((field, idx) => {
+                    if (field === 'country' || field === csvMapping.country) return null;
+                    const label = csvMapping.customFields?.[field] || field;
+                    return (
+                      <div key={`dest-${idx}`} className="space-y-1">
+                        <Label className="text-[10px] text-muted-foreground truncate block" title={label}>{label}</Label>
+                        <Input
+                          className="h-8 pl-2 bg-background border-input/50 focus:bg-background transition-colors text-sm"
+                          value={getDestinationPart(idx)}
+                          onChange={e => updateDestinationPart(idx, e.target.value)}
+                          placeholder={label}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  {/* Fallback Destination if no mapping */}
+                  {!csvMapping && (
+                    <div className="space-y-1 col-span-2">
+                      <Label className="text-[10px] text-muted-foreground">{t('products.destination')}</Label>
+                      <Input
+                        className="h-8 bg-background border-input/50 focus:bg-background transition-colors text-sm"
+                        value={newProduct.destination || ''}
+                        onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Country - Always Visible */}
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">{t('products.country')}</Label>
+                    <Input
+                      value={newProduct.country || ''}
+                      onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
+                      placeholder="e.g. CN"
+                      className="h-8 bg-background border-input/50 focus:bg-background transition-colors text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Logistics Details */}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground truncate block">
+                    {csvMapping?.customFields?.['shipToName'] || 'Ship To Name'}
+                  </Label>
                   <Input
-                    className="pl-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                    value={newProduct.destination || ''}
-                    onChange={e => setNewProduct({ ...newProduct, destination: e.target.value })}
-                    placeholder={t('products.destination')}
+                    value={newProduct.shipToName || ''}
+                    onChange={e => setNewProduct({ ...newProduct, shipToName: e.target.value })}
+                    className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground truncate block">
+                    {csvMapping?.shippingAvailableBy || 'Available By'}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={newProduct.shippingAvailableBy || ''}
+                    onChange={e => setNewProduct({ ...newProduct, shippingAvailableBy: e.target.value })}
+                    className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                  />
+                </div>
+
+                {/* Custom Fields */}
+                {csvMapping?.incoterms && csvMapping.incoterms.length > 0 && (
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-[10px] text-muted-foreground">Incoterms</Label>
+                    <Input
+                      value={newProduct.extraFields?.['Incoterms'] || ''}
+                      onChange={(e) => setNewProduct({
+                        ...newProduct,
+                        extraFields: { ...newProduct.extraFields, Incoterms: e.target.value }
+                      })}
+                      className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                    />
+                  </div>
+                )}
+
+                {csvMapping && Object.entries(csvMapping.customFields).map(([key, label]) => {
+                  if (key === 'shipToName') return null;
+                  if (csvMapping.groupingFields.includes(key)) return null;
+                  return (
+                    <div key={key} className="space-y-1 col-span-2">
+                      <Label className="text-[10px] text-muted-foreground truncate block" title={label}>{label}</Label>
+                      <Input
+                        value={newProduct.extraFields?.[key] || ''}
+                        onChange={(e) => setNewProduct({
+                          ...newProduct,
+                          extraFields: { ...newProduct.extraFields, [key]: e.target.value }
+                        })}
+                        className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Physical Attributes */}
+              <div className="grid grid-cols-12 gap-2 pt-1">
+                <div className="col-span-6 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">{t('products.formFactor')}</Label>
+                  <Select
+                    value={newProduct.formFactorId || ''}
+                    onValueChange={(val) => setNewProduct({ ...newProduct, formFactorId: val })}
+                  >
+                    <SelectTrigger className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-xs">
+                      <SelectValue placeholder={t('products.selectFormFactor')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formFactors.map(ff => (
+                        <SelectItem key={ff.id} value={ff.id} className="text-xs">{ff.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-3 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">{t('common.units')}</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="1"
+                      value={newProduct.quantity}
+                      onChange={e => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 1 })}
+                      className="h-8 pr-6 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
+                    />
+                    <span className="absolute right-2 top-2 text-[10px] text-muted-foreground">#</span>
+                  </div>
+                </div>
+                <div className="col-span-3 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">{t('products.weight')}</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="-"
+                    value={newProduct.weight ?? ''}
+                    onChange={e => setNewProduct({ ...newProduct, weight: e.target.value ? parseFloat(e.target.value) : undefined })}
+                    className="h-8 bg-muted/50 border-input/50 focus:bg-background transition-colors text-sm"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-medium">{t('products.country')}</Label>
-                <Input
-                  value={newProduct.country || ''}
-                  onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
-                  placeholder="e.g. CN"
-                  className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
+
+              {/* Restrictions */}
+              <div className="space-y-1 pt-1">
+                <Label className="text-[10px] text-muted-foreground">{t('products.restrictions')}</Label>
+                <RestrictionSelector
+                  availableOptions={restrictionTags}
+                  selected={newProduct.restrictions}
+                  onChange={r => setNewProduct({ ...newProduct, restrictions: r })}
                 />
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {csvMapping.groupingFields.map((field, idx) => {
-                if (field === 'country' || field === csvMapping.country) {
-                  // We render country separately or below
-                  return null;
-                }
-                const label = csvMapping.customFields?.[field] || field;
 
-                return (
-                  <div key={`dest-${idx}`} className="space-y-2">
-                    <Label className="text-xs text-muted-foreground font-medium">{label}</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        className="pl-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                        value={getDestinationPart(idx)}
-                        onChange={e => updateDestinationPart(idx, e.target.value)}
-                        placeholder={label}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Explicit Country Input */}
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-medium">{t('products.country')}</Label>
-                <Input
-                  value={newProduct.country || ''}
-                  onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
-                  placeholder="e.g. CN"
-                  className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                />
+              <div className="pt-2">
+                <Button
+                  onClick={handleSaveProduct}
+                  className="w-full font-medium h-9"
+                  variant={editingProductId ? "secondary" : "default"}
+                >
+                  {editingProductId ? <><Save size={14} className="mr-2" /> {t('products.updateProduct')}</> : <><Plus size={14} className="mr-2" /> {t('products.addProduct')}</>}
+                </Button>
               </div>
             </div>
-          ))}
-
-          {/* New Fields: Ship To & Shipping Available By */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">
-                {csvMapping?.customFields?.['shipToName'] || 'Ship To Name'}
-              </Label>
-              <Input
-                value={newProduct.shipToName || ''}
-                onChange={e => setNewProduct({ ...newProduct, shipToName: e.target.value })}
-                className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">
-                {csvMapping?.shippingAvailableBy || 'Shipping Available By'}
-              </Label>
-              <Input
-                type="date"
-                value={newProduct.shippingAvailableBy || ''}
-                onChange={e => setNewProduct({ ...newProduct, shippingAvailableBy: e.target.value })}
-                className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Incoterms (Stored in extraFields) */}
-          {csvMapping?.incoterms && csvMapping.incoterms.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">Incoterms</Label>
-              <Input
-                value={newProduct.extraFields?.['Incoterms'] || ''}
-                onChange={(e) => setNewProduct({
-                  ...newProduct,
-                  extraFields: { ...newProduct.extraFields, Incoterms: e.target.value }
-                })}
-                className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-              />
-            </div>
-          )}
-
-          {/* Other Custom Fields */}
-          {csvMapping && Object.entries(csvMapping.customFields).map(([key, label]) => {
-            // Skip fields we've already handled
-            if (key === 'shipToName') return null;
-            if (csvMapping.groupingFields.includes(key)) return null;
-
-            return (
-              <div key={key} className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-medium">{label}</Label>
-                <Input
-                  value={newProduct.extraFields?.[key] || ''}
-                  onChange={(e) => setNewProduct({
-                    ...newProduct,
-                    extraFields: { ...newProduct.extraFields, [key]: e.target.value }
-                  })}
-                  className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                />
-              </div>
-            );
-          })}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">{t('products.formFactor')}</Label>
-              <Select
-                value={newProduct.formFactorId || ''}
-                onValueChange={(val) => setNewProduct({ ...newProduct, formFactorId: val })}
-              >
-                <SelectTrigger className="bg-muted/50 border-input/50 focus:bg-background transition-colors">
-                  <SelectValue placeholder={t('products.selectFormFactor')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {formFactors.map(ff => (
-                    <SelectItem key={ff.id} value={ff.id}>{ff.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-medium">{t('common.units')}</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  min="1"
-                  value={newProduct.quantity}
-                  onChange={e => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 1 })}
-                  className="pr-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-                />
-                <span className="absolute right-3 top-2.5 text-xs text-muted-foreground">#</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground font-medium">{t('products.weight')}</Label>
-            <div className="relative">
-              <Input
-                type="number"
-                min="0"
-                step="0.1"
-                placeholder="-"
-                value={newProduct.weight ?? ''}
-                onChange={e => setNewProduct({ ...newProduct, weight: e.target.value ? parseFloat(e.target.value) : undefined })}
-                className="pr-8 bg-muted/50 border-input/50 focus:bg-background transition-colors"
-              />
-              <Weight className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground font-medium">{t('products.restrictions')}</Label>
-            <RestrictionSelector
-              availableOptions={restrictionTags}
-              selected={newProduct.restrictions}
-              onChange={r => setNewProduct({ ...newProduct, restrictions: r })}
-            />
-          </div>
-
-          <div className="pt-2">
-            <Button
-              onClick={handleSaveProduct}
-              className="w-full font-medium"
-              variant={editingProductId ? "secondary" : "default"}
-            >
-              {editingProductId ? <><Save size={16} className="mr-2" /> {t('products.updateProduct')}</> : <><Plus size={16} className="mr-2" /> {t('products.addProduct')}</>}
-            </Button>
-          </div>
+          </ScrollArea>
         </div>
       </div>
     );

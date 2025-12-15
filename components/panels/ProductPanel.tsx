@@ -474,20 +474,59 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <h3 className="font-semibold text-sm leading-tight text-foreground truncate" title={p.name}>{p.name}</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-1 gap-x-4 text-xs text-muted-foreground mt-auto">
-                    <div className="flex items-center gap-1.5">
+                  <div className="space-y-1.5 mt-auto">
+                    {/* Destination & Country */}
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPin size={12} className="shrink-0 opacity-70" />
-                      <span className="truncate" title={p.destination || 'N/A'}>{p.destination || <span className="opacity-50">-</span>}</span>
-                      {p.country && <span className="opacity-50 text-[10px]">({p.country})</span>}
+                      <span className="truncate" title={p.destination || 'N/A'}>
+                        {p.destination ? p.destination.split('|')[0] : <span className="opacity-50">-</span>}
+                      </span>
+                      {p.country && <span className="opacity-50 text-[10px] ml-auto">({p.country})</span>}
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Box size={12} className="shrink-0 opacity-70" />
-                      <span>{p.quantity} {t('common.units')}</span>
+
+                    {/* Ship To Name (if present) */}
+                    {p.shipToName && (
+                      <div className="text-[10px] text-muted-foreground pl-4 truncate" title={p.shipToName}>
+                        {p.shipToName}
+                      </div>
+                    )}
+
+                    {/* Stats Row 1: Qty & Weight */}
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <Box size={12} className="shrink-0 opacity-70" />
+                        <span>{p.quantity} {t('common.units')}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Weight size={12} className="shrink-0 opacity-70" />
+                        <span>{p.weight || '-'} kg</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Weight size={12} className="shrink-0 opacity-70" />
-                      <span>{p.weight || '-'} kg</span>
-                    </div>
+
+                    {/* Stats Row 2: Date & Custom Fields */}
+                    {p.shippingAvailableBy && (
+                      <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
+                        <span className="opacity-50">Avail:</span> {p.shippingAvailableBy}
+                      </div>
+                    )}
+
+                    {/* Extra Fields */}
+                    {csvMapping?.displayFields?.map(fieldKey => {
+                      let val: any;
+                      if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
+                        val = (p as any)[fieldKey];
+                      } else {
+                        val = p.extraFields?.[fieldKey];
+                      }
+                      if (val === undefined || val === null || val === '') return null;
+                      const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+
+                      return (
+                        <div key={fieldKey} className="text-[10px] text-muted-foreground pl-4 truncate" title={`${fieldKey}: ${displayVal}`}>
+                          <span className="opacity-50 capitalize">{fieldKey}:</span> {displayVal}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {p.restrictions.length > 0 && (

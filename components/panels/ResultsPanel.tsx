@@ -1158,7 +1158,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                     Validation Issues:
                                   </div>
                                   <ul className="space-y-1">
-                                    {loadedContainer.validationIssues.map((issue, idx) => (
+                                    {Array.from(new Set(loadedContainer.validationIssues)).map((issue, idx) => (
                                       <li key={idx} className="text-xs text-red-300 pl-4">
                                         • {issue}
                                       </li>

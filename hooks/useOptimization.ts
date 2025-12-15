@@ -352,14 +352,30 @@ export const useOptimization = (
 
         setDraggedProductId(null);
 
-        const nonEmptyAssignments = newAssignments.filter((a: LoadedContainer) => a.assignedProducts.length > 0);
-        const totalCost = nonEmptyAssignments.reduce((sum, a) => sum + a.container.cost, 0);
+        // Transform countries data into countryCosts map for accurate cost calculation
+        const countryCosts: Record<string, Record<string, number>> = {};
+        countries.forEach((country: any) => {
+            if (country.containerCosts) {
+                if (country.code) countryCosts[country.code] = country.containerCosts;
+                if (country.name) countryCosts[country.name] = country.containerCosts;
+            }
+        });
+
+        // Calculate total cost using country-specific costs when available
+        // Only count non-empty containers for cost (empty containers have no cost)
+        const totalCost = newAssignments.reduce((sum, a) => {
+            if (a.assignedProducts.length === 0) return sum; // Don't count empty containers
+            const country = a.assignedProducts[0]?.country;
+            const baseContainerId = a.container.id.replace(/-instance-\d+$/, '');
+            const cost = (country && countryCosts[country]?.[baseContainerId]) ?? a.container.cost;
+            return sum + cost;
+        }, 0);
 
         setResults({
             ...results,
             [activePriority]: {
                 ...currentResult,
-                assignments: nonEmptyAssignments,
+                assignments: newAssignments, // Keep all containers including empty ones
                 unassignedProducts: newUnassigned,
                 totalCost
             }
@@ -370,7 +386,6 @@ export const useOptimization = (
         if (!results) return;
 
         const currentResult = results[activePriority];
-        if (activePriority !== OptimizationPriority.MANUAL) return;
 
         const newContainer = { ...container, id: `${container.id}-instance-${Date.now()}` };
         const newLoadedContainer = validateLoadedContainer(newContainer, []);

@@ -627,15 +627,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
         <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden gap-2">
           {/* Sticky Add Container Button */}
-          {activePriority === OptimizationPriority.MANUAL && (
-            <Button
-              onClick={() => setAddContainerModal(true)}
-              variant="secondary"
-              className="flex-shrink-0 w-full"
-            >
-              <Box size={14} /> Add Container
-            </Button>
-          )}
+          <Button
+            onClick={() => setAddContainerModal(true)}
+            variant="secondary"
+            className="flex-shrink-0 w-full"
+          >
+            <Box size={14} /> Add Container
+          </Button>
 
           {/* Search Bar */}
           <Input

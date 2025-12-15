@@ -1,4 +1,5 @@
 import { Product, Container, OptimizationPriority, LoadedContainer } from "../types";
+import { parse } from 'date-fns';
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
@@ -356,8 +357,16 @@ export const calculatePacking = (
   allowUnitSplitting: boolean = true,
   shippingDateGroupingRange: number | undefined = undefined
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
-  // Helper to parse date string "YYYY-MM-DD" safely
-  const parseDate = (d?: string) => d ? new Date(d).getTime() : 0;
+
+  // Helper to parse date string "MM/DD/YYYY" safely
+  const parseDate = (d?: string) => {
+    if (!d) {
+      return 0;
+    }
+    // Assuming MM/DD/YYYY format. Adjust format string to 'dd/MM/yyyy' if your dates are DD/MM/YYYY.
+    const parsedDate = parse(d, 'MM/dd/yyyy', new Date());
+    return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+  };
 
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(

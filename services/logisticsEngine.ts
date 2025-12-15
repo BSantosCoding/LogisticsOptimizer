@@ -117,6 +117,7 @@ export const validateLoadedContainer = (
       issues.push(`${p.name}: Container does not support form factor ${p.formFactorId}`);
     } else {
       const utilizationContribution = (p.quantity / maxCap) * 100;
+      console.log(p.name, p.quantity, maxCap, utilizationContribution);
       totalUtilization += utilizationContribution;
     }
 

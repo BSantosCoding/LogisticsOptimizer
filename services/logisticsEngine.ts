@@ -117,7 +117,6 @@ export const validateLoadedContainer = (
       issues.push(`${p.name}: Container does not support form factor ${p.formFactorId}`);
     } else {
       const utilizationContribution = (p.quantity / maxCap) * 100;
-      console.log(p.name, p.quantity, maxCap, utilizationContribution);
       totalUtilization += utilizationContribution;
     }
 
@@ -175,8 +174,6 @@ const canFit = (products: Product[], container: Container, weightLimit?: number)
   return totalUtilization <= 100.1;
 };
 
-// --- Core Packing Logic (Greedy) ---
-// Returns a list of raw container instances (unvalidated)
 // --- Core Packing Logic (Greedy) ---
 // Returns a list of raw container instances (unvalidated)
 const packItems = (
@@ -466,6 +463,8 @@ export const calculatePacking = (
     // 5. Phase 1: Greedy Packing
     let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
+    console.log("Greedy Packed Instances", packedInstances);
+
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
 
@@ -527,6 +526,8 @@ export const calculatePacking = (
         }
       }
     }
+
+    console.log("Optimized Packed Instances", packedInstances);
 
     // 7. Finalize Output
     packedInstances.forEach(inst => {

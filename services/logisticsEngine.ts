@@ -358,13 +358,13 @@ export const calculatePacking = (
   shippingDateGroupingRange: number | undefined = undefined
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // Helper to parse date string "MM/DD/YYYY" or "MM-DD-YYYY" safely
+  // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
   const parseDate = (d?: string) => {
     if (!d) {
       return 0;
     }
 
-    const parsedDate = moment(d, ["MM/DD/YYYY", "MM-DD-YYYY"]).toDate();
+    const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
     console.log(parsedDate);
     return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
   };

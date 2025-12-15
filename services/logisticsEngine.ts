@@ -411,7 +411,7 @@ export const calculatePacking = (
     allProducts.forEach(p => {
       const destRaw = p.destination || '';
       const destNorm = normalize(destRaw); // Your existing normalize function
-      let groupKey = destNorm || 'unknown'; // This 'groupKey' is purely for the destination at this stage
+      const groupKey = destNorm || 'unknown'; // This 'groupKey' is purely for the destination at this stage
 
       if (!intermediateDestinationGroupedProducts[groupKey]) {
         intermediateDestinationGroupedProducts[groupKey] = {
@@ -432,7 +432,7 @@ export const calculatePacking = (
     const groupingRangeMs = shippingDateGroupingRangeDays * MS_PER_DAY;
 
     for (const destinationGroupKey in intermediateDestinationGroupedProducts) {
-      if (intermediateDestinationGroupedProducts.hasOwnProperty(destinationGroupKey)) {
+      if (Object.prototype.hasOwnProperty.call(intermediateDestinationGroupedProducts, destinationGroupKey)) {
         const { products: productsForThisDestination, destination: actualDestination } =
           intermediateDestinationGroupedProducts[destinationGroupKey];
 
@@ -492,7 +492,7 @@ export const calculatePacking = (
 
   const productGroups = groupProductsByDestinationAndFlexibleDate(products, shippingDateGroupingRange);
 
-  let allAssignments: LoadedContainer[] = [];
+  const allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];
   let instanceCounter = 0;
 
@@ -556,7 +556,7 @@ export const calculatePacking = (
     };
 
     // 5. Phase 1: Greedy Packing
-    let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
+    const packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {

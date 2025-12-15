@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping } from '../../types';
-import { Layers, AlertTriangle, Move, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
-import { validateLoadedContainer } from '@/services/logisticsEngine';
+import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping, ProductFormFactor } from '../../types';
+import { AlertTriangle, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +13,7 @@ interface ResultsPanelProps {
   activePriority: OptimizationPriority;
   setActivePriority: (p: OptimizationPriority) => void;
   containers: Container[];
-  countries: any[];
+  countries: CountryData[];
   handleDragStart: (e: React.DragEvent, productId: string, sourceId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, targetId: string, quantity?: number) => void;
@@ -28,8 +27,14 @@ interface ResultsPanelProps {
   isOptimizing: boolean;
   products: Product[];
   selectedProductIds: Set<string>;
-  formFactors: any[];
+  formFactors: ProductFormFactor[];
   csvMapping?: CSVMapping;
+}
+
+interface CountryData {
+  code?: string;
+  name?: string;
+  containerCosts?: Record<string, number>;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
@@ -41,7 +46,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   handleDragStart,
   handleDragOver,
   handleDrop,
-  draggedProductId,
+  _draggedProductId,
   onClose,
   onSaveShipment,
   optimalRange = { min: 85, max: 100 },
@@ -51,7 +56,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   isOptimizing,
   products,
   selectedProductIds,
-  formFactors,
+  _formFactors,
   csvMapping
 }) => {
   const { t } = useTranslation();

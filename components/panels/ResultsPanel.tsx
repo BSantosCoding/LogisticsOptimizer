@@ -180,7 +180,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const groupedUnassigned = React.useMemo(() => {
     if (!result) return {};
     return result.unassignedProducts.reduce((acc, p) => {
-      const key = `${p.name} -${p.formFactorId} `;
+      // Include destination, shipToName, and shippingAvailableBy in the grouping key
+      // to ensure items with different logistics requirements are not merged.
+      const key = `${p.name}-${p.formFactorId}-${p.destination || ''}-${p.shipToName || ''}-${p.shippingAvailableBy || ''}`;
       if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
       acc[key].products.push(p);
       acc[key].totalQty += p.quantity;

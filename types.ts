@@ -98,17 +98,15 @@ export interface CSVMapping {
   formFactor: string;       // CSV header for form factor name
   restrictions: string[];   // Array of CSV header names for restriction fields
   incoterms: string[];      // Array of CSV header names for incoterms
+  shippingAvailableBy: string; // CSV header for date
 
   // Grouping key - which fields combine to create the destination
   groupingFields: string[]; // Array of field keys (core or custom) to combine for destination
+  displayFields?: string[]; // Keys from customFields to show in UI
 
   // Custom fields - company-specific additional fields
   // Maps internal key name to CSV header name
   customFields: Record<string, string>;
-
-  // New Fields
-  shippingAvailableBy: string; // CSV header for date
-  displayFields?: string[]; // Keys from customFields to show in UI
 }
 
 export interface OptimizerSettings {

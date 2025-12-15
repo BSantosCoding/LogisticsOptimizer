@@ -92,7 +92,16 @@
         "unitsPerPallet": "Unidades por Palete",
         "unitsPerPalletPlaceholder": "Unidades que cabem numa palete",
         "palletConfig": "Configuração de Palete",
-        "noPalletConfig": "Sem configuração de palete"
+        "noPalletConfig": "Sem configuração de palete",
+        "optimization": "Otimização",
+        "splitProductUnits": "Dividir Unidades de Produto",
+        "splitProductUnitsDesc": "Permitir que os produtos sejam divididos em vários contentores, se necessário.",
+        "grouping": "Agrupamento",
+        "shippingDateGrouping": "Agrupamento por Data de Disponibilidade de Envio",
+        "days": "Dias",
+        "shippingDateGroupingDesc": "Produtos com datas com mais de X dias de diferença serão agrupados separadamente.",
+        "groupingFields": "Campos de Agrupamento (Chave de Destino)",
+        "productDisplayFields": "Campos de Exibição de Produto"
     },
     "team": {
         "overview": "Visão Geral da Equipa",

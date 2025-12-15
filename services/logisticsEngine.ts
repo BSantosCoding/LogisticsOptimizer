@@ -104,12 +104,20 @@ export const checkCompatibility = (
 export const validateLoadedContainer = (
   container: Container,
   products: Product[],
-  weightLimit?: number
+  weightLimit?: number,
+  shippingDateGroupingRange?: number
 ): LoadedContainer => {
 
   let totalUtilization = 0;
   let totalWeight = 0;
   const issues: string[] = [];
+
+  // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
+  const parseDate = (d?: string): number => {
+    if (!d) return 0;
+    const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
+    return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+  };
 
   // Calculate Utilization and Weight
   products.forEach(p => {
@@ -140,6 +148,29 @@ export const validateLoadedContainer = (
   // Check weight limit
   if (weightLimit !== undefined && totalWeight > weightLimit) {
     issues.push(`Weight limit exceeded: ${totalWeight.toFixed(1)}kg > ${weightLimit}kg`);
+  }
+
+  // Check shipping date grouping (dates too far apart)
+  if (shippingDateGroupingRange !== undefined && products.length > 1) {
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const groupingRangeMs = shippingDateGroupingRange * MS_PER_DAY;
+
+    // Get all valid dates from products
+    const productDates = products
+      .map(p => ({ name: p.name, dateMs: parseDate(p.shippingAvailableBy) }))
+      .filter(p => p.dateMs > 0);
+
+    if (productDates.length > 1) {
+      // Find min and max dates
+      const minDate = Math.min(...productDates.map(p => p.dateMs));
+      const maxDate = Math.max(...productDates.map(p => p.dateMs));
+      const dateSpread = maxDate - minDate;
+
+      if (dateSpread > groupingRangeMs) {
+        const daysDiff = Math.ceil(dateSpread / MS_PER_DAY);
+        issues.push(`Shipping dates span ${daysDiff} days (configured max: ${shippingDateGroupingRange} days)`);
+      }
+    }
   }
 
   return {

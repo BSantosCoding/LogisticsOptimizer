@@ -300,7 +300,7 @@ export const useOptimization = (
                         ...sourceContainer.container,
                         destination: updatedProducts.length > 0 ? updatedProducts[0].destination : sourceContainer.container.destination
                     };
-                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts);
+                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
                     newAssignments[sourceContainerIndex] = revalidatedSource;
                 }
             }
@@ -337,7 +337,7 @@ export const useOptimization = (
             if (targetContainerIndex === -1) {
                 const freshContainer = containers.find(d => d.id === targetId);
                 if (freshContainer) {
-                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert);
+                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert, undefined, shippingDateGroupingRange);
                     newLoadedContainer.container.destination = productsToInsert[0].destination;
                     newAssignments.push(newLoadedContainer);
                 }
@@ -345,7 +345,7 @@ export const useOptimization = (
                 const targetContainer = newAssignments[targetContainerIndex];
                 const updatedProducts = [...targetContainer.assignedProducts, ...productsToInsert];
                 const updatedContainer = { ...targetContainer.container, destination: productsToInsert[0].destination };
-                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts);
+                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
                 newAssignments[targetContainerIndex] = revalidatedTarget;
             }
         }
@@ -388,7 +388,7 @@ export const useOptimization = (
         const currentResult = results[activePriority];
 
         const newContainer = { ...container, id: `${container.id}-instance-${Date.now()}` };
-        const newLoadedContainer = validateLoadedContainer(newContainer, []);
+        const newLoadedContainer = validateLoadedContainer(newContainer, [], undefined, shippingDateGroupingRange);
 
         const newAssignments = [...currentResult.assignments, newLoadedContainer];
 

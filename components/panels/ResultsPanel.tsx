@@ -600,30 +600,34 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         )
       }
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalContainers')}</div>
-          <div className="text-xl font-bold">{result.assignments.length}</div>
+      {/* Compact Summary Stats - Inline */}
+      <div className="flex items-center gap-4 mb-3 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.totalContainers')}:</span>
+          <span className="text-sm font-bold">{result.assignments.length}</span>
         </div>
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.totalCost')}</div>
-          <div className="text-xl font-bold text-success">€{result.totalCost.toLocaleString()}</div>
+        <div className="h-3 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.totalCost')}:</span>
+          <span className="text-sm font-bold text-success">€{result.totalCost.toLocaleString()}</span>
         </div>
-        <div className="bg-card p-3 rounded-xl border border-border">
-          <div className="text-[10px] text-muted-foreground mb-0.5">{t('results.unassignedItems')}</div>
-          <div className="text-xl font-bold text-destructive">{result.unassignedProducts.length}</div>
+        <div className="h-3 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground uppercase">{t('results.unassignedItems')}:</span>
+          <span className="text-sm font-bold text-destructive">{result.unassignedProducts.length}</span>
         </div>
-      </div>
-
-      {/* Reasoning */}
-      <div className="bg-card p-4 rounded-xl border border-border mb-6">
-        <h3 className="text-sm font-bold mb-2">Optimization Strategy</h3>
-        <p className="text-sm text-muted-foreground whitespace-pre-line">{result.reasoning}</p>
+        {result.reasoning && (
+          <>
+            <div className="h-3 w-px bg-border" />
+            <div className="flex-1 text-xs text-muted-foreground truncate" title={result.reasoning}>
+              {result.reasoning.split('\n')[0]}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Split Content Area */}
-      <div className="flex-1 flex gap-6 overflow-hidden">
+      <div className="flex-1 flex gap-4 overflow-hidden">
         {/* Sidebar - Unassigned Items & Add Container (LEFT, 20%) */}
         <div className="w-1/5 min-w-[250px] flex-shrink-0 flex flex-col overflow-hidden gap-2">
           {/* Sticky Add Container Button */}
@@ -1053,7 +1057,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               <div className="text-right flex items-center gap-3">
                                 <button
                                   onClick={() => setDeleteContainerModal(loadedContainer.container.id)}
-                                  className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-destructive/10"
+                                  className="text-destructive hover:text-destructive/80 transition-colors p-1 rounded hover:bg-destructive/10"
                                   title="Delete container"
                                 >
                                   <Trash2 size={16} />

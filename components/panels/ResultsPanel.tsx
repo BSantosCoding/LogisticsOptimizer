@@ -1087,6 +1087,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                         <span className="truncate text-foreground" title={p.name}>{p.name}</span>
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.map(fieldKey => {
+                                          console.log('fieldKey', fieldKey);
+                                          console.log('p', p);
                                           const val = p.extraFields?.[fieldKey];
                                           if (!val) return null;
                                           return (

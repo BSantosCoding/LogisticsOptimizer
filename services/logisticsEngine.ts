@@ -365,6 +365,7 @@ export const calculatePacking = (
     }
 
     const parsedDate = moment(d, ["MM/DD/YYYY", "MM-DD-YYYY"]).toDate();
+    console.log(parsedDate);
     return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
   };
 

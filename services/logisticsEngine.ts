@@ -401,6 +401,7 @@ export const calculatePacking = (
   const allUnassigned: Product[] = [];
   let instanceCounter = 0;
 
+  console.log("Product Groups", productGroups);
   // Process each group separately
   for (const group of Object.values(productGroups)) {
 

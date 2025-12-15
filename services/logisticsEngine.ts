@@ -1,5 +1,5 @@
 import { Product, Container, OptimizationPriority, LoadedContainer } from "../types";
-import { parse } from 'date-fns';
+import moment from 'moment';
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
@@ -364,7 +364,7 @@ export const calculatePacking = (
       return 0;
     }
     // Assuming MM/DD/YYYY format. Adjust format string to 'dd/MM/yyyy' if your dates are DD/MM/YYYY.
-    const parsedDate = parse(d, 'MM/dd/yyyy', new Date());
+    const parsedDate = moment(d).toDate();
     return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
   };
 

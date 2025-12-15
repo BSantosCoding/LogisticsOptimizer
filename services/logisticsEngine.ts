@@ -356,52 +356,106 @@ export const calculatePacking = (
   allowUnitSplitting: boolean = true,
   shippingDateGroupingRange: number | undefined = undefined
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
-
-  // 1. Group Products by Destination AND Date Buckets (if configured)
-  const productGroups: Record<string, { products: Product[], destination: string }> = {};
-
   // Helper to parse date string "YYYY-MM-DD" safely
   const parseDate = (d?: string) => d ? new Date(d).getTime() : 0;
 
-  products.forEach(p => {
-    const destRaw = p.destination || '';
-    const destNorm = normalize(destRaw);
+  // 1. Group Products by Destination AND Date Buckets (if configured)
+  function groupProductsByDestinationAndFlexibleDate(
+    allProducts: Product[],
+    shippingDateGroupingRangeDays: number
+  ): Record<string, { products: Product[], destination: string }> {
 
-    let groupKey = destNorm || 'unknown';
+    // Step 1: Initial grouping by destination (using your existing logic)
+    const intermediateDestinationGroupedProducts: Record<string, { products: Product[], destination: string }> = {};
 
-    // If date grouping is enabled, append a date-bucket-key
-    if (shippingDateGroupingRange !== undefined && p.shippingAvailableBy) {
-      const pDate = parseDate(p.shippingAvailableBy);
-      if (!isNaN(pDate) && pDate > 0) {
-        // Simple bucketing using windows
-        // But we want "group together if within X days".
-        // A simple approximation is integer division of days / range?
-        // No, that creates arbitrary boundaries.
-        // Better: We SHOULD group products later?
-        // Or: create distinct keys here.
+    allProducts.forEach(p => {
+      const destRaw = p.destination || '';
+      const destNorm = normalize(destRaw); // Your existing normalize function
+      let groupKey = destNorm || 'unknown'; // This 'groupKey' is purely for the destination at this stage
 
-        // Let's use a simple bucketing for now to keep it efficient O(N) rather than full clustering O(N^2)
-        // Bucket Index = floor(DaysSinceEpoch / Range)
-        const daysSinceEpoch = Math.floor(pDate / (1000 * 60 * 60 * 24));
-        const bucket = Math.floor(daysSinceEpoch / shippingDateGroupingRange);
-        groupKey += `_date_${bucket}`;
+      if (!intermediateDestinationGroupedProducts[groupKey]) {
+        intermediateDestinationGroupedProducts[groupKey] = {
+          products: [],
+          destination: destRaw // Keep the raw destination for the group info
+        };
+      }
+      intermediateDestinationGroupedProducts[groupKey].products.push(p);
+    });
+
+    if (shippingDateGroupingRangeDays === undefined) {
+      return intermediateDestinationGroupedProducts;
+    }
+
+    // Step 2: Apply flexible date grouping to EACH intermediate destination group
+    const finalCombinedProductGroups: Record<string, { products: Product[], destination: string }> = {};
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const groupingRangeMs = shippingDateGroupingRangeDays * MS_PER_DAY;
+
+    for (const destinationGroupKey in intermediateDestinationGroupedProducts) {
+      if (intermediateDestinationGroupedProducts.hasOwnProperty(destinationGroupKey)) {
+        const { products: productsForThisDestination, destination: actualDestination } =
+          intermediateDestinationGroupedProducts[destinationGroupKey];
+
+        // Filter and sort products for date grouping
+        const productsWithParsedDates = productsForThisDestination
+          .map(p => ({
+            ...p,
+            _shippingDateMs: parseDate(p.shippingAvailableBy)
+          }))
+          .filter(p => !isNaN(p._shippingDateMs) && p._shippingDateMs > 0)
+          .sort((a, b) => a._shippingDateMs - b._shippingDateMs);
+
+        if (productsWithParsedDates.length === 0) {
+          // If no valid products after filtering, skip this destination group
+          continue;
+        }
+
+        // Apply the flexible date grouping logic
+        let currentFlexibleDateGroup: (Product & { _shippingDateMs: number })[] = [];
+        let dateGroupCounter = 0; // To generate unique dateGroupKeys within this destination
+
+        for (let i = 0; i < productsWithParsedDates.length; i++) {
+          const product = productsWithParsedDates[i];
+
+          if (currentFlexibleDateGroup.length === 0) {
+            currentFlexibleDateGroup.push(product);
+          } else {
+            const earliestDateInCurrentGroup = currentFlexibleDateGroup[0]._shippingDateMs;
+            if (product._shippingDateMs - earliestDateInCurrentGroup <= groupingRangeMs) {
+              currentFlexibleDateGroup.push(product);
+            } else {
+              // Current flexible date group is complete, add it to final output
+              const combinedKey = `${destinationGroupKey}__dateGroup_${dateGroupCounter}`;
+              finalCombinedProductGroups[combinedKey] = {
+                products: currentFlexibleDateGroup.map(({ _shippingDateMs, ...rest }) => rest), // Remove temp _shippingDateMs
+                destination: actualDestination,
+              };
+              dateGroupCounter++; // Increment for next date group
+              currentFlexibleDateGroup = [product]; // Start new group
+            }
+          }
+        }
+
+        // Add the last flexible date group if it exists
+        if (currentFlexibleDateGroup.length > 0) {
+          const combinedKey = `${destinationGroupKey}__dateGroup_${dateGroupCounter}`;
+          finalCombinedProductGroups[combinedKey] = {
+            products: currentFlexibleDateGroup.map(({ _shippingDateMs, ...rest }) => rest), // Remove temp _shippingDateMs
+            destination: actualDestination,
+          };
+        }
       }
     }
 
-    if (!productGroups[groupKey]) {
-      productGroups[groupKey] = {
-        products: [],
-        destination: destRaw
-      };
-    }
-    productGroups[groupKey].products.push(p);
-  });
+    return finalCombinedProductGroups;
+  }
+
+  const productGroups = groupProductsByDestinationAndFlexibleDate(products, shippingDateGroupingRange);
 
   let allAssignments: LoadedContainer[] = [];
   const allUnassigned: Product[] = [];
   let instanceCounter = 0;
 
-  console.log("Product Groups", productGroups);
   // Process each group separately
   for (const group of Object.values(productGroups)) {
 
@@ -464,8 +518,6 @@ export const calculatePacking = (
     // 5. Phase 1: Greedy Packing
     let packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
-    console.log("Greedy Packed Instances", packedInstances);
-
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
 
@@ -527,8 +579,6 @@ export const calculatePacking = (
         }
       }
     }
-
-    console.log("Optimized Packed Instances", packedInstances);
 
     // 7. Finalize Output
     packedInstances.forEach(inst => {

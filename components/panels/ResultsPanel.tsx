@@ -180,7 +180,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const groupedUnassigned = React.useMemo(() => {
     if (!result) return {};
     return result.unassignedProducts.reduce((acc, p) => {
-      const key = `${p.name} -${p.formFactorId} `;
+      // Include destination, shipToName, and shippingAvailableBy in the grouping key
+      // to ensure items with different logistics requirements are not merged.
+      const key = `${p.name}-${p.formFactorId}-${p.destination || ''}-${p.shipToName || ''}-${p.shippingAvailableBy || ''}`;
       if (!acc[key]) acc[key] = { products: [], totalQty: 0 };
       acc[key].products.push(p);
       acc[key].totalQty += p.quantity;
@@ -326,10 +328,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     if (!templateProd) return;
 
     // Calculate total quantity of identical items in source
-    const identicalProducts = productsInSource.filter(p =>
-      p.id === productId ||
-      (p.name === templateProd.name && p.formFactorId === templateProd.formFactorId)
-    );
+    // Calculate total quantity of identical items in source
+    const identicalProducts = productsInSource.filter(p => {
+      // Must match name and form factor
+      if (p.name !== templateProd.name || p.formFactorId !== templateProd.formFactorId) return false;
+
+      // Must also match stricter grouping criteria (Destination, ShipTo, Date)
+      // to avoid merging different shipments
+      if (p.destination !== templateProd.destination) return false;
+      if (p.shipToName !== templateProd.shipToName) return false;
+      if (p.shippingAvailableBy !== templateProd.shippingAvailableBy) return false;
+
+      return true;
+    });
 
     const totalQty = identicalProducts.reduce((sum, p) => sum + p.quantity, 0);
 
@@ -1016,7 +1027,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         // Group products for display
                         const productGroups: Record<string, { products: Product[], totalQty: number }> = {};
                         loadedContainer.assignedProducts.forEach(p => {
-                          const key = `${p.name} -${p.formFactorId} `;
+                          const key = `${p.name}-${p.formFactorId}-${p.destination || ''}-${p.shipToName || ''}-${p.shippingAvailableBy || ''}`;
                           if (!productGroups[key]) productGroups[key] = { products: [], totalQty: 0 };
                           productGroups[key].products.push(p);
                           productGroups[key].totalQty += p.quantity;
@@ -1158,7 +1169,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                     Validation Issues:
                                   </div>
                                   <ul className="space-y-1">
-                                    {loadedContainer.validationIssues.map((issue, idx) => (
+                                    {Array.from(new Set(loadedContainer.validationIssues)).map((issue, idx) => (
                                       <li key={idx} className="text-xs text-red-300 pl-4">
                                         • {issue}
                                       </li>

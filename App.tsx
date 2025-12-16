@@ -474,8 +474,7 @@ const App: React.FC = () => {
           name,
           status: 'finalized',
           total_cost: totalCost,
-          container_count: result.assignments.length,
-          snapshot: result
+          container_count: result.assignments.length
         }])
         .select()
         .single();
@@ -539,13 +538,29 @@ const App: React.FC = () => {
 
       if (productsUpdateError) throw productsUpdateError;
 
+      // Collect updated products for the new shipment
+      const shipmentProducts = products.filter(p =>
+        result.assignments.some((a: any) =>
+          a.assignedProducts.some((ap: any) => ap.id === p.id)
+        )
+      ).map(p => {
+        const updates = updatedProductsMap.get(p.id);
+        return updates ? {
+          ...p,
+          shipmentId: shipmentData.id,
+          status: 'shipped' as const,
+          currentContainer: updates.currentContainer,
+          assignmentReference: updates.assignmentReference
+        } : p;
+      });
+
       const newShipment: Shipment = {
         id: shipmentData.id,
         name: shipmentData.name,
         status: shipmentData.status,
         totalCost: shipmentData.total_cost,
         containerCount: shipmentData.container_count,
-        snapshot: shipmentData.snapshot,
+        products: shipmentProducts,
         createdAt: shipmentData.created_at
       };
 
@@ -737,15 +752,13 @@ const App: React.FC = () => {
           : p
       ));
 
+      // Update shipments to remove product from their products array
       setShipments(prev => prev.map(s => {
-        if (s.id === shipmentId) {
-          const newSnapshot = { ...s.snapshot };
-          newSnapshot.assignments = newSnapshot.assignments.map((a: any) => ({
-            ...a,
-            assignedProducts: a.assignedProducts.filter((p: any) => p.id !== productId)
-          })).filter((a: any) => a.assignedProducts.length > 0);
-
-          return { ...s, snapshot: newSnapshot };
+        if (s.id === shipmentId && s.products) {
+          return {
+            ...s,
+            products: s.products.filter(p => p.id !== productId)
+          };
         }
         return s;
       }));

@@ -105,9 +105,9 @@ export const validateLoadedContainer = (
   container: Container,
   products: Product[],
   weightLimit?: number,
-  allowUnitSplitting: boolean = true,
+  _allowUnitSplitting: boolean = true,
   shippingDateGroupingRange: number | undefined = undefined,
-  respectCurrentAssignments: boolean = false
+  _respectCurrentAssignments: boolean = false
 ): LoadedContainer => {
 
   // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
@@ -382,8 +382,8 @@ const packItems = (
 export const calculatePacking = (
   products: Product[],
   containers: Container[],
-  priority: OptimizationPriority,
-  minUtilization: number = 70,
+  _priority: OptimizationPriority,
+  _minUtilization: number = 70,
   countryCosts: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> cost
   maxUtilization: number = 100,
   countryWeightLimits: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> weightLimit

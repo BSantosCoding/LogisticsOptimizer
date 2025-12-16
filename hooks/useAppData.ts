@@ -125,18 +125,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 setOptimizerSettings({ allowUnitSplitting: true, shippingDateGroupingRange: undefined });
             }
 
-            // Process loaded data
-            if (productsData) {
-                setProducts(productsData.map((r: any) => ({
-                    ...r.data,
-                    id: r.id,
-                    formFactorId: r.form_factor_id || r.data.formFactorId,
-                    quantity: r.quantity || r.data.quantity || 1,
-                    weight: r.weight ?? r.data?.weight,
-                    shipmentId: r.shipment_id,
-                    status: r.status || 'available'
-                })));
-            }
+            // Products are processed below with shipments to group by shipmentId
 
             if (containersData) {
                 setContainers(containersData.map((r: any) => ({
@@ -175,6 +164,32 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 .select('*')
                 .eq('created_by', userId)
                 .order('created_at', { ascending: false });
+
+            // Group products by shipmentId for reconstruction
+            const productsByShipment = new Map<string, Product[]>();
+            if (productsData) {
+                const mappedProducts = productsData.map((r: any) => ({
+                    ...r.data,
+                    id: r.id,
+                    formFactorId: r.form_factor_id || r.data.formFactorId,
+                    quantity: r.quantity || r.data.quantity || 1,
+                    weight: r.weight ?? r.data?.weight,
+                    shipmentId: r.shipment_id,
+                    status: r.status || 'available'
+                }));
+
+                setProducts(mappedProducts);
+
+                // Group shipped products by shipment
+                mappedProducts.forEach((p: Product) => {
+                    if (p.shipmentId) {
+                        const existing = productsByShipment.get(p.shipmentId) || [];
+                        existing.push(p);
+                        productsByShipment.set(p.shipmentId, existing);
+                    }
+                });
+            }
+
             if (shipmentsData) {
                 setShipments(shipmentsData.map((r: any) => ({
                     id: r.id,
@@ -182,7 +197,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     status: r.status,
                     totalCost: r.total_cost,
                     containerCount: r.container_count,
-                    snapshot: r.snapshot,
+                    products: productsByShipment.get(r.id) || [],
                     createdAt: r.created_at
                 })));
             }

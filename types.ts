@@ -36,7 +36,7 @@ export interface Shipment {
   status: 'draft' | 'finalized';
   totalCost: number;
   containerCount: number;
-  snapshot: LoadedContainer[]; // Stores the loaded containers snapshot
+  products?: Product[]; // Runtime-loaded products for this shipment
   createdAt: string;
 }
 

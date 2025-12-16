@@ -10,6 +10,17 @@
         "admin": "Admin",
         "userSettings": "Settings"
     },
+    "shipments": {
+        "noShipments": "No shipments saved yet.",
+        "noShipmentsDesc": "Run an optimization and click \"Save as Shipment\" to create one.",
+        "savedShipments": "Saved Shipments",
+        "loadAsBase": "Load as Base Plan",
+        "unpack": "Unpack (Release Items)",
+        "consume": "Consume Plan (Ship Items)",
+        "containers": "Containers",
+        "items": "items",
+        "units": "units"
+    },
     "header": {
         "viewAs": "View as",
         "myRole": "My Role",
@@ -32,7 +43,9 @@
         "warnings": "Warnings",
         "units": "Units",
         "update": "Update",
-        "allCaps": "All Caps"
+        "allCaps": "All Caps",
+        "yes": "Yes",
+        "no": "No"
     },
     "products": {
         "title": "Product Inventory",
@@ -60,7 +73,12 @@
         "filterAll": "All",
         "allTags": "All Tags",
         "allSelectedDefault": "All products selected by default",
-        "weight": "Weight (kg)"
+        "weight": "Weight (kg)",
+        "incoterms": "Incoterms",
+        "shipToName": "Ship To Name",
+        "availableBy": "Available By",
+        "availAbbr": "Avail",
+        "na": "N/A"
     },
     "config": {
         "optimizationSettings": "Optimization Settings",
@@ -104,7 +122,16 @@
         "productDisplayFields": "Product Display Fields",
         "shippingAvailableBy": "Shipping Available By (Date)",
         "currentContainer": "Current Container",
-        "shipmentNumberRef": "Shipment Number / Ref"
+        "shipmentNumberRef": "Shipment Number / Ref",
+        "coreFields": "Core Fields (CSV Header Names)",
+        "csvHeaderName": "CSV Header Name",
+        "incotermsHeaders": "Incoterms Headers",
+        "addIncotermsHeader": "Add Incoterms Header",
+        "restrictionHeaders": "Restriction Headers",
+        "addRestrictionHeader": "Add Restriction Header",
+        "customFields": "Custom Fields",
+        "companySpecific": "Company-Specific",
+        "ignoreDates": "Ignore dates"
     },
     "team": {
         "overview": "Team Overview",
@@ -183,7 +210,18 @@
         "productsToImport": "Products to Import",
         "success": "Success",
         "failed": "Failed",
-        "totalProcessed": "Total Processed"
+        "totalProcessed": "Total Processed",
+        "saveProducts": "Save Products",
+        "quickAnalysis": "Quick Analysis (Don't Save)",
+        "cancelImport": "Cancel Import",
+        "found": "Found",
+        "foundSuffix": "Do you want to add them to your permanent library?",
+        "importedSuccess": "Successfully imported",
+        "toDatabase": " to database",
+        "sessionOnly": " (session only)",
+        "needAttention": "Need Attention",
+        "unknownIssues": "The following products have UNKNOWN form factors and need to be assigned before optimization:",
+        "gotIt": "Got it"
     },
     "results": {
         "title": "Optimization Results",

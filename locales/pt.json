@@ -10,6 +10,17 @@
         "admin": "Admin",
         "userSettings": "Definições"
     },
+    "shipments": {
+        "noShipments": "Ainda não existem envios guardados.",
+        "noShipmentsDesc": "Execute uma otimização e clique em \"Guardar como Envio\" para criar um.",
+        "savedShipments": "Envios Guardados",
+        "loadAsBase": "Carregar como Plano Base",
+        "unpack": "Desempacotar (Libertar Itens)",
+        "consume": "Consumir Plano (Enviar Itens)",
+        "containers": "Contentores",
+        "items": "itens",
+        "units": "unidades"
+    },
     "header": {
         "viewAs": "Ver como",
         "myRole": "A Minha Função",
@@ -32,7 +43,9 @@
         "warnings": "Avisos",
         "units": "Unidades",
         "update": "Atualizar",
-        "allCaps": "Tudo Maiúsculas"
+        "allCaps": "Tudo Maiúsculas",
+        "yes": "Sim",
+        "no": "Não"
     },
     "products": {
         "title": "Inventário de Produtos",
@@ -60,7 +73,12 @@
         "filterAll": "Todos",
         "allTags": "Todas as Etiquetas",
         "allSelectedDefault": "Todos os produtos selecionados por padrão",
-        "weight": "Peso (kg)"
+        "weight": "Peso (kg)",
+        "incoterms": "Incoterms",
+        "shipToName": "Nome de Envio",
+        "availableBy": "Disponível Por",
+        "availAbbr": "Disp.",
+        "na": "N/D"
     },
     "config": {
         "optimizationSettings": "Definições de Otimização",
@@ -105,7 +123,15 @@
         "productDisplayFields": "Campos de Exibição de Produto",
         "shippingAvailableBy": "Disponível para Envio (Data)",
         "currentContainer": "Contêiner Atual",
-        "shipmentNumberRef": "Número da Remessa / Ref"
+        "shipmentNumberRef": "Número da Remessa / Ref",
+        "coreFields": "Campos Principais (Cabeçalhos CSV)",
+        "csvHeaderName": "Nome do Cabeçalho CSV",
+        "incotermsHeaders": "Cabeçalhos Incoterms",
+        "addIncotermsHeader": "Adicionar Cabeçalho Incoterms",
+        "restrictionHeaders": "Cabeçalhos de Restrição",
+        "addRestrictionHeader": "Adicionar Cabeçalho de Restrição",
+        "companySpecific": "Específico da Empresa",
+        "ignoreDates": "Ignorar datas"
     },
     "team": {
         "overview": "Visão Geral da Equipa",
@@ -184,7 +210,18 @@
         "productsToImport": "Produtos a Importar",
         "success": "Sucesso",
         "failed": "Falhou",
-        "totalProcessed": "Total Processado"
+        "totalProcessed": "Total Processado",
+        "saveProducts": "Guardar Produtos",
+        "quickAnalysis": "Análise Rápida (Não Guardar)",
+        "cancelImport": "Cancelar Importação",
+        "found": "Encontrado",
+        "foundSuffix": "Deseja adicioná-los à sua biblioteca permanente?",
+        "importedSuccess": "Importado com sucesso",
+        "toDatabase": " para base de dados",
+        "sessionOnly": " (apenas sessão)",
+        "needAttention": "Requer Atenção",
+        "unknownIssues": "Os seguintes produtos têm formatos DESCONHECIDOS e precisam de ser atribuídos antes da otimização:",
+        "gotIt": "Entendi"
     },
     "results": {
         "title": "Resultados da Otimização",

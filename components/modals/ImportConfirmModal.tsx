@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Database, Zap } from 'lucide-react';
 import {
     Dialog,
@@ -16,27 +17,28 @@ interface ImportConfirmModalProps {
 }
 
 const ImportConfirmModal: React.FC<ImportConfirmModalProps> = ({ onConfirm, onCancel, productCount }) => {
+    const { t } = useTranslation();
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Import Products</DialogTitle>
+                    <DialogTitle>{t('modals.importTitle')}</DialogTitle>
                     <DialogDescription>
-                        Found <span className="font-bold text-primary">{productCount} products</span>.
-                        Do you want to add them to your permanent library?
+                        {t('modals.found')} <span className="font-bold text-primary">{productCount} {t('shipments.items')}</span>.
+                        {t('modals.foundSuffix')}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-2 w-full pt-4">
                     <Button onClick={() => onConfirm(true)} className="w-full">
                         <Database size={18} className="mr-2" />
-                        Save Products
+                        {t('modals.saveProducts')}
                     </Button>
                     <Button onClick={() => onConfirm(false)} variant="secondary" className="w-full">
                         <Zap size={18} className="mr-2" />
-                        Quick Analysis (Don't Save)
+                        {t('modals.quickAnalysis')}
                     </Button>
                     <Button onClick={onCancel} variant="outline" className="w-full">
-                        Cancel Import
+                        {t('modals.cancelImport')}
                     </Button>
                 </div>
             </DialogContent>

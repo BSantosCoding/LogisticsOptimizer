@@ -184,7 +184,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
             <div className="p-3 border-b border-border bg-muted/5">
               <div className="space-y-3">
                 <Input
-                  placeholder="New Template Name"
+                  placeholder={t('config.templateName')}
                   value={newTemplate.name}
                   onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })}
                   className="h-8 bg-background border-input/50"
@@ -297,7 +297,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <Input
                   type="number"
                   min="0"
-                  placeholder="Ignore dates"
+                  placeholder={t('config.ignoreDates')}
                   value={shippingDateGroupingRange === undefined ? '' : shippingDateGroupingRange}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -342,7 +342,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
               {/* Core Fields */}
               <div>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Core Fields (CSV Header Names)</h3>
+                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.coreFields')}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { key: 'country', label: t('products.country') },
@@ -367,7 +367,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
               {/* Incoterms Headers */}
               <div>
-                <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Incoterms Headers</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.incotermsHeaders')}</h4>
                 <div className="space-y-2">
                   {(editingMapping.incoterms || []).map((header, idx) => (
                     <div key={idx} className="flex gap-2">
@@ -379,7 +379,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                           setEditingMapping(prev => ({ ...prev, incoterms: newIncoterms }));
                           setHasUnsavedChanges(true);
                         }}
-                        placeholder="CSV Header Name"
+                        placeholder={t('config.csvHeaderName')}
                         className="flex-1 bg-muted/30 border-input/50 h-8"
                       />
                       <Button
@@ -408,14 +408,14 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     size="sm"
                     className="w-full h-8 border-dashed text-muted-foreground"
                   >
-                    <Plus size={14} className="mr-1" /> Add Incoterms Header
+                    <Plus size={14} className="mr-1" /> {t('config.addIncotermsHeader')}
                   </Button>
                 </div>
               </div>
 
               {/* Restrictions Headers */}
               <div>
-                <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Restriction Headers</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.restrictionHeaders')}</h4>
                 <div className="space-y-2">
 
                   {(editingMapping.restrictions || []).map((header, idx) => (
@@ -457,7 +457,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     size="sm"
                     className="w-full h-8 border-dashed text-muted-foreground"
                   >
-                    <Plus size={14} className="mr-1" /> Add Restriction Header
+                    <Plus size={14} className="mr-1" /> {t('config.addRestrictionHeader')}
                   </Button>
                 </div>
               </div>
@@ -465,8 +465,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               {/* Custom Fields */}
               <div>
                 <div className="flex items-center gap-2 border-b border-border pb-2 mb-4">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase">Custom Fields</h4>
-                  <div className="text-[10px] text-muted-foreground bg-muted px-1.5 rounded border border-border">Company-Specific</div>
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase">{t('config.customFields')}</h4>
+                  <div className="text-[10px] text-muted-foreground bg-muted px-1.5 rounded border border-border">{t('config.companySpecific')}</div>
                 </div>
 
                 <div className="space-y-4">

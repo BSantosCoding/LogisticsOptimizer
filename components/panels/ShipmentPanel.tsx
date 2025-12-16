@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Shipment, Product, CSVMapping } from '../../types';
 import { Package, Calendar, DollarSign, Box, ChevronRight, ChevronDown, Trash2, RefreshCw, RotateCcw, Truck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
     onUnpackItem,
     csvMapping
 }) => {
+    const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [expandedContainerRef, setExpandedContainerRef] = useState<string | null>(null);
 
@@ -67,8 +69,8 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
         return (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
                 <Package size={48} className="mb-4 opacity-50" />
-                <p className="text-center">No shipments saved yet.</p>
-                <p className="text-xs mt-2 text-muted-foreground/70 text-center">Run an optimization and click "Save as Shipment" to create one.</p>
+                <p className="text-center">{t('shipments.noShipments')}</p>
+                <p className="text-xs mt-2 text-muted-foreground/70 text-center">{t('shipments.noShipmentsDesc')}</p>
             </div>
         );
     }
@@ -76,7 +78,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
     return (
         <div className="h-full overflow-y-auto p-6">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Package className="text-primary" /> Saved Shipments
+                <Package className="text-primary" /> {t('shipments.savedShipments')}
             </h2>
 
             <div className="space-y-4">
@@ -101,7 +103,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                 <Calendar size={12} /> {new Date(shipment.createdAt).toLocaleDateString()}
                                             </span>
                                             <span className="flex items-center gap-1">
-                                                <Box size={12} /> {containerGroups.length || shipment.containerCount} Containers
+                                                <Box size={12} /> {containerGroups.length || shipment.containerCount} {t('shipments.containers')}
                                             </span>
                                             <span className="flex items-center gap-1 text-success">
                                                 <DollarSign size={12} /> ${shipment.totalCost.toLocaleString()}
@@ -124,7 +126,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                             className="flex-1"
                                             title="Load these items + new items for re-optimization"
                                         >
-                                            <RefreshCw size={16} className="mr-2" /> Load as Base Plan
+                                            <RefreshCw size={16} className="mr-2" /> {t('shipments.loadAsBase')}
                                         </Button>
                                         <Button
                                             onClick={(e) => { e.stopPropagation(); onUnpack(shipment.id); }}
@@ -132,14 +134,14 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                             className="flex-1"
                                             title="Release items back to available pool"
                                         >
-                                            <RotateCcw size={16} className="mr-2" /> Unpack (Release Items)
+                                            <RotateCcw size={16} className="mr-2" /> {t('shipments.unpack')}
                                         </Button>
                                         <Button
                                             onClick={(e) => { e.stopPropagation(); onDelete(shipment.id); }}
                                             variant="outline"
                                             size="icon"
                                             className="text-success hover:bg-success/10"
-                                            title="Consume Plan (Ship Items)"
+                                            title={t('shipments.consume')}
                                         >
                                             <Truck size={16} />
                                         </Button>
@@ -147,7 +149,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
 
                                     {/* Container List Preview */}
                                     <div className="space-y-2">
-                                        <h4 className="text-xs font-bold text-muted-foreground uppercase mb-2">Containers</h4>
+                                        <h4 className="text-xs font-bold text-muted-foreground uppercase mb-2">{t('shipments.containers')}</h4>
                                         {containerGroups.map((group) => (
                                             <div key={group.assignmentReference} className="bg-card rounded-lg border border-border overflow-hidden">
                                                 <div
@@ -157,10 +159,10 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                     <div className="flex items-center gap-2">
                                                         <Box size={14} className="text-muted-foreground" />
                                                         <span className="text-sm">{group.containerName}</span>
-                                                        <span className="text-xs text-muted-foreground">({group.products.length} items)</span>
+                                                        <span className="text-xs text-muted-foreground">({group.products.length} {t('shipments.items')})</span>
                                                     </div>
                                                     <div className="flex items-center gap-3">
-                                                        <span className="text-xs text-muted-foreground">{group.totalQuantity} units</span>
+                                                        <span className="text-xs text-muted-foreground">{group.totalQuantity} {t('shipments.units')}</span>
                                                         {expandedContainerRef === group.assignmentReference ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronRight size={14} className="text-muted-foreground" />}
                                                     </div>
                                                 </div>
@@ -188,7 +190,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
 
                                                                                 if (val === undefined || val === null || val === '') return null;
 
-                                                                                const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+                                                                                const displayVal = typeof val === 'boolean' ? (val ? t('common.yes') : t('common.no')) : String(val);
                                                                                 // Get friendly label from mapping or format the key
                                                                                 const label = csvMapping.customFields[fieldKey] || fieldKey.replace(/([A-Z])/g, ' $1').trim();
 

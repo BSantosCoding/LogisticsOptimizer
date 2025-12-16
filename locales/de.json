@@ -10,6 +10,17 @@
         "admin": "Admin",
         "userSettings": "Einstellungen"
     },
+    "shipments": {
+        "noShipments": "Noch keine Sendungen gespeichert.",
+        "noShipmentsDesc": "Führen Sie eine Optimierung aus und klicken Sie auf \"Als Sendung speichern\", um eine zu erstellen.",
+        "savedShipments": "Gespeicherte Sendungen",
+        "loadAsBase": "Als Basisplan laden",
+        "unpack": "Auspacken (Artikel freigeben)",
+        "consume": "Plan verbrauchen (Artikel versenden)",
+        "containers": "Container",
+        "items": "Artikel",
+        "units": "Einheiten"
+    },
     "header": {
         "viewAs": "Ansicht als",
         "myRole": "Meine Rolle",
@@ -32,7 +43,9 @@
         "warnings": "Warnungen",
         "units": "Einheiten",
         "update": "Aktualisieren",
-        "allCaps": "Alle Kappen"
+        "allCaps": "Alle Kappen",
+        "yes": "Ja",
+        "no": "Nein"
     },
     "products": {
         "title": "Produktinventar",
@@ -60,7 +73,12 @@
         "filterAll": "Alle",
         "allTags": "Alle Tags",
         "allSelectedDefault": "Alle Produkte standardmäßig ausgewählt",
-        "weight": "Gewicht (kg)"
+        "weight": "Gewicht (kg)",
+        "incoterms": "Incoterms",
+        "shipToName": "Empfängername",
+        "availableBy": "Verfügbar bis",
+        "availAbbr": "Verf.",
+        "na": "N/V"
     },
     "config": {
         "optimizationSettings": "Optimierungseinstellungen",
@@ -106,7 +124,15 @@
         "productDisplayFields": "Produktanzeigefelder",
         "shippingAvailableBy": "Versand verfügbar bis (Datum)",
         "currentContainer": "Aktueller Container",
-        "shipmentNumberRef": "Sendungsnummer / Ref"
+        "shipmentNumberRef": "Sendungsnummer / Ref",
+        "coreFields": "Kernfelder (CSV-Header-Namen)",
+        "csvHeaderName": "CSV-Header-Name",
+        "incotermsHeaders": "Incoterms-Header",
+        "addIncotermsHeader": "Incoterms-Header hinzufügen",
+        "restrictionHeaders": "Einschränkungs-Header",
+        "addRestrictionHeader": "Einschränkungs-Header hinzufügen",
+        "companySpecific": "Firmenspezifisch",
+        "ignoreDates": "Daten ignorieren"
     },
     "team": {
         "overview": "Teamübersicht",
@@ -185,7 +211,18 @@
         "productsToImport": "Zu importierende Produkte",
         "success": "Erfolg",
         "failed": "Fehlgeschlagen",
-        "totalProcessed": "Insgesamt verarbeitet"
+        "totalProcessed": "Insgesamt verarbeitet",
+        "saveProducts": "Produkte speichern",
+        "quickAnalysis": "Schnellanalyse (Nicht speichern)",
+        "cancelImport": "Import abbrechen",
+        "found": "Gefunden",
+        "foundSuffix": "Möchten Sie diese zu Ihrer permanenten Bibliothek hinzufügen?",
+        "importedSuccess": "Erfolgreich importiert",
+        "toDatabase": " in die Datenbank",
+        "sessionOnly": " (nur Sitzung)",
+        "needAttention": "Erfordern Aufmerksamkeit",
+        "unknownIssues": "Die folgenden Produkte haben UNBEKANNTE Formfaktoren und müssen vor der Optimierung zugewiesen werden:",
+        "gotIt": "Verstanden"
     },
     "results": {
         "title": "Optimierungsergebnisse",

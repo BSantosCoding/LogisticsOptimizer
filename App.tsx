@@ -500,7 +500,7 @@ const App: React.FC = () => {
             data: {
               ...p, // keep existing data
               currentContainer: containerName,
-              assignmentReference: containerRef
+              assignmentReference: p.assignmentReference || containerRef
               // Note: we merge this into the 'data' JSON column if that's how products are stored, 
               // BUT based on previous context, these seem to be top-level fields or mixed.
               // Let's check how 'products' table is structured. 
@@ -514,7 +514,7 @@ const App: React.FC = () => {
           productUpdates.push(update);
           updatedProductsMap.set(p.id, {
             currentContainer: containerName,
-            assignmentReference: containerRef
+            assignmentReference: p.assignmentReference || containerRef
           });
         });
         containerCounter++;

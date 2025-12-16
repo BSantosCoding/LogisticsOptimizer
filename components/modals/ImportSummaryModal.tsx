@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import {
     Dialog,
@@ -24,6 +25,7 @@ const ImportSummaryModal: React.FC<ImportSummaryModalProps> = ({
     productsWithIssues,
     onClose
 }) => {
+    const { t } = useTranslation();
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[600px]">
@@ -34,11 +36,11 @@ const ImportSummaryModal: React.FC<ImportSummaryModalProps> = ({
                                 <AlertTriangle className="text-amber-500" size={24} />
                             </div>
                         )}
-                        <DialogTitle>Import Summary</DialogTitle>
+                        <DialogTitle>{t('modals.importSummaryTitle')}</DialogTitle>
                     </div>
                     <DialogDescription>
-                        Successfully imported <span className="font-bold text-primary">{totalImported} products</span>
-                        {savedToDb ? ' to database' : ' (session only)'}.
+                        {t('modals.importedSuccess')} <span className="font-bold text-primary">{totalImported} {t('shipments.items')}</span>
+                        {savedToDb ? t('modals.toDatabase') : t('modals.sessionOnly')}.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -47,12 +49,12 @@ const ImportSummaryModal: React.FC<ImportSummaryModalProps> = ({
                         <div className="flex items-center gap-2 mb-3">
                             <AlertTriangle className="text-amber-500" size={18} />
                             <h3 className="font-semibold text-amber-500">
-                                {productsWithIssues.length} Product{productsWithIssues.length !== 1 ? 's' : ''} Need Attention
+                                {productsWithIssues.length} Product{productsWithIssues.length !== 1 ? 's' : ''} {t('modals.needAttention')}
                             </h3>
                         </div>
 
                         <p className="text-sm text-muted-foreground mb-3">
-                            The following products have <span className="font-semibold text-amber-500">UNKNOWN form factors</span> and need to be assigned before optimization:
+                            {t('modals.unknownIssues')}
                         </p>
 
                         <ScrollArea className="h-48 bg-muted/30 rounded-lg p-3">
@@ -70,7 +72,7 @@ const ImportSummaryModal: React.FC<ImportSummaryModalProps> = ({
 
                 <DialogFooter>
                     <Button onClick={onClose} className="w-full">
-                        Got it
+                        {t('modals.gotIt')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

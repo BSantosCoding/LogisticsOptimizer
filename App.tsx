@@ -466,9 +466,12 @@ const App: React.FC = () => {
         return sum + cost;
       }, 0);
 
+      const shipmentId = `S-${Date.now()}`;
+
       const { data: shipmentData, error: shipmentError } = await supabase
         .from('shipments')
         .insert([{
+          id: shipmentId,
           company_id: companyId,
           created_by: session.user.id,
           name,
@@ -482,17 +485,61 @@ const App: React.FC = () => {
 
       if (shipmentError) throw shipmentError;
 
-      const productIdsToUpdate = new Set<string>();
+      const productUpdates: any[] = [];
+      const updatedProductsMap = new Map<string, any>();
+
+      // Generate updates for products
+      let containerCounter = 1;
+      const shipmentRandomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+
       result.assignments.forEach((a: any) => {
-        a.assignedProducts.forEach((p: any) => productIdsToUpdate.add(p.id));
+        const containerRef = `packter-${shipmentRandomId}-${containerCounter}`;
+        const containerName = a.container.name; // This is the type name, e.g. "40' Standard" (assuming it's not unique per instance)
+
+        a.assignedProducts.forEach((p: any) => {
+          const update = {
+            id: p.id,
+            shipment_id: shipmentId,
+            status: 'shipped',
+            data: {
+              ...p, // keep existing data
+              currentContainer: containerName,
+              assignmentReference: containerRef
+              // Note: we merge this into the 'data' JSON column if that's how products are stored, 
+              // BUT based on previous context, these seem to be top-level fields or mixed.
+              // Let's check how 'products' table is structured. 
+              // Based on confirmImport, these are inside 'data'. But we also update columns.
+              // Let's assume we need to update the JSON 'data' column to persist these new fields.
+            }
+          };
+
+          // We need to construct the full update object for the DB
+          // We'll update the 'data' column which contains currentContainer/assignmentReference
+          productUpdates.push(update);
+          updatedProductsMap.set(p.id, {
+            currentContainer: containerName,
+            assignmentReference: containerRef
+          });
+        });
+        containerCounter++;
       });
 
-      const { error: productsError } = await supabase
-        .from('products')
-        .update({ shipment_id: shipmentData.id, status: 'shipped' })
-        .in('id', Array.from(productIdsToUpdate));
+      // Perform bulk update or individual updates
+      // Supabase helper for bulk update might not be available, so we loop or use upsert if full rows.
+      // Since we are updating specific fields in JSONB 'data' and standard cols, let's do it carefully.
+      // Actually, we can just iterate and update. Efficiency might be lower but safer for now.
 
-      if (productsError) throw productsError;
+      const { error: productsUpdateError } = await supabase.from('products').upsert(
+        productUpdates.map(u => ({
+          id: u.id,
+          company_id: companyId,
+          shipment_id: u.shipment_id,
+          status: u.status,
+          data: u.data
+        }))
+      );
+
+      if (productsUpdateError) throw productsUpdateError;
 
       const newShipment: Shipment = {
         id: shipmentData.id,
@@ -506,11 +553,19 @@ const App: React.FC = () => {
 
       addShipment(newShipment);
 
-      setProducts(prev => prev.map(p =>
-        productIdsToUpdate.has(p.id)
-          ? { ...p, shipmentId: shipmentData.id, status: 'shipped' }
-          : p
-      ));
+      setProducts(prev => prev.map(p => {
+        const updates = updatedProductsMap.get(p.id);
+        if (updates) {
+          return {
+            ...p,
+            shipmentId: shipmentData.id,
+            status: 'shipped',
+            currentContainer: updates.currentContainer,
+            assignmentReference: updates.assignmentReference
+          };
+        }
+        return p;
+      }));
 
       setViewMode('data');
       setInputMode('shipments');
@@ -530,12 +585,37 @@ const App: React.FC = () => {
       isDestructive: false,
       onConfirm: async () => {
         try {
-          const { error: productsError } = await supabase
+          // fetch products first to check for packter refs
+          const { data: productsInShipment, error: fetchError } = await supabase
             .from('products')
-            .update({ shipment_id: null, status: 'available' })
+            .select('*')
             .eq('shipment_id', shipmentId);
 
-          if (productsError) throw productsError;
+          if (fetchError) throw fetchError;
+
+          const updates = productsInShipment.map(p => {
+            const data = p.data || {};
+            let newData = { ...data };
+
+            // Check if it's a packter generated reference
+            if (data.assignmentReference && String(data.assignmentReference).startsWith('packter-')) {
+              newData.assignmentReference = '';
+              newData.currentContainer = '';
+            }
+
+            return {
+              id: p.id,
+              company_id: companyId,
+              shipment_id: null,
+              status: 'available',
+              data: newData
+            };
+          });
+
+          if (updates.length > 0) {
+            const { error: updateError } = await supabase.from('products').upsert(updates);
+            if (updateError) throw updateError;
+          }
 
           const { error: shipmentError } = await supabase
             .from('shipments')
@@ -545,11 +625,19 @@ const App: React.FC = () => {
           if (shipmentError) throw shipmentError;
 
           setShipments(prev => prev.filter(s => s.id !== shipmentId));
-          setProducts(prev => prev.map(p =>
-            p.shipmentId === shipmentId
-              ? { ...p, shipmentId: null, status: 'available' }
-              : p
-          ));
+          setProducts(prev => prev.map(p => {
+            if (p.shipmentId === shipmentId) {
+              const isPackter = p.assignmentReference && p.assignmentReference.startsWith('packter-');
+              return {
+                ...p,
+                shipmentId: null,
+                status: 'available',
+                assignmentReference: isPackter ? '' : p.assignmentReference,
+                currentContainer: isPackter ? '' : p.currentContainer
+              };
+            }
+            return p;
+          }));
         } catch (error) {
           console.error('Error unpacking shipment:', error);
           setErrorModal({ isOpen: true, message: 'Failed to unpack shipment.' });

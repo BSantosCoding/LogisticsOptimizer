@@ -556,7 +556,10 @@ const App: React.FC = () => {
             data: {
               ...p,
               currentContainer: containerName,
-              assignmentReference: finalRef
+              assignmentReference: finalRef,
+              // Store unique physical container ID to strictly distinguish containers in UI
+              // regardless of shared assignment references (e.g. 1 Order split across 2 containers)
+              _containerInstanceId: containerRef
             }
           };
 

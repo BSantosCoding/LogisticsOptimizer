@@ -39,29 +39,40 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
     };
 
     // Group products by assignmentReference to reconstruct containers
-    const getContainerGroups = (products: Product[] | undefined): ContainerGroup[] => {
-        if (!products || products.length === 0) return [];
-
+    const getContainerGroups = (products: any[]) => {
         const groups = new Map<string, ContainerGroup>();
 
         products.forEach(p => {
             const containerName = p.currentContainer || 'Unassigned';
             const rawRef = p.assignmentReference || 'Unassigned';
 
-            // Handle Composite References: "HARD_LINK_SOFT"
-            // We group by the BASE (Hard) reference to keep the physical container together in the UI
-            const ref = rawRef.split('_LINK_')[0];
+            // Primary Grouping Key: Physical Container Instance ID
+            // If _containerInstanceId exists (new save logic), use it to distinguish containers perfectly.
+            // Fallback: If legacy data, fallback to old logic (e.g. ref split).
+            let groupKey = p._containerInstanceId;
+            let displayRef = rawRef;
 
-            if (!groups.has(ref)) {
-                groups.set(ref, {
+            if (!groupKey) {
+                // Fallback for old shipments matches old logic (grouped by Ref)
+                // This maintains backward compatibility
+                groupKey = rawRef.split('_LINK_')[0];
+                displayRef = groupKey;
+            } else {
+                // For new shipments, we group by physical container ID, but we want the "Reference" label 
+                // to still show the hard/base ref for the user.
+                displayRef = rawRef.split('_LINK_')[0];
+            }
+
+            if (!groups.has(groupKey)) {
+                groups.set(groupKey, {
                     containerName,
-                    assignmentReference: ref, // Display the base ref as the group name
+                    assignmentReference: displayRef, // Label for the group (Order ID)
                     products: [],
                     totalQuantity: 0
                 });
             }
 
-            const group = groups.get(ref)!;
+            const group = groups.get(groupKey)!;
             group.products.push(p);
             group.totalQuantity += p.quantity || 1;
         });

@@ -175,7 +175,10 @@ const App: React.FC = () => {
     restrictions: [],
     readyDate: '',
     shipDeadline: '',
-    arrivalDeadline: ''
+    arrivalDeadline: '',
+    shippingAvailableBy: '',
+    currentContainer: '',
+    extraFields: {}
   });
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
@@ -292,6 +295,7 @@ const App: React.FC = () => {
             country: p.country,
             shipToName: p.shipToName,
             shippingAvailableBy: p.shippingAvailableBy,
+            currentContainer: p.currentContainer,
             extraFields: p.extraFields
           },
           form_factor_id: p.formFactorId || null,
@@ -328,7 +332,9 @@ const App: React.FC = () => {
       restrictions: p.restrictions,
       readyDate: p.readyDate || '',
       shipDeadline: p.shipDeadline || '',
-      arrivalDeadline: p.arrivalDeadline || ''
+      arrivalDeadline: p.arrivalDeadline || '',
+      currentContainer: p.currentContainer || '',
+      extraFields: p.extraFields || {}
     });
     setEditingProductId(p.id);
     handleTabChange('products');
@@ -345,7 +351,7 @@ const App: React.FC = () => {
   };
 
   const handleCancelProductEdit = () => {
-    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '' });
+    setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', shippingAvailableBy: '', currentContainer: '', extraFields: {} });
     setEditingProductId(null);
   };
 

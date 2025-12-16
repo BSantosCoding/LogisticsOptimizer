@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
+import { supabase } from "../services/supabase"
 
 type Theme = "dark" | "light" | "system"
 
@@ -47,11 +48,50 @@ export function ThemeProvider({
         root.classList.add(theme)
     }, [theme])
 
+    // Sync from Supabase on load/auth
+    useEffect(() => {
+        const fetchPreferences = async (userId: string) => {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('theme')
+                    .eq('id', userId)
+                    .single();
+
+                if (data?.theme && !error) {
+                    setTheme(data.theme as Theme);
+                }
+            } catch (e) {
+                console.error("Failed to fetch theme preference", e);
+            }
+        };
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                fetchPreferences(session.user.id);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
     const value = {
         theme,
-        setTheme: (theme: Theme) => {
-            localStorage.setItem(storageKey, theme)
-            setTheme(theme)
+        setTheme: async (newTheme: Theme) => {
+            localStorage.setItem(storageKey, newTheme)
+            setTheme(newTheme)
+
+            // Persist to Supabase if logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                supabase
+                    .from('profiles')
+                    .update({ theme: newTheme })
+                    .eq('id', session.user.id)
+                    .then(({ error }) => {
+                        if (error) console.error("Failed to save theme preference:", error);
+                    });
+            }
         },
     }
 

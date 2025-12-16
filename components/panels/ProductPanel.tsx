@@ -462,7 +462,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   <div className="mb-3 pr-6">
                     <div className="flex items-center gap-2 mb-1.5">
                       {p.formFactorId ? (
-                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal bg-secondary/30 text-secondary-foreground border-border/50">
+                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal bg-secondary text-secondary-foreground border-border/50">
                           {formFactors.find(f => f.id === p.formFactorId)?.name || 'Unknown'}
                         </Badge>
                       ) : (
@@ -533,7 +533,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <div className="flex gap-1 flex-wrap mt-3 pt-3 border-t border-border/50">
                       {p.restrictions.map((r, i) => (
                         <div key={i} className="contents">
-                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal bg-secondary/20 text-secondary-foreground">
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal bg-secondary text-secondary-foreground">
                             {r}
                           </Badge>
                         </div>

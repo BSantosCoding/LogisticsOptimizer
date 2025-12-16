@@ -426,7 +426,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               }`}
           >
             {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-            Optimize (Respect Pre-Assignments)
+            {t('header.respectCurrent')}
           </button>
         </div>
       </div >
@@ -499,7 +499,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 title="Respect Current Assignments"
               >
                 <Zap size={14} className="mr-1" />
-                Respect Current
+                {t('header.respectCurrent')}
               </Button>
             </div>
 
@@ -706,7 +706,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
           {/* Scrollable Products List */}
           <div
-            className="flex-1 bg-card rounded-xl border border-border p-2 overflow-y-auto scrollbar-hide min-h-0"
+            className="flex-1 bg-card rounded-xl border border-border p-2 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             onDragOver={(e) => {
               e.preventDefault();
               e.currentTarget.classList.add('bg-primary/10');

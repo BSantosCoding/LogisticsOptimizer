@@ -345,13 +345,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Core Fields (CSV Header Names)</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { key: 'country', label: 'Country' },
-                    { key: 'quantity', label: 'Quantity' },
+                    { key: 'country', label: t('products.country') },
+                    { key: 'quantity', label: t('products.quantity') },
                     { key: 'weight', label: t('products.weight') },
                     { key: 'formFactor', label: t('config.formFactorLabel') },
-                    { key: 'shippingAvailableBy', label: 'Shipping Available By (Date)' },
-                    { key: 'currentContainer', label: 'Current Container' },
-                    { key: 'assignmentReference', label: 'Shipment Number / Ref' }
+                    { key: 'shippingAvailableBy', label: t('config.shippingAvailableBy') },
+                    { key: 'currentContainer', label: t('config.currentContainer') },
+                    { key: 'assignmentReference', label: t('config.shipmentNumberRef') }
                   ].map(({ key, label }) => (
                     <div key={key}>
                       <Label className="text-xs text-muted-foreground mb-1.5 block">{label}</Label>

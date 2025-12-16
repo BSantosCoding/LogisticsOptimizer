@@ -409,23 +409,26 @@ export const calculatePacking = (
     const unassignedProducts = products.filter(p => !p.currentContainer || p.currentContainer.trim().length === 0);
 
     // Heuristically match the string to a template.
+    // Match container by finding the longest matching container name/id in the description string
     const findTemplate = (desc: string): Container | undefined => {
-      const d = desc.toLowerCase();
-      const isReefer = d.includes('reefer');
-      const is20 = d.includes('20');
-      const is40 = d.includes('40');
+      if (!desc) return undefined;
+      const d = desc.toLowerCase().trim();
 
-      // Try strict ID match first
-      const exactId = containers.find(c => c.id === desc || c.name === desc);
-      if (exactId) return exactId;
+      // 1. Try Exact Match (ID or Name)
+      const exactMatch = containers.find(c =>
+        c.id.toLowerCase() === d || c.name.toLowerCase() === d
+      );
+      if (exactMatch) return exactMatch;
 
-      return containers.find(c => {
+      // 2. Sort containers by name length (descending) to match longest/most specific first
+      // e.g. Match "40' High Cube" before "40'"
+      const sortedContainers = [...containers].sort((a, b) => b.name.length - a.name.length);
+
+      // 3. Find first container whose Name or ID is contained in the description string
+      return sortedContainers.find(c => {
         const cName = c.name.toLowerCase();
         const cId = c.id.toLowerCase();
-        const cIsReefer = cName.includes('reefer') || cId.includes('r');
-        const cIs20 = cName.includes('20') || cId.includes('20');
-        const cIs40 = cName.includes('40') || cId.includes('40');
-        return (isReefer === cIsReefer) && (is20 === cIs20 && is40 === cIs40);
+        return (cName.length > 0 && d.includes(cName)) || (cId.length > 0 && d.includes(cId));
       });
     };
 

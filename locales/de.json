@@ -14,7 +14,8 @@
         "viewAs": "Ansicht als",
         "myRole": "Meine Rolle",
         "runOptimization": "Optimierung starten",
-        "optimizing": "Optimiere..."
+        "optimizing": "Optimiere...",
+        "respectCurrent": "Optimieren (Aktuelle beibehalten)"
     },
     "common": {
         "loading": "Laden...",
@@ -102,7 +103,10 @@
         "days": "Tage",
         "shippingDateGroupingDesc": "Produkte mit Daten, die mehr als X Tage auseinander liegen, werden separat gruppiert.",
         "groupingFields": "Gruppierungsfelder (Zielschlüssel)",
-        "productDisplayFields": "Produktanzeigefelder"
+        "productDisplayFields": "Produktanzeigefelder",
+        "shippingAvailableBy": "Versand verfügbar bis (Datum)",
+        "currentContainer": "Aktueller Container",
+        "shipmentNumberRef": "Sendungsnummer / Ref"
     },
     "team": {
         "overview": "Teamübersicht",

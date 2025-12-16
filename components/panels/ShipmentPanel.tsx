@@ -153,10 +153,12 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                                             if (val === undefined || val === null || val === '') return null;
 
                                                                             const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+                                                                            // Get friendly label from mapping or format the key
+                                                                            const label = csvMapping.customFields[fieldKey] || fieldKey.replace(/([A-Z])/g, ' $1').trim();
 
                                                                             return (
-                                                                                <span key={fieldKey} className="text-[10px] text-muted-foreground" title={`${fieldKey}: ${displayVal}`}>
-                                                                                    {displayVal}
+                                                                                <span key={fieldKey} className="text-[10px] text-muted-foreground" title={`${label}: ${displayVal}`}>
+                                                                                    <span className="opacity-70 font-semibold mr-1">{label}:</span>{displayVal}
                                                                                 </span>
                                                                             );
                                                                         })}

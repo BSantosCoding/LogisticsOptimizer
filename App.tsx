@@ -466,12 +466,9 @@ const App: React.FC = () => {
         return sum + cost;
       }, 0);
 
-      const shipmentId = `S-${Date.now()}`;
-
       const { data: shipmentData, error: shipmentError } = await supabase
         .from('shipments')
         .insert([{
-          id: shipmentId,
           company_id: companyId,
           created_by: session.user.id,
           name,
@@ -499,7 +496,7 @@ const App: React.FC = () => {
         a.assignedProducts.forEach((p: any) => {
           const update = {
             id: p.id,
-            shipment_id: shipmentId,
+            shipment_id: shipmentData.id,
             status: 'shipped',
             data: {
               ...p, // keep existing data

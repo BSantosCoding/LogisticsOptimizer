@@ -518,7 +518,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         moveModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-card p-6 rounded-xl border border-border w-80 shadow-2xl">
-              <h3 className="text-lg font-bold text-white mb-2">{t('results.moveItems')}</h3>
+              <h3 className="text-lg font-bold text-foreground mb-2">{t('results.moveItems')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {t('results.moveItemsDescription', { productName: moveModal.productName })}
               </p>
@@ -571,7 +571,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         deleteContainerModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="bg-card p-6 rounded-xl border border-border w-96 shadow-2xl">
-              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
                 <Trash2 size={20} className="text-red-400" />
                 {t('containers.deleteTitle')}
               </h3>
@@ -604,7 +604,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         isSaving && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-card p-6 rounded-xl border border-border w-96 shadow-xl">
-              <h3 className="text-lg font-bold text-white mb-4">{t('results.saveShipment')}</h3>
+              <h3 className="text-lg font-bold text-foreground mb-4">{t('results.saveShipment')}</h3>
               <div className="mb-4">
                 <label className="block text-xs text-muted-foreground mb-1">{t('results.shipmentName')}</label>
                 <input
@@ -825,7 +825,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           {/* Utilization Preview - Always Visible */}
           {utilizationPreview && (
             <div className="flex-shrink-0 p-2 bg-card/50 rounded-lg border border-border">
-              <h4 className="text-[10px] font-semibold text-white mb-1.5">
+              <h4 className="text-[10px] font-semibold text-foreground mb-1.5">
                 Previewing: {utilizationPreview.totalUnits} unit{utilizationPreview.totalUnits !== 1 ? 's' : ''}
                 {utilizationPreview.filterDestination && (
                   <span className="text-blue-400 ml-1">
@@ -918,7 +918,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 addContainerModal && (
                   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-card p-6 rounded-xl border border-border w-[500px] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
-                      <h3 className="text-lg font-bold text-white mb-4">Add Container</h3>
+                      <h3 className="text-lg font-bold text-foreground mb-4">Add Container</h3>
 
                       {/* Unassigned Products Summary */}
                       {result && result.unassignedProducts.length > 0 && (
@@ -1072,7 +1072,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             <div className={`p-3 border-b border-border flex justify-between items-center ${(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) ? 'bg-destructive/20' : 'bg-card/80'
                               } `}>
                               <div>
-                                <div className="font-semibold text-white flex items-center gap-2">
+                                <div className="font-semibold text-foreground flex items-center gap-2">
                                   {loadedContainer.container.name} {instanceNumber && <span className="text-muted-foreground text-sm font-normal">{instanceNumber}</span>}
                                   {(loadedContainer.validationIssues && loadedContainer.validationIssues.length > 0) && (
                                     <span className="text-red-400 flex items-center gap-1 text-xs bg-red-900/30 px-2 py-0.5 rounded-full">

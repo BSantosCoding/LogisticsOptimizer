@@ -257,7 +257,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                         if (!ff) return null;
                         return (
                           <div key={ffId} className="contents">
-                            <Badge variant="outline" className="text-[10px] font-normal h-5 px-1.5 bg-secondary/30 text-secondary-foreground border-border/50">
+                            <Badge variant="outline" className="text-[10px] font-normal h-5 px-1.5 bg-secondary text-secondary-foreground border-border/50">
                               {ff.name}: {cap}
                             </Badge>
                           </div>
@@ -277,7 +277,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                     <div className="flex gap-1 flex-wrap mt-3 pt-3 border-t border-border/50">
                       {c.restrictions.map((r, i) => (
                         <div key={i} className="contents">
-                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 gap-1 text-green-600 bg-green-500/10 hover:bg-green-500/20 border-green-500/20">
+                          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 gap-1 font-normal bg-secondary text-secondary-foreground">
                             <ShieldAlert size={8} /> {r}
                           </Badge>
                         </div>

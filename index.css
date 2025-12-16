@@ -5,10 +5,12 @@
 @layer base {
   :root {
     /* Corporate Light Theme */
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
+    /* Slightly tinted off-white background */
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
+    /* Pure white cards */
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
@@ -23,7 +25,8 @@
     --secondary-foreground: 0 0% 100%;
 
     /* Muted: Soft gray */
-    --muted: 210 40% 96.1%;
+    --muted: 210 40% 93%;
+    /* Darkened slightly for contrast */
     --muted-foreground: 215.4 16.3% 46.9%;
 
     /* Accent: Generic surface accent */
@@ -34,7 +37,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
+    --border: 214.3 31.8% 88%;
+    /* Darker border */
     --input: 214.3 31.8% 91.4%;
     --ring: 221 100% 18%;
 
@@ -43,11 +47,13 @@
 
   .dark {
     /* Corporate Dark Theme - Material inspired */
-    --background: 222 47% 11%;
+    --background: 222 47% 6%;
+    /* Deep dark blue/slate base - Darker than before */
     /* Slate 950 base */
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 47% 13%;
+    /* Lighter than background for elevation effect */
     --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;

@@ -1201,6 +1201,7 @@ const App: React.FC = () => {
                     onLoadAsBase={handleLoadBasePlan}
                     onDelete={handleConsumeShipment}
                     onUnpackItem={handleUnpackItem}
+                    csvMapping={csvMapping}
                   />
                 </div>
               )}

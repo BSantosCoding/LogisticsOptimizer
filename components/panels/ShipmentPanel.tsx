@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shipment, LoadedContainer } from '../../types';
+import { Shipment, LoadedContainer, CSVMapping } from '../../types';
 import { Package, Calendar, DollarSign, Box, ChevronRight, ChevronDown, Trash2, RefreshCw, RotateCcw, Truck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ interface ShipmentPanelProps {
     onLoadAsBase: (shipmentId: string) => void;
     onDelete: (shipmentId: string) => void;
     onUnpackItem: (shipmentId: string, productId: string) => void;
+    csvMapping?: CSVMapping;
 }
 
 const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
@@ -17,7 +18,8 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
     onUnpack,
     onLoadAsBase,
     onDelete,
-    onUnpackItem
+    onUnpackItem,
+    csvMapping
 }) => {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [expandedContainerIdx, setExpandedContainerIdx] = useState<number | null>(null);
@@ -132,9 +134,34 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                 <div className="bg-background/50 p-2 border-t border-border space-y-1">
                                                     {a.assignedProducts.map(p => (
                                                         <div key={p.id} className="flex justify-between items-center text-xs p-2 hover:bg-accent/30 rounded group">
-                                                            <div className="flex items-center gap-2">
-                                                                <span>{p.name}</span>
-                                                                <span className="text-muted-foreground">x{p.quantity}</span>
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-medium">{p.name}</span>
+                                                                    <span className="text-muted-foreground">x{p.quantity}</span>
+                                                                </div>
+                                                                {/* Extra Fields */}
+                                                                {csvMapping?.displayFields?.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                                                        {csvMapping.displayFields.map(fieldKey => {
+                                                                            let val: any;
+                                                                            if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
+                                                                                val = (p as any)[fieldKey];
+                                                                            } else {
+                                                                                val = p.extraFields?.[fieldKey];
+                                                                            }
+
+                                                                            if (val === undefined || val === null || val === '') return null;
+
+                                                                            const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+
+                                                                            return (
+                                                                                <span key={fieldKey} className="text-[10px] text-muted-foreground" title={`${fieldKey}: ${displayVal}`}>
+                                                                                    {displayVal}
+                                                                                </span>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <button
                                                                 onClick={(e) => {

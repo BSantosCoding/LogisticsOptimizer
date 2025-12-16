@@ -532,6 +532,7 @@ const App: React.FC = () => {
           company_id: companyId,
           shipment_id: u.shipment_id,
           status: u.status,
+          created_by: session.user.id, // RLS requirement
           data: u.data
         }))
       );

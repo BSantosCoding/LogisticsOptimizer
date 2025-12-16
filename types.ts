@@ -25,6 +25,7 @@ export interface Product {
 
   // New Fields
   shippingAvailableBy?: string; // ISO Date String
+  currentContainer?: string; // Pre-assigned container from CSV (e.g. "40' Reefer")
   extraFields?: Record<string, string>; // user-defined key/value pairs
 }
 
@@ -99,6 +100,7 @@ export interface CSVMapping {
   restrictions: string[];   // Array of CSV header names for restriction fields
   incoterms: string[];      // Array of CSV header names for incoterms
   shippingAvailableBy: string; // CSV header for date
+  currentContainer: string; // CSV header for pre-assigned container
 
   // Grouping key - which fields combine to create the destination
   groupingFields: string[]; // Array of field keys (core or custom) to combine for destination
@@ -112,4 +114,5 @@ export interface CSVMapping {
 export interface OptimizerSettings {
   allowUnitSplitting: boolean;
   shippingDateGroupingRange?: number;
+  respectCurrentAssignments?: boolean;
 }

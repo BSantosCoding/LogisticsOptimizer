@@ -257,7 +257,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <Card>
           <CardHeader className="p-4 py-3 border-b border-border bg-muted/20">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Settings className="text-primary" size={16} /> Optimization
+              <Settings className="text-primary" size={16} /> {t('config.optimization')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
@@ -273,10 +273,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   htmlFor="split-units"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Split Product Units
+                  {t('config.splitProductUnits')}
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  Allow products to be split across multiple containers if needed.
+                  {t('config.splitProductUnitsDesc')}
                 </p>
               </div>
             </div>
@@ -287,12 +287,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <Card>
           <CardHeader className="p-4 py-3 border-b border-border bg-muted/20">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Filter className="text-primary" size={16} /> Grouping
+              <Filter className="text-primary" size={16} /> {t('config.grouping')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <div className="p-3 bg-muted/30 rounded-lg border border-border/50 space-y-3">
-              <Label className="text-xs text-muted-foreground font-medium">Shipping Available Date Grouping</Label>
+              <Label className="text-xs text-muted-foreground font-medium">{t('config.shippingDateGrouping')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -305,10 +305,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                   }}
                   className="flex-1 h-8 bg-background"
                 />
-                <span className="text-xs text-muted-foreground font-medium">Days</span>
+                <span className="text-xs text-muted-foreground font-medium">{t('config.days')}</span>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Products with dates more than X days apart will be grouped separately.
+                {t('config.shippingDateGroupingDesc')}
               </p>
             </div>
           </CardContent>
@@ -349,7 +349,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     { key: 'quantity', label: 'Quantity' },
                     { key: 'weight', label: t('products.weight') },
                     { key: 'formFactor', label: t('config.formFactorLabel') },
-                    { key: 'shippingAvailableBy', label: 'Shipping Available By (Date)' }
+                    { key: 'shippingAvailableBy', label: 'Shipping Available By (Date)' },
+                    { key: 'currentContainer', label: 'Current Container' }
                   ].map(({ key, label }) => (
                     <div key={key}>
                       <Label className="text-xs text-muted-foreground mb-1.5 block">{label}</Label>
@@ -539,7 +540,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
               {/* Grouping Fields Selection */}
               <div>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Grouping Fields (Destination Key)</h3>
+                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.groupingFields')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     'country', 'incoterms',
@@ -564,7 +565,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
 
               {/* Product Display Fields Selection */}
               <div>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Product Display Fields</h3>
+                <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.productDisplayFields')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     'country', 'quantity', 'weight', 'shippingAvailableBy',

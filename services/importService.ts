@@ -84,6 +84,7 @@ export const parseProductsCSV = (
         csvMapping.weight,
         csvMapping.formFactor,
         (csvMapping.shippingAvailableBy || ''),
+        (csvMapping.currentContainer || ''),
         ...(csvMapping.incoterms || []),
         ...(csvMapping.restrictions || []),
         ...Object.values(csvMapping.customFields || {})
@@ -220,6 +221,7 @@ export const parseProductsCSV = (
             shipDeadline: '',
             arrivalDeadline: '',
             shippingAvailableBy: shippingDate,
+            currentContainer: getVal(getColIndexByHeader(csvMapping.currentContainer))?.trim(),
             extraFields: extraFields
         };
 

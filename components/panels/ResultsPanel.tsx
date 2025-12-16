@@ -23,7 +23,7 @@ interface ResultsPanelProps {
   optimalRange?: { min: number; max: number };
   onAddContainer?: (container: Container) => void;
   onDeleteContainer?: (containerId: string, priority: OptimizationPriority) => void;
-  onRunOptimization: () => void;
+  onRunOptimization: (respectCurrentAssignments?: boolean) => void;
   isOptimizing: boolean;
   products: Product[];
   selectedProductIds: Set<string>;
@@ -404,17 +404,31 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground bg-card/50 rounded-xl border border-border border-dashed min-h-[400px]">
         <Box size={48} className="mb-4 opacity-50" />
         <p className="mb-6">{t('results.noResults')}</p>
-        <button
-          onClick={onRunOptimization}
-          disabled={products.length === 0 || containers.length === 0 || isOptimizing}
-          className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
-            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
-            : 'bg-muted text-muted-foreground cursor-not-allowed'
-            }`}
-        >
-          {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-          {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => onRunOptimization(false)}
+            disabled={products.length === 0 || containers.length === 0 || isOptimizing}
+            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-900/20'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+          >
+            {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
+            {isOptimizing ? t('header.optimizing') : "Optimize (Standard)"}
+          </button>
+
+          <button
+            onClick={() => onRunOptimization(true)}
+            disabled={products.length === 0 || containers.length === 0 || isOptimizing}
+            className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all shadow-lg ${products.length > 0 && containers.length > 0
+              ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/20'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+          >
+            {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
+            Optimize (Respect Pre-Assignments)
+          </button>
+        </div>
       </div >
     );
   }
@@ -465,17 +479,29 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               )}
             </div>
 
-            {/* Optimize Button */}
-            <Button
-              onClick={onRunOptimization}
-              disabled={hasNoProducts || hasNoContainers || isOptimizing}
-              size="sm"
-            >
-              {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
-              {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
-            </Button>
-
-            <Separator orientation="vertical" className="h-6" />
+            {/* Optimize Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => onRunOptimization(false)}
+                disabled={hasNoProducts || hasNoContainers || isOptimizing}
+                size="sm"
+                title="Standard Optimization"
+              >
+                {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
+                {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
+              </Button>
+              <Button
+                onClick={() => onRunOptimization(true)}
+                disabled={hasNoProducts || hasNoContainers || isOptimizing}
+                size="sm"
+                variant="outline"
+                className="text-green-600 border-green-600/50 hover:bg-green-500/10"
+                title="Respect Current Assignments"
+              >
+                <Zap size={14} className="mr-1" />
+                Respect Current
+              </Button>
+            </div>
 
             <Button variant="outline" size="sm" onClick={() => setIsSaving(true)}>
               <Save size={14} /> {t('common.save')}

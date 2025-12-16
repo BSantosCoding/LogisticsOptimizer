@@ -661,10 +661,11 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRunOptimization = () => {
+  const handleRunOptimization = (respectCurrentAssignments: boolean = false) => {
     runOptimization(
       (msg) => setErrorModal({ isOpen: true, message: msg }),
-      () => setViewMode('results')
+      () => setViewMode('results'),
+      respectCurrentAssignments
     );
   };
 

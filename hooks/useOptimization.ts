@@ -53,7 +53,7 @@ export const useOptimization = (
         }
     }, [products]);
 
-    const handleRunOptimization = (onError: (msg: string) => void, onSuccess: () => void) => {
+    const handleRunOptimization = (onError: (msg: string) => void, onSuccess: () => void, respectCurrentAssignments: boolean = false) => {
         if (products.length === 0) {
             onError('Add products first!');
             return;
@@ -107,7 +107,8 @@ export const useOptimization = (
                 optimalUtilizationRange.max,
                 countryWeightLimits,
                 allowUnitSplitting,
-                shippingDateGroupingRange
+                shippingDateGroupingRange,
+                respectCurrentAssignments
             );
 
             const assignmentsAlternative = calculatePacking(
@@ -119,7 +120,8 @@ export const useOptimization = (
                 optimalUtilizationRange.max,
                 countryWeightLimits,
                 !allowUnitSplitting,
-                shippingDateGroupingRange
+                shippingDateGroupingRange,
+                respectCurrentAssignments
             );
 
             const costFunc = (sum, a) => {
@@ -266,7 +268,7 @@ export const useOptimization = (
                         ...sourceContainer.container,
                         destination: updatedProducts.length > 0 ? updatedProducts[0].destination : sourceContainer.container.destination
                     };
-                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
+                    const revalidatedSource = validateLoadedContainer(updatedContainer, updatedProducts, undefined, allowUnitSplitting, shippingDateGroupingRange);
                     newAssignments[sourceContainerIndex] = revalidatedSource;
                 }
             }
@@ -303,7 +305,7 @@ export const useOptimization = (
             if (targetContainerIndex === -1) {
                 const freshContainer = containers.find(d => d.id === targetId);
                 if (freshContainer) {
-                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert, undefined, shippingDateGroupingRange);
+                    const newLoadedContainer = validateLoadedContainer(freshContainer, productsToInsert, undefined, allowUnitSplitting, shippingDateGroupingRange);
                     newLoadedContainer.container.destination = productsToInsert[0].destination;
                     newAssignments.push(newLoadedContainer);
                 }
@@ -311,7 +313,7 @@ export const useOptimization = (
                 const targetContainer = newAssignments[targetContainerIndex];
                 const updatedProducts = [...targetContainer.assignedProducts, ...productsToInsert];
                 const updatedContainer = { ...targetContainer.container, destination: productsToInsert[0].destination };
-                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts, undefined, shippingDateGroupingRange);
+                const revalidatedTarget = validateLoadedContainer(updatedContainer, updatedProducts, undefined, allowUnitSplitting, shippingDateGroupingRange);
                 newAssignments[targetContainerIndex] = revalidatedTarget;
             }
         }
@@ -354,7 +356,7 @@ export const useOptimization = (
         const currentResult = results[activePriority];
 
         const newContainer = { ...container, id: `${container.id}-instance-${Date.now()}` };
-        const newLoadedContainer = validateLoadedContainer(newContainer, [], undefined, shippingDateGroupingRange);
+        const newLoadedContainer = validateLoadedContainer(newContainer, [], undefined, allowUnitSplitting, shippingDateGroupingRange);
 
         const newAssignments = [...currentResult.assignments, newLoadedContainer];
 

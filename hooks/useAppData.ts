@@ -19,7 +19,8 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
         description: "Material Description"
     },
     displayFields: ["customerNum", "shipToName"],
-    shippingAvailableBy: "First Date"
+    shippingAvailableBy: "First Date",
+    currentContainer: "Shipping Type: Description"
 };
 
 

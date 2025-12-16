@@ -38,7 +38,8 @@ const defaultMapping: CSVMapping = {
         shippingType: "Shipping Type: Description"
     },
     displayFields: ["customerNum"],
-    shippingAvailableBy: "First Date"
+    shippingAvailableBy: "First Date",
+    currentContainer: "Shipping Type: Description"
 };
 
 const csvPath = path.join(process.cwd(), 'csv/EXPORT.csv');

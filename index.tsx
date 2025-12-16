@@ -8,9 +8,13 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
+import { ThemeProvider } from "./components/ThemeProvider";
+
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );

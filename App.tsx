@@ -42,6 +42,7 @@ import { useOptimization } from './hooks/useOptimization';
 import { parseProductsCSV } from './services/importService';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import { ThemeToggle } from './components/ThemeToggle';
 
 // Shadcn UI
 import { Button } from "@/components/ui/button";
@@ -906,7 +907,10 @@ const App: React.FC = () => {
               <Badge variant="secondary" className="text-[10px] uppercase">admin</Badge>
             )}
             <div className="bg-border h-4 w-px mx-1" />
-            <LanguageSwitcher />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <LanguageSwitcher />
+            </div>
 
             {/* View As Role Selector */}
             {userRole && hasRole(userRole, 'manager') && getAvailableViewRoles(userRole).length > 0 && (

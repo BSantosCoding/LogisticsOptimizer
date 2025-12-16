@@ -296,6 +296,7 @@ const App: React.FC = () => {
             shipToName: p.shipToName,
             shippingAvailableBy: p.shippingAvailableBy,
             currentContainer: p.currentContainer,
+            assignmentReference: p.assignmentReference,
             extraFields: p.extraFields
           },
           form_factor_id: p.formFactorId || null,
@@ -334,6 +335,7 @@ const App: React.FC = () => {
       shipDeadline: p.shipDeadline || '',
       arrivalDeadline: p.arrivalDeadline || '',
       currentContainer: p.currentContainer || '',
+      assignmentReference: p.assignmentReference || '',
       extraFields: p.extraFields || {}
     });
     setEditingProductId(p.id);

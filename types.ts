@@ -26,6 +26,7 @@ export interface Product {
   // New Fields
   shippingAvailableBy?: string; // ISO Date String
   currentContainer?: string; // Pre-assigned container from CSV (e.g. "40' Reefer")
+  assignmentReference?: string; // Pre-assigned container instance ID from CSV (e.g. "Shipment Number")
   extraFields?: Record<string, string>; // user-defined key/value pairs
 }
 
@@ -98,9 +99,10 @@ export interface CSVMapping {
   weight: string;           // CSV header for weight in kg
   formFactor: string;       // CSV header for form factor name
   restrictions: string[];   // Array of CSV header names for restriction fields
-  incoterms: string[];      // Array of CSV header names for incoterms
-  shippingAvailableBy: string; // CSV header for date
-  currentContainer: string; // CSV header for pre-assigned container
+  incoterms?: string[];      // Array of CSV header names for incoterms
+  shippingAvailableBy?: string; // CSV header for available date
+  currentContainer?: string; // CSV header for pre-assigned container type
+  assignmentReference?: string; // CSV header for pre-assigned container instance ID (Shipment Number)
 
   // Grouping key - which fields combine to create the destination
   groupingFields: string[]; // Array of field keys (core or custom) to combine for destination

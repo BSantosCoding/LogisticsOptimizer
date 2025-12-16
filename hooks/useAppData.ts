@@ -20,7 +20,8 @@ const DEFAULT_CSV_MAPPING: CSVMapping = {
     },
     displayFields: ["customerNum", "shipToName"],
     shippingAvailableBy: "First Date",
-    currentContainer: "Shipping Type: Description"
+    currentContainer: "Shipping Type: Description",
+    assignmentReference: "Shipment Number"
 };
 
 

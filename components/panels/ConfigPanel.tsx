@@ -416,6 +416,19 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               <div>
                 <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Restriction Headers</h4>
                 <div className="space-y-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="assignmentReferenceMap">{t('config.assignmentReferenceMap') || "Shipment Number / Ref Column"}</Label>
+                    <Input
+                      id="assignmentReferenceMap"
+                      value={editingMapping.assignmentReference || ''}
+                      onChange={e => {
+                        setEditingMapping(prev => ({ ...prev, assignmentReference: e.target.value }));
+                        setHasUnsavedChanges(true);
+                      }}
+                      placeholder="CSV Header Name"
+                      className="bg-muted/50"
+                    />
+                  </div>
                   {(editingMapping.restrictions || []).map((header, idx) => (
                     <div key={idx} className="flex gap-2">
                       <Input
@@ -568,7 +581,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.productDisplayFields')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    'country', 'quantity', 'weight', 'shippingAvailableBy', 'currentContainer',
+                    'country', 'quantity', 'weight', 'shippingAvailableBy', 'currentContainer', 'assignmentReference',
                     ...Object.keys(editingMapping.customFields || {})
                   ].map(field => (
                     <div key={field} className="flex items-center space-x-2 p-2 rounded-md border border-transparent hover:bg-muted/50 hover:border-border/50 transition-colors">

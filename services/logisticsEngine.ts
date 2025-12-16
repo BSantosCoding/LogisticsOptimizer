@@ -434,20 +434,25 @@ export const calculatePacking = (
 
     const groupedAssigned: Record<string, Product[]> = {};
     assignedProducts.forEach(p => {
-      const key = `${p.currentContainer}|${p.destination}`;
+      // Group by Assignment Ref (Shipment Number) if available, otherwise fallback to bulk group
+      const ref = p.assignmentReference && p.assignmentReference.trim().length > 0 ? p.assignmentReference.trim() : 'bulk';
+      const key = `${p.currentContainer}|${p.destination}|${ref}`;
       if (!groupedAssigned[key]) groupedAssigned[key] = [];
       groupedAssigned[key].push(p);
     });
 
     Object.entries(groupedAssigned).forEach(([key, groupProducts]) => {
-      const [containerDesc] = key.split('|');
+      const [containerDesc, _dest, ref] = key.split('|');
       const template = findTemplate(containerDesc);
 
       if (template) {
         instanceCounter++;
+        const isSpecificInstance = ref !== 'bulk';
         const newInstance: Container = {
           ...template,
-          id: `${template.id}-existing-${instanceCounter}`,
+          // If specific shipment number, use it in ID for visibility
+          id: isSpecificInstance ? `${template.id}-SHIPMENT-${ref}` : `${template.id}-existing-${instanceCounter}`,
+          name: isSpecificInstance ? `${template.name} (${ref})` : template.name,
           destination: groupProducts[0].destination // Inherit dest from products
         };
 

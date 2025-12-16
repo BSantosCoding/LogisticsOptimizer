@@ -1143,31 +1143,35 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                       onDragStart={(e) => handleDragStart(e, p.id, loadedContainer.container.id)}
                                       className="bg-muted/50 p-2 rounded border border-border/50 flex justify-between items-center text-sm hover:bg-muted cursor-grab active:cursor-grabbing group"
                                     >
-                                      <div className="flex items-center gap-2 overflow-hidden">
-                                        <Box size={14} className="text-primary shrink-0" />
-                                        <span className="truncate text-foreground" title={p.name}>{p.name}</span>
+                                      <div className="flex flex-col gap-1 overflow-hidden flex-1 min-w-0 mr-3">
+                                        <div className="flex items-center gap-2">
+                                          <Box size={14} className="text-primary shrink-0" />
+                                          <span className="truncate text-foreground font-medium" title={p.name}>{p.name}</span>
+                                        </div>
                                         {/* Extra Fields in Container */}
-                                        {csvMapping?.displayFields?.map(fieldKey => {
-                                          let val: any;
-                                          if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
-                                            val = (p as any)[fieldKey];
-                                          } else {
-                                            val = p.extraFields?.[fieldKey];
-                                          }
+                                        {csvMapping?.displayFields?.length > 0 && (
+                                          <div className="flex flex-wrap gap-x-3 gap-y-1 ml-5">
+                                            {csvMapping.displayFields.map(fieldKey => {
+                                              let val: any;
+                                              if (Object.prototype.hasOwnProperty.call(p, fieldKey)) {
+                                                val = (p as any)[fieldKey];
+                                              } else {
+                                                val = p.extraFields?.[fieldKey];
+                                              }
 
-                                          if (val === undefined || val === null || val === '') return null; // Only hide if truly empty or not found
+                                              if (val === undefined || val === null || val === '') return null;
 
-                                          // Ensure val is a string for display consistency, handle booleans specifically if needed
-                                          const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
-                                          // Get friendly label
-                                          const label = csvMapping.customFields[fieldKey] || fieldKey.replace(/([A-Z])/g, ' $1').trim();
+                                              const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+                                              const label = csvMapping.customFields[fieldKey] || fieldKey.replace(/([A-Z])/g, ' $1').trim();
 
-                                          return (
-                                            <span key={fieldKey} className="text-xs text-muted-foreground border-l border-border pl-2 ml-2 truncate max-w-[150px]" title={`${label}: ${displayVal}`}>
-                                              <span className="opacity-70 font-semibold mr-1">{label}:</span>{displayVal}
-                                            </span>
-                                          );
-                                        })}
+                                              return (
+                                                <span key={fieldKey} className="text-[10px] text-foreground/70" title={`${label}: ${displayVal}`}>
+                                                  <span className="font-semibold text-foreground/60 mr-1">{label}:</span>{displayVal}
+                                                </span>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
                                       </div>
                                       <div className="flex items-center gap-2 shrink-0">
                                         <span className="text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded">

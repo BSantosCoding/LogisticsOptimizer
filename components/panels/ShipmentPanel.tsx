@@ -29,6 +29,8 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
         setExpandedContainerIdx(null);
     };
 
+    console.log("shipments", shipments);
+
     if (shipments.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">

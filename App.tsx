@@ -805,7 +805,7 @@ const App: React.FC = () => {
         className={`w-full h-auto py-2 px-2 flex flex-col items-center gap-1 rounded-lg transition-all ${activeState ? 'bg-primary text-primary-foreground hover:bg-primary/90' : isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'}`}
         onClick={() => {
           if (isResults) {
-            if (results) setViewMode('results');
+            setViewMode('results');
           } else if (mode) {
             if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management') {
               handleTabChange(mode as any);
@@ -863,7 +863,7 @@ const App: React.FC = () => {
 
         <ScrollArea className="flex-1 w-full px-1.5">
           <div className="flex flex-col gap-1 items-center pb-4">
-            <NavButton mode={undefined} icon={BarChart3} label={t('nav.results')} disabled={!results} tooltip={results ? t('nav.results') : "Run optimization first"} />
+            <NavButton mode={undefined} icon={BarChart3} label={t('nav.results')} />
             <Separator className="w-10 bg-border/60 my-1" />
             <NavButton mode="shipments" icon={Package} label={t('nav.shipments')} />
             <NavButton mode="products" icon={Box} label={t('nav.items')} />

@@ -568,7 +568,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                 <h3 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">{t('config.productDisplayFields')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    'country', 'quantity', 'weight', 'shippingAvailableBy',
+                    'country', 'quantity', 'weight', 'shippingAvailableBy', 'currentContainer',
                     ...Object.keys(editingMapping.customFields || {})
                   ].map(field => (
                     <div key={field} className="flex items-center space-x-2 p-2 rounded-md border border-transparent hover:bg-muted/50 hover:border-border/50 transition-colors">

@@ -22,18 +22,18 @@ const ImportConfirmModal: React.FC<ImportConfirmModalProps> = ({ onConfirm, onCa
                 <DialogHeader>
                     <DialogTitle>Import Products</DialogTitle>
                     <DialogDescription>
-                        Found <span className="font-bold text-primary">{productCount} products</span> to import.
-                        Would you like to save these products to your company database?
+                        Found <span className="font-bold text-primary">{productCount} products</span>.
+                        Do you want to add them to your permanent library?
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-2 w-full pt-4">
                     <Button onClick={() => onConfirm(true)} className="w-full">
                         <Database size={18} className="mr-2" />
-                        Save to Database
+                        Save Products
                     </Button>
                     <Button onClick={() => onConfirm(false)} variant="secondary" className="w-full">
                         <Zap size={18} className="mr-2" />
-                        Session Only (Don't Save)
+                        Quick Analysis (Don't Save)
                     </Button>
                     <Button onClick={onCancel} variant="outline" className="w-full">
                         Cancel Import

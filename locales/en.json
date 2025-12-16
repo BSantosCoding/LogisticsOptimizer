@@ -91,7 +91,16 @@
         "unitsPerPallet": "Units per Pallet",
         "unitsPerPalletPlaceholder": "Units that fit on one pallet",
         "palletConfig": "Pallet Configuration",
-        "noPalletConfig": "No pallet config"
+        "noPalletConfig": "No pallet config",
+        "optimization": "Optimization",
+        "splitProductUnits": "Split Product Units",
+        "splitProductUnitsDesc": "Allow products to be split across multiple containers if needed.",
+        "grouping": "Grouping",
+        "shippingDateGrouping": "Shipping Available Date Grouping",
+        "days": "Days",
+        "shippingDateGroupingDesc": "Products with dates more than X days apart will be grouped separately.",
+        "groupingFields": "Grouping Fields (Destination Key)",
+        "productDisplayFields": "Product Display Fields"
     },
     "team": {
         "overview": "Team Overview",

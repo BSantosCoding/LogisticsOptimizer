@@ -434,8 +434,12 @@ export const calculatePacking = (
 
     const groupedAssigned: Record<string, Product[]> = {};
     assignedProducts.forEach(p => {
-      // Group by Assignment Ref (Shipment Number) if available, otherwise fallback to bulk group
-      const ref = p.assignmentReference && p.assignmentReference.trim().length > 0 ? p.assignmentReference.trim() : 'bulk';
+      // Group by Assignment Ref (Shipment Number) if available
+      const rawRef = p.assignmentReference && p.assignmentReference.trim().length > 0 ? p.assignmentReference.trim() : 'bulk';
+      // Handle Composite References: "HARD_LINK_SOFT"
+      // We group by the BASE (Hard) reference to keep the physical container together when respecting assignments
+      const ref = rawRef.split('_LINK_')[0];
+
       const key = `${p.currentContainer}|${p.destination}|${ref}`;
       if (!groupedAssigned[key]) groupedAssigned[key] = [];
       groupedAssigned[key].push(p);

@@ -492,22 +492,61 @@ const App: React.FC = () => {
         const containerRef = `packter-${shipmentRandomId}-${containerCounter}`;
         const containerName = a.container.name;
 
+        // Step 1: Find a "Dominant" Hard Reference in this container, if any.
+        // A Hard Reference is one that didn't originate from the system (doesn't start with 'packter-').
+        // If we find one, we should group all "new" items (soft/no ref) under this ID to keep the container physically together.
+        // If we find MULTIPLE distinct hard refs, we can't merge them (user forbid overwriting), so they will split.
+        // We pick the first one found as the "dominant" one for new items.
+        let dominantHardRef: string | null = null;
+
+        for (const p of a.assignedProducts) {
+          if (p.assignmentReference) {
+            const ref = p.assignmentReference.toString();
+            if (!ref.startsWith('packter-')) {
+              dominantHardRef = ref;
+              break; // Found one, use it.
+            }
+          }
+        }
+
         a.assignedProducts.forEach((p: any) => {
           // Logic:
-          // 1. If product has a "hard" reference (imported, e.g. "EMP-123"), NEVER overwrite it.
-          // 2. If product has a "soft" reference (system generated, starts with "packter-"), overwrite it with the NEW container ref.
-          //    This ensures that if optimization re-shuffles items, the assignments reflect the NEW container structure.
-          // 3. If product has no reference, assign the NEW container ref.
+          // 1. If product has a "hard" reference, NEVER overwrite it.
+          // 2. If product has a "soft" reference or NO reference:
+          //    a. If there is a dominant hard ref in the container, inherit it as a COMPOSITE key.
+          //       Format: "HARD_LINK_SOFT" (e.g. "EMP-123_LINK_packter-123...")
+          //       This ensures:
+          //       - Groups together in UI/Engine (by splitting on _LINK_)
+          //       - Preserves "Soft" status (by checking for _LINK_ or packter) for future mutability
+          //    b. Otherwise, use the new generated container ref. (New standalone group)
 
           let finalRef = containerRef;
 
           if (p.assignmentReference) {
-            const isSystemRef = p.assignmentReference.toString().startsWith('packter-');
+            const ref = p.assignmentReference.toString();
+            const isSystemRef = ref.startsWith('packter-') || ref.includes('_LINK_');
+
             if (!isSystemRef) {
-              finalRef = p.assignmentReference; // Keep hard reference
+              finalRef = ref; // Case 1: Keep hard reference (Pure)
+            } else {
+              // Case 2: System ref. 
+              // If we have a dominant hard ref, link to it.
+              // Else reset to new container ref.
+              if (dominantHardRef) {
+                // Create Composite Key: HardBase + Unique Soft ID
+                // Use the *new* containerRef as the Soft ID to ensure uniqueness/freshness
+                finalRef = `${dominantHardRef}_LINK_${containerRef}`;
+              } else {
+                finalRef = containerRef;
+              }
             }
-            // If it IS a system ref, we fall through to using `containerRef` (new generated ID)
-            // This effectively "resets" system refs to match the current optimization result
+          } else {
+            // Case 3: New Item
+            if (dominantHardRef) {
+              finalRef = `${dominantHardRef}_LINK_${containerRef}`;
+            } else {
+              finalRef = containerRef;
+            }
           }
 
           const update = {

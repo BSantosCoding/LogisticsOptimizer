@@ -45,13 +45,17 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
         const groups = new Map<string, ContainerGroup>();
 
         products.forEach(p => {
-            const ref = p.assignmentReference || 'unassigned';
-            const containerName = p.currentContainer || 'Unknown Container';
+            const containerName = p.currentContainer || 'Unassigned';
+            const rawRef = p.assignmentReference || 'Unassigned';
+
+            // Handle Composite References: "HARD_LINK_SOFT"
+            // We group by the BASE (Hard) reference to keep the physical container together in the UI
+            const ref = rawRef.split('_LINK_')[0];
 
             if (!groups.has(ref)) {
                 groups.set(ref, {
                     containerName,
-                    assignmentReference: ref,
+                    assignmentReference: ref, // Display the base ref as the group name
                     products: [],
                     totalQuantity: 0
                 });

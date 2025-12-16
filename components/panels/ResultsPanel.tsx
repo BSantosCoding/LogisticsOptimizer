@@ -1149,12 +1149,52 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                           <span className="truncate text-foreground font-medium" title={p.name}>{p.name}</span>
                                         </div>
                                         {/* Assignment Reference */}
-                                        {p.assignmentReference && (
-                                          <div className="text-[10px] text-muted-foreground mt-0.5 ml-5 truncate">
-                                            <span className="opacity-70 font-semibold mr-1">Ref:</span>
-                                            {p.assignmentReference}
-                                          </div>
-                                        )}
+                                        {(() => {
+                                          // Calculate effective reference for display
+                                          // This mimics the logic in App.tsx to show what the reference WILL be
+                                          let displayRef = p.assignmentReference;
+                                          let isPending = false;
+                                          let isInherited = false;
+
+                                          // Find dominant hard ref in this container (for previewing pending)
+                                          const dominantHardRef = loadedContainer.assignedProducts
+                                            .map(prod => prod.assignmentReference)
+                                            .find(ref => ref && !ref.toString().startsWith('packter-') && !ref.toString().includes('_LINK_'));
+
+                                          // Helper to clean composite keys for display
+                                          const cleanRef = (r: string) => r.split('_LINK_')[0];
+
+                                          if (!displayRef || displayRef.toString().startsWith('packter-') || displayRef.toString().includes('_LINK_')) {
+                                            if (dominantHardRef) {
+                                              // It will inherit/link to dominant header
+                                              displayRef = cleanRef(dominantHardRef);
+                                              isInherited = true;
+                                            } else if (displayRef) {
+                                              // Just clean it (e.g. if it's already a composite saved ref)
+                                              displayRef = cleanRef(displayRef.toString());
+                                              // Still pending if it's purely packter-
+                                              if (displayRef.startsWith('packter-')) isPending = true;
+                                            } else {
+                                              isPending = true;
+                                            }
+                                          }
+
+                                          if (!displayRef || (isPending && !displayRef)) {
+                                            return null;
+                                          }
+
+                                          return (
+                                            <div className="text-[10px] text-muted-foreground mt-0.5 ml-5 truncate flex items-center gap-1">
+                                              <span className="opacity-70 font-semibold">Ref:</span>
+                                              <span className={isInherited ? "text-blue-400" : ""}>
+                                                {displayRef}
+                                              </span>
+                                              {isInherited && (
+                                                <span className="text-[9px] opacity-50 italic">(inherited)</span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
 
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.length > 0 && (

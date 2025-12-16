@@ -350,7 +350,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     { key: 'weight', label: t('products.weight') },
                     { key: 'formFactor', label: t('config.formFactorLabel') },
                     { key: 'shippingAvailableBy', label: 'Shipping Available By (Date)' },
-                    { key: 'currentContainer', label: 'Current Container' }
+                    { key: 'currentContainer', label: 'Current Container' },
+                    { key: 'assignmentReference', label: 'Shipment Number / Ref' }
                   ].map(({ key, label }) => (
                     <div key={key}>
                       <Label className="text-xs text-muted-foreground mb-1.5 block">{label}</Label>
@@ -416,19 +417,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
               <div>
                 <h4 className="text-xs font-bold text-muted-foreground uppercase border-b border-border pb-2 mb-4">Restriction Headers</h4>
                 <div className="space-y-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="assignmentReferenceMap">{t('config.assignmentReferenceMap') || "Shipment Number / Ref Column"}</Label>
-                    <Input
-                      id="assignmentReferenceMap"
-                      value={editingMapping.assignmentReference || ''}
-                      onChange={e => {
-                        setEditingMapping(prev => ({ ...prev, assignmentReference: e.target.value }));
-                        setHasUnsavedChanges(true);
-                      }}
-                      placeholder="CSV Header Name"
-                      className="bg-muted/50"
-                    />
-                  </div>
+
                   {(editingMapping.restrictions || []).map((header, idx) => (
                     <div key={idx} className="flex gap-2">
                       <Input

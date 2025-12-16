@@ -569,8 +569,6 @@ export const calculatePacking = (
     }
   }
 
-  console.log(finalAssignments)
-
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(
     allProducts: Product[],

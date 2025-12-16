@@ -1148,6 +1148,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                           <Box size={14} className="text-primary shrink-0" />
                                           <span className="truncate text-foreground font-medium" title={p.name}>{p.name}</span>
                                         </div>
+                                        {/* Assignment Reference */}
+                                        {p.assignmentReference && (
+                                          <div className="text-[10px] text-muted-foreground mt-0.5 ml-5 truncate">
+                                            <span className="opacity-70 font-semibold mr-1">Ref:</span>
+                                            {p.assignmentReference}
+                                          </div>
+                                        )}
+
                                         {/* Extra Fields in Container */}
                                         {csvMapping?.displayFields?.length > 0 && (
                                           <div className="flex flex-wrap gap-x-3 gap-y-1 ml-5">

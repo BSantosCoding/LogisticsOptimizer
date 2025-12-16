@@ -490,31 +490,41 @@ const App: React.FC = () => {
 
       result.assignments.forEach((a: any) => {
         const containerRef = `packter-${shipmentRandomId}-${containerCounter}`;
-        const containerName = a.container.name; // This is the type name, e.g. "40' Standard" (assuming it's not unique per instance)
+        const containerName = a.container.name;
 
         a.assignedProducts.forEach((p: any) => {
+          // Logic:
+          // 1. If product has a "hard" reference (imported, e.g. "EMP-123"), NEVER overwrite it.
+          // 2. If product has a "soft" reference (system generated, starts with "packter-"), overwrite it with the NEW container ref.
+          //    This ensures that if optimization re-shuffles items, the assignments reflect the NEW container structure.
+          // 3. If product has no reference, assign the NEW container ref.
+
+          let finalRef = containerRef;
+
+          if (p.assignmentReference) {
+            const isSystemRef = p.assignmentReference.toString().startsWith('packter-');
+            if (!isSystemRef) {
+              finalRef = p.assignmentReference; // Keep hard reference
+            }
+            // If it IS a system ref, we fall through to using `containerRef` (new generated ID)
+            // This effectively "resets" system refs to match the current optimization result
+          }
+
           const update = {
             id: p.id,
             shipment_id: shipmentData.id,
             status: 'shipped',
             data: {
-              ...p, // keep existing data
+              ...p,
               currentContainer: containerName,
-              assignmentReference: p.assignmentReference || containerRef
-              // Note: we merge this into the 'data' JSON column if that's how products are stored, 
-              // BUT based on previous context, these seem to be top-level fields or mixed.
-              // Let's check how 'products' table is structured. 
-              // Based on confirmImport, these are inside 'data'. But we also update columns.
-              // Let's assume we need to update the JSON 'data' column to persist these new fields.
+              assignmentReference: finalRef
             }
           };
 
-          // We need to construct the full update object for the DB
-          // We'll update the 'data' column which contains currentContainer/assignmentReference
           productUpdates.push(update);
           updatedProductsMap.set(p.id, {
             currentContainer: containerName,
-            assignmentReference: p.assignmentReference || containerRef
+            assignmentReference: finalRef
           });
         });
         containerCounter++;

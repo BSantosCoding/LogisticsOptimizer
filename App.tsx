@@ -569,7 +569,8 @@ const App: React.FC = () => {
           productUpdates.push(update);
           updatedProductsMap.set(p.id, {
             currentContainer: containerName,
-            assignmentReference: finalRef
+            assignmentReference: finalRef,
+            _containerInstanceId: containerRef // Add to map for local state updates
           });
         });
         containerCounter++;
@@ -605,7 +606,8 @@ const App: React.FC = () => {
           shipmentId: shipmentData.id,
           status: 'shipped' as const,
           currentContainer: updates.currentContainer,
-          assignmentReference: updates.assignmentReference
+          assignmentReference: updates.assignmentReference,
+          _containerInstanceId: updates._containerInstanceId
         } : p;
       });
 
@@ -629,7 +631,8 @@ const App: React.FC = () => {
             shipmentId: shipmentData.id,
             status: 'shipped',
             currentContainer: updates.currentContainer,
-            assignmentReference: updates.assignmentReference
+            assignmentReference: updates.assignmentReference,
+            _containerInstanceId: updates._containerInstanceId
           };
         }
         return p;

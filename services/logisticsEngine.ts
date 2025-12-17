@@ -400,7 +400,8 @@ export const calculatePacking = (
   };
 
   const finalAssignments: LoadedContainer[] = [];
-  let remainingProducts = [...products];
+  // Deep clone products to avoid mutating the original objects in the calling scope/state
+  let remainingProducts = products.map(p => ({ ...p }));
   let instanceCounter = 0;
 
   // 0. Handle Pre-Assigned Containers (if mode enabled)

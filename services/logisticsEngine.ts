@@ -437,11 +437,6 @@ export const calculatePacking = (
       return container.trim().length === 0 || !isHard;
     });
 
-    console.log(`Assigned products:`, assignedProducts);
-    console.log(`Unassigned products:`, unassignedProducts);
-
-    // Heuristically match the string to a template.
-
     // Heuristically match the string to a template.
     // Match container by finding the longest matching container name/id in the description string
     const findTemplate = (desc: string): Container | undefined => {
@@ -489,7 +484,6 @@ export const calculatePacking = (
 
       const key = `${p.currentContainer}|${p.destination}|${groupRef}`;
       if (!groupedAssigned[key]) groupedAssigned[key] = [];
-      console.log(p, key)
       groupedAssigned[key].push(p);
     });
 
@@ -507,6 +501,9 @@ export const calculatePacking = (
           name: isSpecificInstance ? `${template.name} (${ref})` : template.name,
           destination: groupProducts[0].destination // Inherit dest from products
         };
+
+        console.log(`Grouped products:`, groupProducts);
+        console.log(`Template:`, template);
 
         // Weight limit check
         const weightLimit = groupProducts[0].country

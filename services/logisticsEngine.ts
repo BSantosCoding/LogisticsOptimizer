@@ -524,7 +524,7 @@ export const calculatePacking = (
   }
 
   console.log(`Remaining products:`, JSON.parse(JSON.stringify(remainingProducts)));
-  console.log(`Final assignments pre filling:`, JSON.parse(JSON.stringify(finalAssignments);
+  console.log(`Final assignments pre filling:`, JSON.parse(JSON.stringify(finalAssignments)));
 
   // Fill pre-assigned containers:
   // If we have pre-assigned containers (hard references), we should try to fill them to capacity

@@ -428,10 +428,6 @@ export const calculatePacking = (
       const container = getContainer(p);
       const ref = getRef(p);
       const isHard = isHardReference(ref);
-      console.log(`Product:`, p);
-      console.log(`Container:`, container);
-      console.log(`Reference:`, ref);
-      console.log(`Is hard:`, isHard);
       return container.trim().length > 0 && isHard;
     });
     const unassignedProducts = remainingProducts.filter(p => {
@@ -493,6 +489,7 @@ export const calculatePacking = (
 
       const key = `${p.currentContainer}|${p.destination}|${groupRef}`;
       if (!groupedAssigned[key]) groupedAssigned[key] = [];
+      console.log(p, key)
       groupedAssigned[key].push(p);
     });
 

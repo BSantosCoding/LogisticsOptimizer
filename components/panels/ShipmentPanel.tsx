@@ -47,19 +47,17 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
             const rawRef = p.assignmentReference || 'Unassigned';
 
             // Primary Grouping Key: Physical Container Instance ID
-            // If _containerInstanceId exists (new save logic), use it to distinguish containers perfectly.
-            // Fallback: If legacy data, fallback to old logic (e.g. ref split).
-            let groupKey = p._containerInstanceId;
+            // Check top-level OR inside data json (depending on how product object is structured)
+            // It is stored in 'data' column in DB, so it might be in p.data
+            let groupKey = p._containerInstanceId || p.data?._containerInstanceId;
             let displayRef = rawRef;
 
             if (!groupKey) {
                 // Fallback for old shipments matches old logic (grouped by Ref)
-                // This maintains backward compatibility
                 groupKey = rawRef.split('_LINK_')[0];
                 displayRef = groupKey;
             } else {
-                // For new shipments, we group by physical container ID, but we want the "Reference" label 
-                // to still show the hard/base ref for the user.
+                // For new shipments, we group by physical container ID
                 displayRef = rawRef.split('_LINK_')[0];
             }
 

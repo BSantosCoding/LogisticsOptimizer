@@ -149,6 +149,9 @@ const App: React.FC = () => {
     }
   }, [optimalUtilizationRange]);
 
+  // Filter out shipped products for optimization and results view
+  const activeProducts = products.filter(p => p.status !== 'shipped');
+
   // Optimization Hook
   const {
     results,
@@ -162,7 +165,7 @@ const App: React.FC = () => {
     handleDrop,
     handleAddContainer: addContainerInstance,
     handleDeleteContainer: deleteContainerInstance
-  } = useOptimization(products, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, optimizerSettings.allowUnitSplitting, optimizerSettings.shippingDateGroupingRange);
+  } = useOptimization(activeProducts, containers, countries, selectedProductIds, selectedContainerIds, optimalUtilizationRange, optimizerSettings.allowUnitSplitting, optimizerSettings.shippingDateGroupingRange);
 
   // Forms
   const [newTag, setNewTag] = useState('');
@@ -798,23 +801,47 @@ const App: React.FC = () => {
 
       if (productError) throw productError;
 
+      // Update local state first
+      let shipmentIsEmpty = false;
+      setShipments(prev => {
+        return prev.map(s => {
+          if (s.id === shipmentId) {
+            // Remove product from shipment.products list if it exists in memory to check count
+            const remaining = (s.products || []).filter(p => p.id !== productId);
+            if (remaining.length === 0) {
+              shipmentIsEmpty = true;
+              return null; // Will filter out
+            }
+            return { ...s, products: remaining, containerCount: s.containerCount }; // naive container count update? 
+          }
+          return s;
+        }).filter(Boolean) as any[]; // remove nulls
+      });
+
+      // If locally empty, strictly delete from DB
+      if (shipmentIsEmpty) {
+        await supabase.from('shipments').delete().eq('id', shipmentId);
+      } else {
+        // If not empty, we should check DB count for safety (async race conditions etc)
+        // But for now, purely local check + optimistic UI update is standard.
+        // Let's do a DB check to be safe:
+        const { count } = await supabase.from('products').select('*', { count: 'exact', head: true }).eq('shipment_id', shipmentId);
+        if (count === 0) {
+          await supabase.from('shipments').delete().eq('id', shipmentId);
+          setShipments(prev => prev.filter(s => s.id !== shipmentId));
+        }
+      }
+
       setProducts(prev => prev.map(p =>
         p.id === productId
           ? { ...p, shipmentId: null, status: 'available' }
           : p
       ));
 
-      // Update shipments to remove product from their products array
-      setShipments(prev => prev.map(s => {
-        if (s.id === shipmentId && s.products) {
-          return {
-            ...s,
-            products: s.products.filter(p => p.id !== productId)
-          };
-        }
-        return s;
-      }));
-
+      // Update shipments to remove product from their products array (Redundant if handled above, but ensuring consistency)
+      // Actually lines 803-816 handle shipment update.
+      // Lines 832-836 handle product update.
+      // So we just need to close the try block and start the real catch.
     } catch (error) {
       console.error('Error unpacking item:', error);
       setErrorModal({ isOpen: true, message: 'Failed to unpack item.' });
@@ -1163,7 +1190,7 @@ const App: React.FC = () => {
                 onDeleteContainer={deleteContainerInstance}
                 onRunOptimization={handleRunOptimization}
                 isOptimizing={isOptimizing}
-                products={products}
+                products={activeProducts}
                 selectedProductIds={selectedProductIds}
                 formFactors={formFactors}
                 csvMapping={csvMapping}

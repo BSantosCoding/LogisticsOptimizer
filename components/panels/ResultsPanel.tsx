@@ -1173,13 +1173,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                               // Just clean it (e.g. if it's already a composite saved ref)
                                               displayRef = cleanRef(displayRef.toString());
                                               // Still pending if it's purely packter-
-                                              if (displayRef.startsWith('packter-')) isPending = true;
+                                              if (displayRef.startsWith('packter-')) {
+                                                isPending = true;
+                                                displayRef = "Pending";
+                                              }
                                             } else {
                                               isPending = true;
+                                              displayRef = "Pending";
                                             }
                                           }
 
-                                          if (!displayRef || (isPending && !displayRef)) {
+                                          if (!displayRef) {
                                             return null;
                                           }
 

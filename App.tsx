@@ -726,9 +726,10 @@ const App: React.FC = () => {
               newData.assignmentReference = '';
               newData.currentContainer = '';
             } else if (currentRef.includes('_LINK_packter-')) {
-              // Composite assignment - revert to original hard reference but KEEP the container
-              newData.assignmentReference = currentRef.split('_LINK_packter-')[0];
-              // newData.currentContainer is preserved from ...data
+              // Composite assignment (soft item in hard container). 
+              // Clear ref (revert to no-ref), but KEEP the container since it's hard-linked.
+              newData.assignmentReference = '';
+              // newData.currentContainer is preserved
             }
             // Else: Hard reference - preserve both ref and container
 
@@ -767,8 +768,9 @@ const App: React.FC = () => {
                 newRef = '';
                 newContainer = '';
               } else if (currentRef.includes('_LINK_packter-')) {
-                newRef = currentRef.split('_LINK_packter-')[0];
-                // Keep existing container for hard-linked items
+                // Was a soft item inheriting a hard ref. Clear ref, but keep container.
+                newRef = '';
+                // newContainer remains currentContainerVal
               }
 
               return {

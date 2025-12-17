@@ -819,19 +819,24 @@ const App: React.FC = () => {
           if (fetchError) throw fetchError;
 
           const productsToUpdate = productsInShipment.map(p => {
-            let assignmentReference = p.data?.assignmentReference || p.assignmentReference;
+            const originalRef = p.data?.assignmentReference || p.assignmentReference || '';
+            const originalContainer = p.currentContainer || p.data?.currentContainer || '';
 
-            // Clear soft references (system-generated) - they should be re-optimizable
-            if (assignmentReference && (
-              String(assignmentReference).startsWith('packter-') ||
-              String(assignmentReference).includes('_LINK_packter-')
-            )) {
+            // Check if this is a soft reference (system-generated)
+            const isSoftRef = originalRef && (
+              String(originalRef).startsWith('packter-') ||
+              String(originalRef).includes('_LINK_packter-')
+            );
+
+            // For soft references: Clear BOTH reference AND container - they should be fully re-optimizable
+            // For hard references: Keep BOTH reference AND container
+            let assignmentReference = originalRef;
+            let currentContainer = originalContainer;
+
+            if (isSoftRef) {
               assignmentReference = '';
+              currentContainer = ''; // Also clear container so item can be packed optimally
             }
-
-            // Preserve currentContainer for all items - we want to maintain the same configuration
-            // Only the soft reference is cleared (for editability), not the container assignment
-            const currentContainer = p.currentContainer || p.data?.currentContainer || '';
 
             return {
               ...p,
@@ -842,7 +847,7 @@ const App: React.FC = () => {
               data: {
                 ...p.data,
                 assignmentReference,
-                currentContainer // Preserve container assignment
+                currentContainer
               }
             };
           });

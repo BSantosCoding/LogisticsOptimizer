@@ -406,9 +406,25 @@ export const calculatePacking = (
 
   // 0. Handle Pre-Assigned Containers (if mode enabled)
   if (respectCurrentAssignments) {
-    // Filter from remainingProducts (clones) to avoid mutating original state later
-    const assignedProducts = remainingProducts.filter(p => p.currentContainer && p.currentContainer.trim().length > 0);
-    const unassignedProducts = remainingProducts.filter(p => !p.currentContainer || p.currentContainer.trim().length === 0);
+    // Helper to check if a reference is "hard" (user-defined, not system-generated)
+    const isHardReference = (ref: string | undefined | null): boolean => {
+      if (!ref || ref.trim().length === 0) return false;
+      const r = ref.trim();
+      // System refs start with 'packter-' or contain '_LINK_packter-'
+      return !r.startsWith('packter-') && !r.includes('_LINK_packter-');
+    };
+
+    // Only respect items that have BOTH a container AND a hard reference
+    // Items with just currentContainer (but no/soft reference) should be re-optimizable
+    const assignedProducts = remainingProducts.filter(p =>
+      p.currentContainer && p.currentContainer.trim().length > 0 &&
+      isHardReference(p.assignmentReference)
+    );
+    const unassignedProducts = remainingProducts.filter(p =>
+      !p.currentContainer ||
+      p.currentContainer.trim().length === 0 ||
+      !isHardReference(p.assignmentReference)
+    );
 
     // Heuristically match the string to a template.
     // Match container by finding the longest matching container name/id in the description string

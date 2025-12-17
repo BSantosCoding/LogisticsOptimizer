@@ -727,6 +727,7 @@ const App: React.FC = () => {
             return {
               id: p.id,
               company_id: companyId,
+              created_by: p.created_by,
               shipment_id: null,
               status: 'available',
               data: newData

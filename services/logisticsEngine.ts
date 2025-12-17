@@ -406,8 +406,9 @@ export const calculatePacking = (
 
   // 0. Handle Pre-Assigned Containers (if mode enabled)
   if (respectCurrentAssignments) {
-    const assignedProducts = products.filter(p => p.currentContainer && p.currentContainer.trim().length > 0);
-    const unassignedProducts = products.filter(p => !p.currentContainer || p.currentContainer.trim().length === 0);
+    // Filter from remainingProducts (clones) to avoid mutating original state later
+    const assignedProducts = remainingProducts.filter(p => p.currentContainer && p.currentContainer.trim().length > 0);
+    const unassignedProducts = remainingProducts.filter(p => !p.currentContainer || p.currentContainer.trim().length === 0);
 
     // Heuristically match the string to a template.
     // Match container by finding the longest matching container name/id in the description string

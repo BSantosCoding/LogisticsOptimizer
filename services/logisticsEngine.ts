@@ -428,6 +428,10 @@ export const calculatePacking = (
       const container = getContainer(p);
       const ref = getRef(p);
       const isHard = isHardReference(ref);
+      console.log(`Product:`, p);
+      console.log(`Container:`, container);
+      console.log(`Reference:`, ref);
+      console.log(`Is hard:`, isHard);
       return container.trim().length > 0 && isHard;
     });
     const unassignedProducts = remainingProducts.filter(p => {

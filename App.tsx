@@ -806,8 +806,7 @@ const App: React.FC = () => {
               data: {
                 ...p.data,
                 assignmentReference
-              },
-              assignmentReference // Update top level too if it exists there in your schema
+              }
             };
           });
 

@@ -150,7 +150,7 @@ const App: React.FC = () => {
   }, [optimalUtilizationRange]);
 
   // Filter out shipped products for optimization and results view
-  const activeProducts = products.filter(p => p.status !== 'shipped');
+  const activeProducts = React.useMemo(() => products.filter(p => p.status !== 'shipped'), [products]);
 
   // Optimization Hook
   const {

@@ -436,13 +436,26 @@ export const calculatePacking = (
 
     const groupedAssigned: Record<string, Product[]> = {};
     assignedProducts.forEach(p => {
-      // Group by Assignment Ref (Shipment Number) if available
-      const rawRef = p.assignmentReference && p.assignmentReference.trim().length > 0 ? p.assignmentReference.trim() : 'bulk';
-      // Handle Composite References: "HARD_LINK_SOFT"
-      // We group by the BASE (Hard) reference to keep the physical container together when respecting assignments
-      const ref = rawRef.split('_LINK_')[0];
+      // Priority for grouping:
+      // 1. _containerInstanceId - Best: Uniquely identifies the physical container from a saved shipment
+      // 2. assignmentReference (hard ref) - Fallback: User-defined shipment number
+      // 3. 'bulk' - Last resort: Items without any grouping identifier
 
-      const key = `${p.currentContainer}|${p.destination}|${ref}`;
+      const containerInstanceId = (p as any)._containerInstanceId || (p as any).data?._containerInstanceId;
+      let groupRef: string;
+
+      if (containerInstanceId) {
+        // Use _containerInstanceId directly - items with same ID were in same physical container
+        groupRef = containerInstanceId;
+      } else if (p.assignmentReference && p.assignmentReference.trim().length > 0) {
+        // Fall back to assignment reference (handle composite refs)
+        const rawRef = p.assignmentReference.trim();
+        groupRef = rawRef.split('_LINK_')[0];
+      } else {
+        groupRef = 'bulk';
+      }
+
+      const key = `${p.currentContainer}|${p.destination}|${groupRef}`;
       if (!groupedAssigned[key]) groupedAssigned[key] = [];
       groupedAssigned[key].push(p);
     });

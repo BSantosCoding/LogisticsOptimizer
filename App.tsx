@@ -347,13 +347,45 @@ const App: React.FC = () => {
   };
 
   const handleRemoveProduct = async (id: string) => {
+    // Check if product belongs to a shipment
+    const productToDelete = products.find(p => p.id === id);
+    if (!productToDelete) return;
+
     removeProduct(id);
     setSelectedProductIds(prev => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
-    await supabase.from('products').delete().eq('id', id);
+
+    try {
+      await supabase.from('products').delete().eq('id', id);
+
+      if (productToDelete.shipmentId) {
+        // Check if shipment is now empty
+        setShipments(prev => {
+          let shipmentDeleted = false;
+          const nextShipments = prev.map(s => {
+            if (s.id === productToDelete.shipmentId) {
+              const remaining = (s.products || []).filter(p => p.id !== id);
+              if (remaining.length === 0) {
+                shipmentDeleted = true;
+                // Async delete shipment from DB if empty
+                supabase.from('shipments').delete().eq('id', s.id).then(({ error }) => {
+                  if (error) console.error("Failed to delete empty shipment:", error);
+                });
+                return null;
+              }
+              return { ...s, products: remaining, containerCount: s.containerCount };
+            }
+            return s;
+          }).filter(Boolean) as Shipment[];
+          return nextShipments;
+        });
+      }
+    } catch (error) {
+      console.error("Error removing product:", error);
+    }
   };
 
   const handleCancelProductEdit = () => {

@@ -542,8 +542,8 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   )}
                 </div>
 
-                {/* Edit Actions overlay on hover - correctly positioned within the relative card */}
-                <div className="absolute right-2 bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                {/* Edit Actions overlay - always visible */}
+                <div className="absolute right-2 bottom-2 flex gap-1 z-20">
                   <Button
                     size="icon"
                     variant="secondary"

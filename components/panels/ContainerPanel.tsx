@@ -287,7 +287,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                 </div>
 
                 {canManage && (
-                  <div className="absolute right-2 bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <div className="absolute right-2 bottom-2 flex gap-1 z-20">
                     <Button
                       size="icon"
                       variant="secondary"

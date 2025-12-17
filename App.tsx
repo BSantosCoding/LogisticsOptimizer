@@ -727,9 +727,9 @@ const App: React.FC = () => {
               newData.currentContainer = '';
             } else if (currentRef.includes('_LINK_packter-')) {
               // Composite assignment (soft item in hard container). 
-              // Clear ref (revert to no-ref), but KEEP the container since it's hard-linked.
+              // Clear ref (revert to no-ref) AND Clear container (revert to available input).
               newData.assignmentReference = '';
-              // newData.currentContainer is preserved
+              newData.currentContainer = '';
             }
             // Else: Hard reference - preserve both ref and container
 
@@ -768,9 +768,9 @@ const App: React.FC = () => {
                 newRef = '';
                 newContainer = '';
               } else if (currentRef.includes('_LINK_packter-')) {
-                // Was a soft item inheriting a hard ref. Clear ref, but keep container.
+                // Was a soft item inheriting a hard ref. Clear ref AND container to revert to available input.
                 newRef = '';
-                // newContainer remains currentContainerVal
+                newContainer = '';
               }
 
               return {
@@ -827,8 +827,18 @@ const App: React.FC = () => {
               }
               assignmentReference = packterRefMap.get(assignmentReference);
             } else if (assignmentReference && String(assignmentReference).includes('_LINK_packter-')) {
-              // Composite reference: Revert to Hard reference (prefix)
-              assignmentReference = String(assignmentReference).split('_LINK_packter-')[0];
+              // Composite reference: Clear ref and container to revert to available input
+              assignmentReference = '';
+            }
+
+            // Determine if container should be cleared. 
+            // If we cleared the reference (manually or via link logic above), we might want to clear container too?
+            // Actually simpler: if assignmentReference is empty string (after logic above), clear container.
+            // But wait, Manual No-Ref items exist?
+            // Logic specific to _LINK_:
+            let currentContainer = p.currentContainer;
+            if (p.data?.assignmentReference?.includes('_LINK_packter-')) {
+              currentContainer = '';
             }
 
             return {
@@ -837,9 +847,11 @@ const App: React.FC = () => {
               created_by: p.created_by,
               shipment_id: null,
               status: 'available',
+              currentContainer, // Explicitly update top-level
               data: {
                 ...p.data,
-                assignmentReference
+                assignmentReference,
+                currentContainer // Update data level
               }
             };
           });
@@ -872,11 +884,12 @@ const App: React.FC = () => {
                   shipmentId: null,
                   status: 'available',
                   assignmentReference: newRef, // Sync top-level
-                  // Ensure we keep currentContainer so the optimizer knows where to put it
-                  currentContainer: p.currentContainer,
+                  // Sync container from updated logic (which clears it for _LINK_)
+                  currentContainer: updated.currentContainer,
                   data: {
                     ...p.data,
-                    assignmentReference: newRef // Sync data level
+                    assignmentReference: newRef, // Sync data level
+                    currentContainer: updated.currentContainer // Sync data level
                   }
                 };
               }

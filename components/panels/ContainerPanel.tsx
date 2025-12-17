@@ -290,8 +290,8 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                   <div className="absolute right-2 bottom-2 flex gap-2 z-20">
                     <Button
                       size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 shadow-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-input"
+                      variant="ghost"
+                      className="h-8 w-8 shadow-sm bg-background border border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
                       onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }}
                       title={t('common.edit')}
                     >
@@ -299,7 +299,7 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                     </Button>
                     <Button
                       size="icon"
-                      variant="secondary"
+                      variant="ghost"
                       className="h-8 w-8 shadow-sm bg-background border border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }}
                       title={t('common.delete')}

@@ -718,11 +718,19 @@ const App: React.FC = () => {
             const data = p.data || {};
             let newData = { ...data };
 
-            // Check if it's a packter generated reference
-            if (data.assignmentReference && String(data.assignmentReference).startsWith('packter-')) {
+            // Handle assignments logic
+            const currentRef = String(data.assignmentReference || '');
+
+            if (currentRef.startsWith('packter-')) {
+              // Purely soft assignment - clear it and the container
               newData.assignmentReference = '';
               newData.currentContainer = '';
+            } else if (currentRef.includes('_LINK_packter-')) {
+              // Composite assignment - revert to original hard reference but KEEP the container
+              newData.assignmentReference = currentRef.split('_LINK_packter-')[0];
+              // newData.currentContainer is preserved from ...data
             }
+            // Else: Hard reference - preserve both ref and container
 
             return {
               id: p.id,
@@ -749,13 +757,24 @@ const App: React.FC = () => {
           setShipments(prev => prev.filter(s => s.id !== shipmentId));
           setProducts(prev => prev.map(p => {
             if (p.shipmentId === shipmentId) {
-              const isPackter = p.assignmentReference && p.assignmentReference.startsWith('packter-');
+              const currentRef = String(p.assignmentReference || '');
+              let newRef = currentRef;
+              let newContainer = p.currentContainer;
+
+              if (currentRef.startsWith('packter-')) {
+                newRef = '';
+                newContainer = '';
+              } else if (currentRef.includes('_LINK_packter-')) {
+                newRef = currentRef.split('_LINK_packter-')[0];
+                // Keep existing container for hard-linked items
+              }
+
               return {
                 ...p,
                 shipmentId: null,
                 status: 'available',
-                assignmentReference: isPackter ? '' : p.assignmentReference,
-                currentContainer: isPackter ? '' : p.currentContainer
+                assignmentReference: newRef,
+                currentContainer: newContainer
               };
             }
             return p;

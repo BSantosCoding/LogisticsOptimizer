@@ -826,10 +826,15 @@ const App: React.FC = () => {
                 packterRefMap.set(assignmentReference, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
               }
               assignmentReference = packterRefMap.get(assignmentReference);
+            } else if (assignmentReference && String(assignmentReference).includes('_LINK_packter-')) {
+              // Composite reference: Revert to Hard reference (prefix)
+              assignmentReference = String(assignmentReference).split('_LINK_packter-')[0];
             }
 
             return {
               ...p,
+              company_id: companyId,
+              created_by: p.created_by,
               shipment_id: null,
               status: 'available',
               data: {
@@ -859,13 +864,20 @@ const App: React.FC = () => {
             return prev.map(p => {
               if (updatedMap.has(p.id)) {
                 const updated = updatedMap.get(p.id);
+                // Ensure we get the updated reference from the map logic
+                const newRef = updated.data.assignmentReference;
+
                 return {
                   ...p,
                   shipmentId: null,
                   status: 'available',
-                  assignmentReference: updated.data.assignmentReference,
+                  assignmentReference: newRef, // Sync top-level
                   // Ensure we keep currentContainer so the optimizer knows where to put it
-                  currentContainer: p.currentContainer
+                  currentContainer: p.currentContainer,
+                  data: {
+                    ...p.data,
+                    assignmentReference: newRef // Sync data level
+                  }
                 };
               }
               return p;

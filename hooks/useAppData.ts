@@ -199,7 +199,7 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                     containerCount: r.container_count,
                     products: productsByShipment.get(r.id) || [],
                     createdAt: r.created_at
-                })));
+                })).filter(s => s.products.length > 0));
             }
 
         } catch (error) {

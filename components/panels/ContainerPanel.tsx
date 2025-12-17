@@ -287,22 +287,24 @@ const ContainerPanel: React.FC<ContainerPanelProps> = ({
                 </div>
 
                 {canManage && (
-                  <div className="absolute right-2 bottom-2 flex gap-1 z-20">
+                  <div className="absolute right-2 bottom-2 flex gap-2 z-20">
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="h-7 w-7 shadow-sm bg-background border border-border hover:bg-secondary hover:text-secondary-foreground"
+                      className="h-8 w-8 shadow-sm bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-input"
                       onClick={(e) => { e.stopPropagation(); handleEditContainer(c) }}
+                      title={t('common.edit')}
                     >
-                      <Pencil size={12} />
+                      <Pencil size={14} />
                     </Button>
                     <Button
                       size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shadow-sm bg-background border border-border text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      variant="secondary"
+                      className="h-8 w-8 shadow-sm bg-background border border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={(e) => { e.stopPropagation(); handleRemoveContainer(c.id) }}
+                      title={t('common.delete')}
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 )}

@@ -502,8 +502,6 @@ export const calculatePacking = (
           destination: groupProducts[0].destination // Inherit dest from products
         };
 
-        console.log(`Grouped products (initial state):`, JSON.parse(JSON.stringify(groupProducts)));
-
         // Weight limit check
         const weightLimit = groupProducts[0].country
           ? countryWeightLimits[groupProducts[0].country]?.[template.id]
@@ -525,8 +523,8 @@ export const calculatePacking = (
     remainingProducts = unassignedProducts;
   }
 
-  console.log(`Remaining products:`, remainingProducts);
-  console.log(`Final assignments pre filling:`, finalAssignments);
+  console.log(`Remaining products:`, JSON.parse(JSON.stringify(remainingProducts)));
+  console.log(`Final assignments pre filling:`, JSON.parse(JSON.stringify(finalAssignments);
 
   // Fill pre-assigned containers:
   // If we have pre-assigned containers (hard references), we should try to fill them to capacity
@@ -605,8 +603,8 @@ export const calculatePacking = (
     }
   }
 
-  console.log(`Remaining products:`, remainingProducts);
-  console.log(`Final assignments post filling:`, finalAssignments);
+  console.log(`Remaining products:`, JSON.parse(JSON.stringify(remainingProducts)));
+  console.log(`Final assignments post filling:`, JSON.parse(JSON.stringify(finalAssignments)));
 
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(

@@ -829,15 +829,9 @@ const App: React.FC = () => {
               assignmentReference = '';
             }
 
-            // Determine if container should be cleared. 
-            // If we cleared the reference (manually or via link logic above), we might want to clear container too?
-            // Actually simpler: if assignmentReference is empty string (after logic above), clear container.
-            // But wait, Manual No-Ref items exist?
-            // Logic specific to _LINK_:
-            let currentContainer = p.currentContainer;
-            if (p.data?.assignmentReference?.includes('_LINK_packter-')) {
-              currentContainer = '';
-            }
+            // Preserve currentContainer for all items - we want to maintain the same configuration
+            // Only the soft reference is cleared (for editability), not the container assignment
+            const currentContainer = p.currentContainer || p.data?.currentContainer || '';
 
             return {
               ...p,
@@ -848,7 +842,7 @@ const App: React.FC = () => {
               data: {
                 ...p.data,
                 assignmentReference,
-                currentContainer // Update data level
+                currentContainer // Preserve container assignment
               }
             };
           });

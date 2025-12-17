@@ -525,8 +525,8 @@ export const calculatePacking = (
     remainingProducts = unassignedProducts;
   }
 
-  console.log(`Remaining products: ${JSON.stringify(remainingProducts)}`);
-  console.log(`Final assignments pre filling: ${JSON.stringify(finalAssignments)}`);
+  console.log(`Remaining products:`, remainingProducts);
+  console.log(`Final assignments pre filling:`, finalAssignments);
 
   // Fill pre-assigned containers:
   // If we have pre-assigned containers (hard references), we should try to fill them to capacity
@@ -605,8 +605,8 @@ export const calculatePacking = (
     }
   }
 
-  console.log(`Remaining products: ${JSON.stringify(remainingProducts)}`);
-  console.log(`Final assignments post filling: ${JSON.stringify(finalAssignments)}`);
+  console.log(`Remaining products:`, remainingProducts);
+  console.log(`Final assignments post filling:`, finalAssignments);
 
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(
@@ -767,7 +767,7 @@ export const calculatePacking = (
     // 5. Phase 1: Greedy Packing
     const packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
-    console.log(`Packed instances: ${JSON.stringify(packedInstances)}`);
+    console.log(`Packed instances:`, packedInstances);
 
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
@@ -819,7 +819,7 @@ export const calculatePacking = (
       }
     }
 
-    console.log(`Packed instances after optimization: ${JSON.stringify(packedInstances)}`);
+    console.log(`Packed instances after optimization:`, packedInstances);
 
     // 7. Finalize Output
     packedInstances.forEach(inst => {

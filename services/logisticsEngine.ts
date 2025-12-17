@@ -199,7 +199,8 @@ const packItems = (
   products: Product[],
   templates: Container[],
   maxUtilization: number = 100,
-  getWeightLimitForContainer: (templateId: string, currentWeight: number, countryCode?: string) => number | undefined, // Added countryCode
+  getWeightLimitForContainer: (templateId: string, currentWeight: number, countryCode?: string) => number | undefined,
+  getCostForContainer: (templateId: string, countryCode?: string) => number, // New parameter for cost lookup
   allowUnitSplitting: boolean = true,
   existingPackedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = []
 ): Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> => {
@@ -213,10 +214,9 @@ const packItems = (
     let remainingQty = product.quantity;
     const totalLineWeight = product.weight ?? 0;
     const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
-    const productCountry = product.country; // Get product's country for lookups
+    const productCountry = product.country;
 
     // Phase A: Try to fill *existing* or *last opened* container first (Next Fit)
-    // Prioritize existing containers if any are available and compatible
 
     // Try to find the best existing container for the product
     // Sort existing instances by available space (descending) to fill the emptiest ones first
@@ -224,9 +224,7 @@ const packItems = (
       .filter(inst => {
         const maxCap = inst.template.capacities[product.formFactorId];
         if (!maxCap) return false;
-        // Check if product is compatible with this specific container instance
         if (checkCompatibility(product, inst.template).length > 0) return false;
-        // Check if there's any space left at all (allowing for small float tolerance)
         return inst.currentUtil < (maxUtilization + 0.1);
       })
       .sort((a, b) => (b.currentUtil - a.currentUtil)); // Sort by utilization (least utilized first to fill better)
@@ -237,16 +235,14 @@ const packItems = (
       // Pass productCountry to getWeightLimitForContainer
       const weightLimit = getWeightLimitForContainer(currentInstance.template.id, currentInstance.currentWeight, productCountry);
 
-      // Check if at least 1 unit fits by weight
       const canFitWeightInitially = weightLimit === undefined ||
         (currentInstance.currentWeight + unitWeight <= weightLimit);
 
-      if (!canFitWeightInitially) continue; // Cannot fit even one unit
+      if (!canFitWeightInitially) continue;
 
       const spacePercent = (maxUtilization + 0.1) - currentInstance.currentUtil;
       let maxQtyThatFits = Math.floor((spacePercent / 100) * maxCap);
 
-      // Also limit by weight if configured
       if (weightLimit !== undefined && unitWeight > 0) {
         const remainingWeightCapacity = weightLimit - currentInstance.currentWeight;
         maxQtyThatFits = Math.min(maxQtyThatFits, Math.floor(remainingWeightCapacity / unitWeight));
@@ -268,7 +264,7 @@ const packItems = (
           currentInstance.currentUtil += (take / maxCap) * 100;
           currentInstance.currentWeight += assignedWeight;
           remainingQty -= take;
-          if (remainingQty <= 0) break; // Product fully assigned
+          if (remainingQty <= 0) break;
         }
       }
     }
@@ -283,12 +279,10 @@ const packItems = (
         if (!t.capacities[product.formFactorId]) return false;
         if (checkCompatibility(product, t).length > 0) return false;
 
-        // Check if it can hold at least one unit by weight (assuming empty for new container)
         // Pass productCountry to getWeightLimitForContainer
         const limit = getWeightLimitForContainer(t.id, 0, productCountry);
         if (limit !== undefined && unitWeight > limit) return false;
 
-        // If unit splitting disabled, check if WHOLE qty fits
         if (!allowUnitSplitting) {
           const cap = t.capacities[product.formFactorId];
           if (cap < remainingQty) return false;
@@ -317,7 +311,6 @@ const packItems = (
         maxByCapacity = Math.min(maxCap, Math.floor(weightLimit / unitWeight));
       }
 
-      // Safety check: maxByCapacity should be >= 1 because we filtered templates above
       if (maxByCapacity < 1) {
         unassigned.push({ ...product, quantity: remainingQty, weight: unitWeight * remainingQty });
         break;
@@ -337,9 +330,12 @@ const packItems = (
 
       const assignedWeight = unitWeight * take;
 
+      // Get the country-specific cost for this new container instance
+      const containerCost = getCostForContainer(bestTemplate.id, productCountry);
+
       // Create new instance
       packedInstances.push({
-        template: bestTemplate,
+        template: { ...bestTemplate, cost: containerCost }, // Set the cost explicitly here
         assigned: [{ ...product, quantity: take, weight: assignedWeight }],
         currentUtil: (take / maxCap) * 100,
         currentWeight: assignedWeight
@@ -448,15 +444,21 @@ export const calculatePacking = (
     Object.entries(groupedAssigned).forEach(([key, groupProducts]) => {
       const [containerDesc, _dest, ref] = key.split('|');
       const template = findTemplate(containerDesc);
+      const groupCountryForInitialAssignment = groupProducts[0]?.country; // Get country from first product in group
 
       if (template) {
         instanceCounter++;
         const isSpecificInstance = ref !== 'bulk';
+
+        // Resolve cost for this specific pre-assigned container instance
+        const resolvedCost = (groupCountryForInitialAssignment && countryCosts[groupCountryForInitialAssignment]?.[template.id]) ?? template.cost;
+
         const newInstance: Container = {
           ...template,
           id: isSpecificInstance ? `${template.id}-SHIPMENT-${ref}` : `${template.id}-existing-${instanceCounter}`,
           name: isSpecificInstance ? `${template.name} (${ref})` : template.name,
-          destination: groupProducts[0].destination
+          destination: groupProducts[0].destination,
+          cost: resolvedCost, // Assign the resolved cost here!
         };
 
         const weightLimit = groupProducts[0].country
@@ -623,6 +625,15 @@ export const calculatePacking = (
       return countryWeightLimits[countryCode]?.[templateId];
     };
 
+    // Define the getCostForContainer resolver for this group
+    const getCostForContainer = (templateId: string, countryCode?: string): number => {
+      if (countryCode && countryCosts[countryCode]?.[templateId] !== undefined) {
+        return countryCosts[countryCode][templateId];
+      }
+      // Fallback to default cost from the containers array (which has the template data)
+      return containers.find(c => c.id === templateId)?.cost ?? 0;
+    };
+
     const existingInstancesForThisGroup = currentPackedInstancesForOptimization
       .filter(inst => normalize(inst.template.destination || '') === normalize(group.destination));
 
@@ -630,7 +641,8 @@ export const calculatePacking = (
       sortedProducts,
       sortedTemplates,
       maxUtilization,
-      getWeightLimitForContainer, // Pass the resolver
+      getWeightLimitForContainer,
+      getCostForContainer, // Pass the cost resolver
       allowUnitSplitting,
       existingInstancesForThisGroup
     );
@@ -638,8 +650,6 @@ export const calculatePacking = (
     currentPackedInstancesForOptimization = currentPackedInstancesForOptimization
       .filter(inst => normalize(inst.template.destination || '') !== normalize(group.destination));
     currentPackedInstancesForOptimization.push(...packedInstances);
-
-    console.log(`Packed instances after initial fill/new container for group (temp state):`, packedInstances);
   }
 
   // Phase 2: Optimization Loop (Applied globally now)
@@ -650,8 +660,8 @@ export const calculatePacking = (
       let bestReplacement = instance.template;
       const instanceProductsCountry = instance.assigned.length > 0 ? instance.assigned[0].country : undefined;
 
-      // Use country-specific cost for current instance
-      let bestCost = (instanceProductsCountry && countryCosts[instanceProductsCountry]?.[instance.template.id]) ?? instance.template.cost;
+      // Get the cost of the *current* instance (which should already be country-specific if set)
+      let bestCost = instance.template.cost; // Use instance.template.cost directly, as it should be resolved now
       let foundBetter = false;
 
       const compatibleTemplatesForDownsizing = containers.filter(t =>
@@ -671,7 +681,9 @@ export const calculatePacking = (
       }
 
       if (foundBetter) {
-        currentPackedInstancesForOptimization[i].template = bestReplacement;
+        // When replacing, ensure the cost of the replacement template is also resolved
+        const resolvedReplacementCost = (instanceProductsCountry && countryCosts[instanceProductsCountry]?.[bestReplacement.id]) ?? bestReplacement.cost;
+        currentPackedInstancesForOptimization[i].template = { ...bestReplacement, cost: resolvedReplacementCost };
       }
     }
   }
@@ -680,7 +692,7 @@ export const calculatePacking = (
   currentPackedInstancesForOptimization.forEach(inst => {
     instanceCounter++;
     const instanceContainer = {
-      ...inst.template,
+      ...inst.template, // This template should now have the correct country-specific cost
       id: `${inst.template.id}-instance-${instanceCounter}`,
       destination: inst.template.destination || (inst.assigned.length > 0 ? inst.assigned[0].destination : undefined)
     };

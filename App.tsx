@@ -757,9 +757,11 @@ const App: React.FC = () => {
           setShipments(prev => prev.filter(s => s.id !== shipmentId));
           setProducts(prev => prev.map(p => {
             if (p.shipmentId === shipmentId) {
-              const currentRef = String(p.assignmentReference || '');
+              const currentRef = String(p.data?.assignmentReference || p.assignmentReference || '');
+              const currentContainerVal = p.data?.currentContainer || p.currentContainer || '';
+
               let newRef = currentRef;
-              let newContainer = p.currentContainer;
+              let newContainer = currentContainerVal;
 
               if (currentRef.startsWith('packter-')) {
                 newRef = '';
@@ -774,7 +776,12 @@ const App: React.FC = () => {
                 shipmentId: null,
                 status: 'available',
                 assignmentReference: newRef,
-                currentContainer: newContainer
+                currentContainer: newContainer,
+                data: {
+                  ...p.data,
+                  assignmentReference: newRef,
+                  currentContainer: newContainer
+                }
               };
             }
             return p;

@@ -96,7 +96,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
   const filteredProducts = products
     .filter(p => {
       const matchesSearch =
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesTag = selectedTagFilter && selectedTagFilter !== 'all_tags' ? p.restrictions.includes(selectedTagFilter) : true;
 

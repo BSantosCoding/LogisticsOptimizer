@@ -437,6 +437,9 @@ export const calculatePacking = (
       return container.trim().length === 0 || !isHard;
     });
 
+    console.log(`Assigned products:`, assignedProducts);
+    console.log(`Unassigned products:`, unassignedProducts);
+
     // Heuristically match the string to a template.
 
     // Heuristically match the string to a template.

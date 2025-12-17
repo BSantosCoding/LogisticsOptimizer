@@ -602,16 +602,20 @@ const App: React.FC = () => {
             }
           }
 
+          // Safe Lookup: Use original product state to avoid persisting any mutations (like quantity changes) 
+          // that the optimizer might have done to the 'p' object in the result set.
+          const originalProduct = products.find(prod => prod.id === p.id);
+          const baseData = originalProduct ? (originalProduct.data || {}) : (p.data || {});
+
           const update = {
             id: p.id,
             shipment_id: shipmentData.id,
             status: 'shipped',
             data: {
-              ...p,
+              ...baseData,
               currentContainer: containerName,
               assignmentReference: finalRef,
               // Store unique physical container ID to strictly distinguish containers in UI
-              // regardless of shared assignment references (e.g. 1 Order split across 2 containers)
               _containerInstanceId: containerRef
             }
           };

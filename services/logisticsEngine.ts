@@ -3,8 +3,6 @@ import moment from 'moment';
 
 const normalize = (s: string) => s.trim().toLowerCase();
 
-// --- Helper Functions ---
-
 // Calculate how "large" a container is (sum of capacities as a rough heuristic for sorting)
 const getContainerCapacityScore = (c: Container) =>
   Object.values(c.capacities).reduce((sum, val) => sum + val, 0);
@@ -53,18 +51,6 @@ export const checkCompatibility = (
 
   // 4. Check Weight Limit (if configured)
   if (weightLimit !== undefined && product.weight !== undefined) {
-    // product.weight is TOTAL weight for the line item
-    // We need to calculate the weight of the specific quantity being checked?
-    // Actually, checkCompatibility is usually called with a product object that has a specific quantity.
-    // BUT, if the product object passed here is a "slice" (e.g. quantity=1), does it have the weight of 1 unit or the original total?
-    // The engine creates slices. We need to ensure when we create a slice, we adjust the weight.
-    // If we do that, then product.weight HERE is the total weight of THIS slice.
-
-    // However, to be safe and consistent with the new logic:
-    // We assume the caller has already adjusted the weight for the slice, OR we calculate unit weight if we have context.
-    // But checkCompatibility doesn't know about the "original" quantity.
-    // So we must enforce that any Product object passed around has its .weight property matching its .quantity.
-
     const productTotalWeight = product.weight;
     if (existingWeight + productTotalWeight > weightLimit) {
       issues.push(`Weight limit exceeded: ${(existingWeight + productTotalWeight).toFixed(1)}kg > ${weightLimit}kg`);
@@ -110,7 +96,6 @@ export const validateLoadedContainer = (
   _respectCurrentAssignments: boolean = false
 ): LoadedContainer => {
 
-  // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
   const parseDate = (d?: string): number => {
     if (!d) return 0;
     const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
@@ -133,7 +118,7 @@ export const validateLoadedContainer = (
 
     // Track total weight
     if (p.weight !== undefined) {
-      totalWeight += p.weight; // p.weight is now total weight for this assignment
+      totalWeight += p.weight;
     }
 
     const productIssues = checkCompatibility(p, container);
@@ -196,7 +181,7 @@ const canFit = (products: Product[], container: Container, weightLimit?: number)
 
     totalUtilization += (p.quantity / maxCap) * 100;
     if (p.weight !== undefined) {
-      totalWeight += p.weight; // p.weight is total for this slice
+      totalWeight += p.weight;
     }
   }
 
@@ -214,24 +199,24 @@ const packItems = (
   products: Product[],
   templates: Container[],
   maxUtilization: number = 100,
-  weightLimitResolver: (templateId: string, currentWeight: number) => number | undefined, // Added currentWeight
+  getWeightLimitForContainer: (templateId: string, currentWeight: number, countryCode?: string) => number | undefined, // Added countryCode
   allowUnitSplitting: boolean = true,
-  existingPackedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = [] // New parameter
-): Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> => { // Changed return type to include util/weight
+  existingPackedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = []
+): Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> => {
 
   if (templates.length === 0 && existingPackedInstances.length === 0) return [];
 
   const packedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = [...existingPackedInstances];
-  const unassigned: Product[] = []; // Track unassigned items locally
+  const unassigned: Product[] = [];
 
   for (const product of products) {
     let remainingQty = product.quantity;
     const totalLineWeight = product.weight ?? 0;
     const unitWeight = product.quantity > 0 ? totalLineWeight / product.quantity : 0;
+    const productCountry = product.country; // Get product's country for lookups
 
     // Phase A: Try to fill *existing* or *last opened* container first (Next Fit)
     // Prioritize existing containers if any are available and compatible
-    let targetInstance: typeof packedInstances[number] | undefined;
 
     // Try to find the best existing container for the product
     // Sort existing instances by available space (descending) to fill the emptiest ones first
@@ -249,7 +234,8 @@ const packItems = (
     // Try to fill the least utilized compatible existing instance
     for (const currentInstance of compatibleExistingInstances) {
       const maxCap = currentInstance.template.capacities[product.formFactorId];
-      const weightLimit = weightLimitResolver(currentInstance.template.id, currentInstance.currentWeight);
+      // Pass productCountry to getWeightLimitForContainer
+      const weightLimit = getWeightLimitForContainer(currentInstance.template.id, currentInstance.currentWeight, productCountry);
 
       // Check if at least 1 unit fits by weight
       const canFitWeightInitially = weightLimit === undefined ||
@@ -298,16 +284,15 @@ const packItems = (
         if (checkCompatibility(product, t).length > 0) return false;
 
         // Check if it can hold at least one unit by weight (assuming empty for new container)
-        const limit = weightLimitResolver(t.id, 0); // Pass 0 for initial weight
+        // Pass productCountry to getWeightLimitForContainer
+        const limit = getWeightLimitForContainer(t.id, 0, productCountry);
         if (limit !== undefined && unitWeight > limit) return false;
 
         // If unit splitting disabled, check if WHOLE qty fits
         if (!allowUnitSplitting) {
-          // We need to check if the new container can hold the ENTIRE remaining quantity
           const cap = t.capacities[product.formFactorId];
           if (cap < remainingQty) return false;
 
-          // Weight limit
           if (limit !== undefined) {
             if ((unitWeight * remainingQty) > limit) return false;
           }
@@ -323,7 +308,8 @@ const packItems = (
       }
 
       const maxCap = bestTemplate.capacities[product.formFactorId];
-      const weightLimit = weightLimitResolver(bestTemplate.id, 0); // Pass 0 for initial weight
+      // Pass productCountry to getWeightLimitForContainer
+      const weightLimit = getWeightLimitForContainer(bestTemplate.id, 0, productCountry);
 
       // Calculate how many units can fit considering weight limit
       let maxByCapacity = maxCap;
@@ -341,11 +327,9 @@ const packItems = (
       if (allowUnitSplitting) {
         take = Math.min(maxByCapacity, remainingQty);
       } else {
-        // If we are here, we already checked in 'find' loop that it fits, but let's double check
         if (maxByCapacity >= remainingQty) {
           take = remainingQty;
         } else {
-          // Should not happen if filter logic is correct, but safe fallback
           unassigned.push({ ...product, quantity: remainingQty, weight: unitWeight * remainingQty });
           break;
         }
@@ -365,7 +349,6 @@ const packItems = (
     }
   }
 
-  // Return both the packed instances and the locally unassigned items
   return packedInstances;
 };
 
@@ -377,15 +360,14 @@ export const calculatePacking = (
   containers: Container[],
   _priority: OptimizationPriority,
   _minUtilization: number = 70,
-  countryCosts: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> cost
+  countryCosts: Record<string, Record<string, number>> = {},
   maxUtilization: number = 100,
-  countryWeightLimits: Record<string, Record<string, number>> = {}, // countryCode -> containerTemplateId -> weightLimit
+  countryWeightLimits: Record<string, Record<string, number>> = {},
   allowUnitSplitting: boolean = true,
   shippingDateGroupingRange: number | undefined = undefined,
   respectCurrentAssignments: boolean = false
 ): { assignments: LoadedContainer[]; unassigned: Product[] } => {
 
-  // Helper to parse date string "DD/MM/YYYY" or "DD-MM-YYYY" safely
   const parseDate = (d?: string) => {
     if (!d) return 0;
     const parsedDate = moment(d, ["DD/MM/YYYY", "DD-MM-YYYY"]).toDate();
@@ -393,15 +375,12 @@ export const calculatePacking = (
   };
 
   let finalAssignments: LoadedContainer[] = [];
-  // Deep clone products to avoid mutating the original objects in the calling scope/state
   let remainingProducts = products.map(p => ({ ...p }));
   let instanceCounter = 0;
 
-  // 0. Handle Pre-Assigned Containers (if mode enabled)
   let initialPackedInstances: Array<{ template: Container; assigned: Product[]; currentUtil: number; currentWeight: number }> = [];
 
   if (respectCurrentAssignments) {
-    // Helper to get value from either top-level or nested data property
     const getRef = (p: Product): string => {
       return p.assignmentReference || (p as any).data?.assignmentReference || '';
     };
@@ -409,22 +388,19 @@ export const calculatePacking = (
       return p.currentContainer || (p as any).data?.currentContainer || '';
     };
 
-    // Helper to check if a reference is "hard" (user-defined, not system-generated)
     const isHardReference = (ref: string): boolean => {
       if (!ref || ref.trim().length === 0) return false;
       const r = ref.trim();
-      // System refs start with 'packter-' or contain '_LINK_packter-'
       return !r.startsWith('packter-') && !r.includes('_LINK_packter-');
     };
 
-    // Filter products into assigned and unassigned based on currentContainer and hard reference
     const initiallyAssignedProducts = remainingProducts.filter(p => {
       const container = getContainer(p);
       const ref = getRef(p);
       const isHard = isHardReference(ref);
       return container.trim().length > 0 && isHard;
     });
-    // Products that are NOT hard-assigned should be re-optimized
+
     remainingProducts = remainingProducts.filter(p => {
       const container = getContainer(p);
       const ref = getRef(p);
@@ -432,23 +408,17 @@ export const calculatePacking = (
       return container.trim().length === 0 || !isHard;
     });
 
-    // Heuristically match the string to a template.
-    // Match container by finding the longest matching container name/id in the description string
     const findTemplate = (desc: string): Container | undefined => {
       if (!desc) return undefined;
       const d = desc.toLowerCase().trim();
 
-      // 1. Try Exact Match (ID or Name)
       const exactMatch = containers.find(c =>
         c.id.toLowerCase() === d || c.name.toLowerCase() === d
       );
       if (exactMatch) return exactMatch;
 
-      // 2. Sort containers by name length (descending) to match longest/most specific first
-      // e.g. Match "40' High Cube" before "40'"
       const sortedContainers = [...containers].sort((a, b) => b.name.length - a.name.length);
 
-      // 3. Find first container whose Name or ID is contained in the description string
       return sortedContainers.find(c => {
         const cName = c.name.toLowerCase();
         const cId = c.id.toLowerCase();
@@ -458,19 +428,12 @@ export const calculatePacking = (
 
     const groupedAssigned: Record<string, Product[]> = {};
     initiallyAssignedProducts.forEach(p => {
-      // Priority for grouping:
-      // 1. _containerInstanceId - Best: Uniquely identifies the physical container from a saved shipment
-      // 2. assignmentReference (hard ref) - Fallback: User-defined shipment number
-      // 3. 'bulk' - Last resort: Items without any grouping identifier
-
       const containerInstanceId = (p as any)._containerInstanceId || (p as any).data?._containerInstanceId;
       let groupRef: string;
 
       if (containerInstanceId) {
-        // Use _containerInstanceId directly - items with same ID were in same physical container
         groupRef = containerInstanceId;
       } else if (p.assignmentReference && p.assignmentReference.trim().length > 0) {
-        // Fall back to assignment reference (handle composite refs)
         const rawRef = p.assignmentReference.trim();
         groupRef = rawRef.split('_LINK_')[0];
       } else {
@@ -493,10 +456,9 @@ export const calculatePacking = (
           ...template,
           id: isSpecificInstance ? `${template.id}-SHIPMENT-${ref}` : `${template.id}-existing-${instanceCounter}`,
           name: isSpecificInstance ? `${template.name} (${ref})` : template.name,
-          destination: groupProducts[0].destination // Inherit dest from products
+          destination: groupProducts[0].destination
         };
 
-        // Validate to get current utilization and weight
         const weightLimit = groupProducts[0].country
           ? countryWeightLimits[groupProducts[0].country]?.[template.id]
           : undefined;
@@ -518,7 +480,6 @@ export const calculatePacking = (
         });
 
       } else {
-        // If template not found, these products become unassigned
         remainingProducts.push(...groupProducts);
       }
     });
@@ -530,7 +491,6 @@ export const calculatePacking = (
     shippingDateGroupingRangeDays: number | undefined
   ): Record<string, { products: Product[], destination: string }> {
 
-    // Step 1: Initial grouping by destination
     const intermediateDestinationGroupedProducts: Record<string, { products: Product[], destination: string }> = {};
 
     allProducts.forEach(p => {
@@ -551,7 +511,6 @@ export const calculatePacking = (
       return intermediateDestinationGroupedProducts;
     }
 
-    // Step 2: Apply flexible date grouping
     const finalCombinedProductGroups: Record<string, { products: Product[], destination: string }> = {};
     const MS_PER_DAY = 1000 * 60 * 60 * 24;
     const groupingRangeMs = shippingDateGroupingRangeDays * MS_PER_DAY;
@@ -561,7 +520,6 @@ export const calculatePacking = (
         const { products: productsForThisDestination, destination: actualDestination } =
           intermediateDestinationGroupedProducts[destinationGroupKey];
 
-        // Filter and sort products for date grouping
         const productsWithParsedDates = productsForThisDestination
           .map(p => ({
             ...p,
@@ -569,12 +527,6 @@ export const calculatePacking = (
           }))
           .filter(p => !isNaN(p._shippingDateMs) && p._shippingDateMs > 0)
           .sort((a, b) => a._shippingDateMs - b._shippingDateMs);
-
-        // Products without valid dates are not included in date grouping.
-        // We need to ensure they are handled if `shippingDateGroupingRange` is active.
-        // For now, these products are implicitly dropped if they don't have a date.
-        // This is a pre-existing behavior that might warrant further discussion,
-        // but for this task, we will maintain it.
 
         if (productsWithParsedDates.length === 0) {
           continue;
@@ -621,13 +573,10 @@ export const calculatePacking = (
 
   const allUnassigned: Product[] = [];
 
-  // Create a modifiable copy of initialPackedInstances to pass to each group's packing
   let currentPackedInstancesForOptimization = [...initialPackedInstances];
 
-  // Process each group separately
   for (const group of Object.values(productGroups)) {
 
-    // 2. Identify Compatible Templates for this group
     const compatibleTemplates = containers.filter(c => {
       const cDest = normalize(c.destination || '');
       const gDest = normalize(group.destination);
@@ -642,12 +591,12 @@ export const calculatePacking = (
 
     const groupCountry = group.products[0]?.country;
 
-    // 3. Sort Templates
     const sortedTemplates = [...compatibleTemplates].sort((a, b) => {
       const capA = getContainerCapacityScore(a);
       const capB = getContainerCapacityScore(b);
       if (capA !== capB) return capB - capA;
 
+      // Use country-specific cost for sorting templates
       const costA = (groupCountry && countryCosts[groupCountry]?.[a.id]) ?? a.cost;
       const costB = (groupCountry && countryCosts[groupCountry]?.[b.id]) ?? b.cost;
       return costA - costB;
@@ -655,12 +604,10 @@ export const calculatePacking = (
 
     const largestTemplate = sortedTemplates[0];
 
-    // 4. Sort Products
     const restrictedProducts = group.products.filter(p => p.restrictions.length > 0);
     const standardProducts = group.products.filter(p => p.restrictions.length === 0);
 
     const sortByPoC = (a: Product, b: Product) => {
-      // Use the largest template as a reference for PoC calculation
       const pocA = getPoC(a, largestTemplate);
       const pocB = getPoC(b, largestTemplate);
       return pocB - pocA;
@@ -670,13 +617,12 @@ export const calculatePacking = (
     standardProducts.sort(sortByPoC);
     const sortedProducts = [...restrictedProducts, ...standardProducts];
 
-    const getWeightLimit = (templateId: string, currentWeight: number): number | undefined => {
-      if (!groupCountry) return undefined;
-      return countryWeightLimits[groupCountry]?.[templateId];
+    // Define the getWeightLimitForContainer resolver for this group
+    const getWeightLimitForContainer = (templateId: string, currentWeight: number, countryCode?: string): number | undefined => {
+      if (!countryCode) return undefined;
+      return countryWeightLimits[countryCode]?.[templateId];
     };
 
-    // 5. Phase 1: Greedy Packing
-    // Pass the relevant existing packed instances for this destination group
     const existingInstancesForThisGroup = currentPackedInstancesForOptimization
       .filter(inst => normalize(inst.template.destination || '') === normalize(group.destination));
 
@@ -684,46 +630,37 @@ export const calculatePacking = (
       sortedProducts,
       sortedTemplates,
       maxUtilization,
-      getWeightLimit,
+      getWeightLimitForContainer, // Pass the resolver
       allowUnitSplitting,
       existingInstancesForThisGroup
     );
 
-    // Update currentPackedInstancesForOptimization with the results
-    // Remove the old instances for this group and add the new/modified ones
     currentPackedInstancesForOptimization = currentPackedInstancesForOptimization
       .filter(inst => normalize(inst.template.destination || '') !== normalize(group.destination));
     currentPackedInstancesForOptimization.push(...packedInstances);
 
     console.log(`Packed instances after initial fill/new container for group (temp state):`, packedInstances);
-    // Note: Optimization Loop below will operate on a slice, then update this main array.
   }
 
-  // Now that all products are processed against initial and new containers,
-  // we perform the optimization loops across all generated containers.
-
-  // 6. Phase 2: Optimization Loop (Applied globally now)
+  // Phase 2: Optimization Loop (Applied globally now)
   if (currentPackedInstancesForOptimization.length > 0) {
-    // We need to re-sort or re-evaluate the instances for optimization,
-    // especially if we want to combine containers across "groups".
-    // For simplicity, let's process the instances as a single list.
-
     // Step A: Downsize Remainder (apply to each container individually)
     for (let i = 0; i < currentPackedInstancesForOptimization.length; i++) {
       const instance = currentPackedInstancesForOptimization[i];
       let bestReplacement = instance.template;
-      // Get country context for cost and weight limit
       const instanceProductsCountry = instance.assigned.length > 0 ? instance.assigned[0].country : undefined;
+
+      // Use country-specific cost for current instance
       let bestCost = (instanceProductsCountry && countryCosts[instanceProductsCountry]?.[instance.template.id]) ?? instance.template.cost;
       let foundBetter = false;
 
-      // Filter templates compatible with the current instance's destination and restrictions
       const compatibleTemplatesForDownsizing = containers.filter(t =>
         normalize(t.destination || '') === normalize(instance.template.destination || '') &&
         instance.assigned.every(p => checkCompatibility(p, t).length === 0)
       );
 
       for (const t of compatibleTemplatesForDownsizing) {
+        // Use country-specific weight limit and cost for candidate replacement templates
         const tWeightLimit = (instanceProductsCountry && countryWeightLimits[instanceProductsCountry]?.[t.id]);
         const tCost = (instanceProductsCountry && countryCosts[instanceProductsCountry]?.[t.id]) ?? t.cost;
         if (tCost < bestCost && canFit(instance.assigned, t, tWeightLimit)) {
@@ -737,58 +674,6 @@ export const calculatePacking = (
         currentPackedInstancesForOptimization[i].template = bestReplacement;
       }
     }
-
-    // Step B: Optimize combining adjacent containers (or any two containers)
-    // This part is more complex with initial instances. A simpler approach might be
-    // to try to combine any two partially filled containers if they fit into a smaller one.
-    // For now, let's keep the existing logic that works on "adjacent" from the original packing run.
-    // If the goal is a global optimization, this would need a more sophisticated merge algorithm.
-
-    // The original logic assumes `packedInstances` is ordered from a single packing run.
-    // To apply similar logic, we'd need to sort `currentPackedInstancesForOptimization` by some criteria
-    // (e.g., date, then destination, then current utilization) to make "adjacent" meaningful.
-    // For a simple merge, we can just iterate.
-
-    // A more robust merging logic would be:
-    // 1. Iterate through pairs of containers in `currentPackedInstancesForOptimization`.
-    // 2. If they are compatible (same destination, no restriction conflicts), try to combine their products.
-    // 3. See if the combined products fit into a *single smaller/cheaper* container.
-    // 4. If so, replace the two original containers with the new single one.
-
-    // This is beyond a simple "merge 2 logics". Given the prompt, I will skip
-    // a full rewrite of the global merge optimization and assume `packItems`
-    // already does a good job, and Downsizing is the main loop optimization.
-    // The previous Phase B was for `packItems`'s internal instances; it doesn't
-    // easily translate to global `initialPackedInstances`.
-    // Let's comment out the old "Optimize Last Full + Remainder" for now as it doesn't fit the new global `initialPackedInstances` structure cleanly.
-    /*
-    if (packedInstances.length >= 2) {
-      const idxTail = packedInstances.length - 1;
-      const idxPrev = packedInstances.length - 2;
-      const tail = packedInstances[idxTail];
-      const prev = packedInstances[idxPrev];
-
-      const currentCost = tail.template.cost + prev.template.cost;
-      const combinedItems = [...prev.assigned, ...tail.assigned];
-      const smallerTemplates = sortedTemplates.filter(t => t.id !== prev.template.id);
-
-      if (smallerTemplates.length > 0) {
-        // Here, we need to pass the current weight limits for the *new* combined container context
-        const alternativePacking = packItems(combinedItems, smallerTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
-
-        const totalAltQty = alternativePacking.reduce((sum, i) => sum + i.assigned.reduce((q, p) => q + p.quantity, 0), 0);
-        const totalReqQty = combinedItems.reduce((sum, p) => sum + p.quantity, 0);
-
-        if (totalAltQty === totalReqQty) {
-          const altCost = alternativePacking.reduce((sum, i) => sum + i.template.cost, 0);
-          if (altCost < currentCost) {
-            packedInstances.splice(idxPrev, 2);
-            packedInstances.push(...alternativePacking);
-          }
-        }
-      }
-    }
-    */
   }
 
   // 7. Finalize Output
@@ -800,7 +685,7 @@ export const calculatePacking = (
       destination: inst.template.destination || (inst.assigned.length > 0 ? inst.assigned[0].destination : undefined)
     };
 
-    const groupCountry = inst.assigned[0]?.country; // Assume products in an instance share a country
+    const groupCountry = inst.assigned[0]?.country;
     const weightLimitForTemplate = (groupCountry && countryWeightLimits[groupCountry]?.[inst.template.id]);
 
     const validatedContainer = validateLoadedContainer(
@@ -812,9 +697,6 @@ export const calculatePacking = (
       respectCurrentAssignments
     );
     finalAssignments.push(validatedContainer);
-    // Any validation issues here indicate a problem that needs to be handled
-    // (e.g., initial assignments somehow violated rules, or an optimization step failed)
-    // For now, they are just collected in validatedContainer.validationIssues
   });
 
   return {

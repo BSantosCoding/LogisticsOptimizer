@@ -424,8 +424,6 @@ export const calculatePacking = (
 
     // Only respect items that have BOTH a container AND a hard reference
     // Items with just currentContainer (but no/soft reference) should be re-optimizable
-    // Only respect items that have BOTH a container AND a hard reference
-    // Items with just currentContainer (but no/soft reference) should be re-optimizable
     const assignedProducts = remainingProducts.filter(p => {
       const container = getContainer(p);
       const ref = getRef(p);
@@ -527,6 +525,9 @@ export const calculatePacking = (
     remainingProducts = unassignedProducts;
   }
 
+  console.log(`Remaining products: ${JSON.stringify(remainingProducts)}`);
+  console.log(`Final assignments pre filling: ${JSON.stringify(finalAssignments)}`);
+
   // Fill pre-assigned containers:
   // If we have pre-assigned containers (hard references), we should try to fill them to capacity
   // with ANY compatible unassigned products. This maximizes utilization of "paid for" containers.
@@ -603,6 +604,10 @@ export const calculatePacking = (
       }
     }
   }
+
+  console.log(`Remaining products: ${JSON.stringify(remainingProducts)}`);
+  console.log(`Final assignments post filling: ${JSON.stringify(finalAssignments)}`);
+
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(
     allProducts: Product[],

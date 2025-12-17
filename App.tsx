@@ -33,7 +33,7 @@ import ConfirmModal from './components/modals/ConfirmModal';
 import SetupWizard from './components/SetupWizard';
 import PendingApproval from './components/PendingApproval';
 
-import { Container, Product, Shipment, UserProfile } from './types';
+import { Container, Product, Shipment, UserProfile, OptimizationPriority } from './types';
 import { hasRole, getAvailableViewRoles, getRoleLabel } from './utils/roles';
 import { supabase } from './services/supabase';
 import { useAuth } from './hooks/useAuth';
@@ -151,6 +151,24 @@ const App: React.FC = () => {
 
   // Filter out shipped products for optimization and results view
   const activeProducts = React.useMemo(() => products.filter(p => p.status !== 'shipped'), [products]);
+
+  const resetResultsToDefault = () => {
+    setResults({
+      [OptimizationPriority.AUTOMATIC]: {
+        assignments: [],
+        unassignedProducts: [],
+        totalCost: 0,
+        reasoning: ''
+      },
+      [OptimizationPriority.MANUAL]: {
+        assignments: [],
+        unassignedProducts: [...activeProducts],
+        totalCost: 0,
+        reasoning: 'Manual planning mode'
+      }
+    });
+    setActivePriority(OptimizationPriority.MANUAL);
+  };
 
   // Optimization Hook
   const {
@@ -759,12 +777,46 @@ const App: React.FC = () => {
       confirmText: 'Load & Re-optimize',
       onConfirm: async () => {
         try {
-          const { error: productsError } = await supabase
+          // Fetch current product data to handle references
+          const { data: productsInShipment, error: fetchError } = await supabase
             .from('products')
-            .update({ shipment_id: null, status: 'available' })
+            .select('*')
             .eq('shipment_id', shipmentId);
 
-          if (productsError) throw productsError;
+          if (fetchError) throw fetchError;
+
+          // Map to track packter reference conversions to keep groups together
+          const packterRefMap = new Map<string, string>();
+
+          const productsToUpdate = productsInShipment.map(p => {
+            let assignmentReference = p.data?.assignmentReference || p.assignmentReference; // specific field or data field
+
+            // If it's a packter reference, convert to manual to preserve grouping but enable editing
+            if (assignmentReference && String(assignmentReference).startsWith('packter-')) {
+              if (!packterRefMap.has(assignmentReference)) {
+                packterRefMap.set(assignmentReference, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
+              }
+              assignmentReference = packterRefMap.get(assignmentReference);
+            }
+
+            return {
+              ...p,
+              shipment_id: null,
+              status: 'available',
+              data: {
+                ...p.data,
+                assignmentReference
+              },
+              assignmentReference // Update top level too if it exists there in your schema
+            };
+          });
+
+          // Perform upsert to update all products
+          const { error: updateError } = await supabase
+            .from('products')
+            .upsert(productsToUpdate);
+
+          if (updateError) throw updateError;
 
           const { error: shipmentError } = await supabase
             .from('shipments')
@@ -774,11 +826,23 @@ const App: React.FC = () => {
           if (shipmentError) throw shipmentError;
 
           setShipments(prev => prev.filter(s => s.id !== shipmentId));
-          setProducts(prev => prev.map(p =>
-            p.shipmentId === shipmentId
-              ? { ...p, shipmentId: null, status: 'available' }
-              : p
-          ));
+          setProducts(prev => {
+            const updatedMap = new Map(productsToUpdate.map(p => [p.id, p]));
+            return prev.map(p => {
+              if (updatedMap.has(p.id)) {
+                const updated = updatedMap.get(p.id);
+                return {
+                  ...p,
+                  shipmentId: null,
+                  status: 'available',
+                  assignmentReference: updated.data.assignmentReference,
+                  // Ensure we keep currentContainer so the optimizer knows where to put it
+                  currentContainer: p.currentContainer
+                };
+              }
+              return p;
+            });
+          });
 
           setPendingReoptimize(true);
         } catch (error) {
@@ -1214,7 +1278,7 @@ const App: React.FC = () => {
                 setActivePriority={setActivePriority}
                 containers={containers}
                 countries={countries}
-                onClose={() => setResults(null)}
+                onClose={resetResultsToDefault}
                 onSaveShipment={handleSaveShipment}
                 handleDragStart={handleDragStart}
                 handleDragOver={(e) => e.preventDefault()}

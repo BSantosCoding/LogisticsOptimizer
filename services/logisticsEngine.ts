@@ -502,8 +502,7 @@ export const calculatePacking = (
           destination: groupProducts[0].destination // Inherit dest from products
         };
 
-        console.log(`Grouped products:`, groupProducts);
-        console.log(`Template:`, template);
+        console.log(`Grouped products (initial state):`, JSON.parse(JSON.stringify(groupProducts)));
 
         // Weight limit check
         const weightLimit = groupProducts[0].country

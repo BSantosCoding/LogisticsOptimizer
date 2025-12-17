@@ -474,7 +474,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <h3 className="font-semibold text-sm leading-tight text-foreground truncate" title={p.name}>{p.name}</h3>
                   </div>
 
-                  <div className="space-y-1.5 mt-auto">
+                  <div className="space-y-1.5 mt-0 flex-1">
                     {/* Destination & Country */}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPin size={12} className="shrink-0 opacity-70" />
@@ -530,7 +530,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                   </div>
 
                   {p.restrictions.length > 0 && (
-                    <div className="flex gap-1 flex-wrap mt-3 pt-3 border-t border-border/50">
+                    <div className="flex gap-1 flex-wrap mt-auto pt-3 border-t border-border/50">
                       {p.restrictions.map((r, i) => (
                         <div key={i} className="contents">
                           <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal bg-secondary text-secondary-foreground">

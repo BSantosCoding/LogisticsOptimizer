@@ -767,6 +767,8 @@ export const calculatePacking = (
     // 5. Phase 1: Greedy Packing
     const packedInstances = packItems(sortedProducts, sortedTemplates, maxUtilization, getWeightLimit, allowUnitSplitting);
 
+    console.log(`Packed instances: ${JSON.stringify(packedInstances)}`);
+
     // 6. Phase 2: Optimization Loop
     if (packedInstances.length > 0) {
       // Step A: Downsize Remainder
@@ -816,6 +818,8 @@ export const calculatePacking = (
         }
       }
     }
+
+    console.log(`Packed instances after optimization: ${JSON.stringify(packedInstances)}`);
 
     // 7. Finalize Output
     packedInstances.forEach(inst => {

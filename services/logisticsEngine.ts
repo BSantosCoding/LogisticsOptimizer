@@ -406,8 +406,16 @@ export const calculatePacking = (
 
   // 0. Handle Pre-Assigned Containers (if mode enabled)
   if (respectCurrentAssignments) {
+    // Helper to get value from either top-level or nested data property
+    const getRef = (p: Product): string => {
+      return p.assignmentReference || (p as any).data?.assignmentReference || '';
+    };
+    const getContainer = (p: Product): string => {
+      return p.currentContainer || (p as any).data?.currentContainer || '';
+    };
+
     // Helper to check if a reference is "hard" (user-defined, not system-generated)
-    const isHardReference = (ref: string | undefined | null): boolean => {
+    const isHardReference = (ref: string): boolean => {
       if (!ref || ref.trim().length === 0) return false;
       const r = ref.trim();
       // System refs start with 'packter-' or contain '_LINK_packter-'
@@ -416,15 +424,16 @@ export const calculatePacking = (
 
     // Only respect items that have BOTH a container AND a hard reference
     // Items with just currentContainer (but no/soft reference) should be re-optimizable
-    const assignedProducts = remainingProducts.filter(p =>
-      p.currentContainer && p.currentContainer.trim().length > 0 &&
-      isHardReference(p.assignmentReference)
-    );
-    const unassignedProducts = remainingProducts.filter(p =>
-      !p.currentContainer ||
-      p.currentContainer.trim().length === 0 ||
-      !isHardReference(p.assignmentReference)
-    );
+    const assignedProducts = remainingProducts.filter(p => {
+      const container = getContainer(p);
+      const ref = getRef(p);
+      return container.trim().length > 0 && isHardReference(ref);
+    });
+    const unassignedProducts = remainingProducts.filter(p => {
+      const container = getContainer(p);
+      const ref = getRef(p);
+      return container.trim().length === 0 || !isHardReference(ref);
+    });
 
     // Heuristically match the string to a template.
     // Match container by finding the longest matching container name/id in the description string
@@ -512,21 +521,25 @@ export const calculatePacking = (
     remainingProducts = unassignedProducts;
   }
 
-  // Optimize: Try to fill pre-assigned containers with compatible unassigned products
-  // filtering remainingProducts to only those that couldn't be added to existing containers
+  // NOTE: Disabled pre-fill logic. Previously, this would stuff unassigned items into pre-assigned containers.
+  // This is undesirable because it prevents optimal container type selection for unassigned items.
+  // For example, if pre-assigned containers are Reefers, unassigned items without temperature requirements
+  // would be stuffed into Reefers instead of going to cheaper regular Containers.
+  // Unassigned items should go through normal optimization (line 715+) to find optimal container types.
+  /*
   if (respectCurrentAssignments && finalAssignments.length > 0 && remainingProducts.length > 0) {
     const productsToProcess = [...remainingProducts];
     remainingProducts = [];
-
+  
     // Sort products by size/priority to pack easiest/largest first? Or just iterate.
     // Let's iterate.
-
+  
     for (const p of productsToProcess) {
       let allocated = false;
       const pDest = normalize(p.destination || '');
       const pFF = p.formFactorId;
       const pQty = p.quantity;
-
+  
       // Find compatible existing containers
       // Sort by utilization desc (fill fullest first) or asc (spread load)?
       // Generally filling fullest first is better for optimization.
@@ -540,14 +553,14 @@ export const calculatePacking = (
           return true;
         })
         .sort((a, b) => b.totalUtilization - a.totalUtilization);
-
+  
       for (const lc of candidateContainers) {
         // Check compatibility
         if (checkCompatibility(p, lc.container).length > 0) continue;
-
+  
         const currentAssignedWeight = lc.assignedProducts.reduce((sum, ap) => sum + (ap.weight || 0), 0);
         const weightLimit = countryWeightLimits[p.country || '']?.[lc.container.id] || countryWeightLimits[lc.container.country || '']?.[lc.container.id];
-
+  
         const maxCap = lc.container.capacities[pFF];
         // Calculate space left for this FF
         // Current Util is sum(qty/maxCap). We need to see how much % is free
@@ -555,12 +568,12 @@ export const calculatePacking = (
         // Util = sum (qty_i / maxCap_i).
         // Free Space % = 100 - Util.
         // Capacity for Product P = (Free Space / 100) * maxCap_p
-
+  
         const freeSpacePercent = 100.1 - lc.totalUtilization; // 100.1 for tolerance
         if (freeSpacePercent <= 0) continue;
-
+  
         let maxQtyThatFits = Math.floor((freeSpacePercent / 100) * maxCap);
-
+  
         // Weight check
         const unitWeight = (p.weight && p.quantity > 0) ? p.weight / p.quantity : 0;
         if (weightLimit !== undefined && unitWeight > 0) {
@@ -568,7 +581,7 @@ export const calculatePacking = (
           const maxQtyByWeight = Math.floor(freeWeight / unitWeight);
           maxQtyThatFits = Math.min(maxQtyThatFits, maxQtyByWeight);
         }
-
+  
         if (maxQtyThatFits > 0) {
           let take = 0;
           if (allowUnitSplitting) {
@@ -576,20 +589,20 @@ export const calculatePacking = (
           } else {
             if (maxQtyThatFits >= pQty) take = pQty;
           }
-
+  
           if (take > 0) {
             // Add to container
             const weightOfSlice = unitWeight * take;
             const newProductSlice = { ...p, quantity: take, weight: weightOfSlice };
             lc.assignedProducts.push(newProductSlice);
-
+  
             // Update stats
             lc.totalUtilization += (take / maxCap) * 100;
-
+  
             // Reduce P quantity
             p.quantity -= take;
             if (p.weight) p.weight -= weightOfSlice;
-
+  
             if (p.quantity <= 0) {
               allocated = true;
               break;
@@ -597,13 +610,13 @@ export const calculatePacking = (
           }
         }
       }
-
+  
       if (!allocated && p.quantity > 0) {
         remainingProducts.push(p);
       }
     }
   }
-
+  */
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(
     allProducts: Product[],

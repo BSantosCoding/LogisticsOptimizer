@@ -818,20 +818,14 @@ const App: React.FC = () => {
 
           if (fetchError) throw fetchError;
 
-          // Map to track packter reference conversions to keep groups together
-          const packterRefMap = new Map<string, string>();
-
           const productsToUpdate = productsInShipment.map(p => {
-            let assignmentReference = p.data?.assignmentReference || p.assignmentReference; // specific field or data field
+            let assignmentReference = p.data?.assignmentReference || p.assignmentReference;
 
-            // If it's a packter reference, convert to manual to preserve grouping but enable editing
-            if (assignmentReference && String(assignmentReference).startsWith('packter-')) {
-              if (!packterRefMap.has(assignmentReference)) {
-                packterRefMap.set(assignmentReference, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
-              }
-              assignmentReference = packterRefMap.get(assignmentReference);
-            } else if (assignmentReference && String(assignmentReference).includes('_LINK_packter-')) {
-              // Composite reference: Clear ref and container to revert to available input
+            // Clear soft references (system-generated) - they should be re-optimizable
+            if (assignmentReference && (
+              String(assignmentReference).startsWith('packter-') ||
+              String(assignmentReference).includes('_LINK_packter-')
+            )) {
               assignmentReference = '';
             }
 

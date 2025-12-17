@@ -424,16 +424,12 @@ export const calculatePacking = (
 
     // Only respect items that have BOTH a container AND a hard reference
     // Items with just currentContainer (but no/soft reference) should be re-optimizable
+    // Only respect items that have BOTH a container AND a hard reference
+    // Items with just currentContainer (but no/soft reference) should be re-optimizable
     const assignedProducts = remainingProducts.filter(p => {
       const container = getContainer(p);
       const ref = getRef(p);
       const isHard = isHardReference(ref);
-      // DEBUG: Trace why item is assigned/unassigned
-      const pAny = p as any;
-      const pName = p.name || pAny.data?.name || 'Unknown';
-      if (pName.includes('DAOTAN')) {
-        console.log(`[Engine] Check Product ${pName}: Container="${container}", Ref="${ref}", Hard=${isHard} -> ${container.trim().length > 0 && isHard ? 'ASSIGNED' : 'UNASSIGNED'}`);
-      }
       return container.trim().length > 0 && isHard;
     });
     const unassignedProducts = remainingProducts.filter(p => {
@@ -442,8 +438,6 @@ export const calculatePacking = (
       const isHard = isHardReference(ref);
       return container.trim().length === 0 || !isHard;
     });
-
-    console.log(`[Engine] Assigned: ${assignedProducts.length}, Unassigned: ${unassignedProducts.length}`);
 
     // Heuristically match the string to a template.
 
@@ -608,7 +602,6 @@ export const calculatePacking = (
         remainingProducts.push(p);
       }
     }
-    console.log(`[Engine] After Fill: Remaining=${remainingProducts.length}, FinalAssignments=${finalAssignments.length}`);
   }
   // 1. Group Products by Destination AND Date Buckets (if configured)
   function groupProductsByDestinationAndFlexibleDate(

@@ -851,7 +851,6 @@ const App: React.FC = () => {
               created_by: p.created_by,
               shipment_id: null,
               status: 'available',
-              currentContainer, // Explicitly update top-level
               data: {
                 ...p.data,
                 assignmentReference,
@@ -889,11 +888,11 @@ const App: React.FC = () => {
                   status: 'available',
                   assignmentReference: newRef, // Sync top-level
                   // Sync container from updated logic (which clears it for _LINK_)
-                  currentContainer: updated.currentContainer,
+                  currentContainer: updated.data.currentContainer,
                   data: {
                     ...p.data,
                     assignmentReference: newRef, // Sync data level
-                    currentContainer: updated.currentContainer // Sync data level
+                    currentContainer: updated.data.currentContainer // Sync data level
                   }
                 };
               }

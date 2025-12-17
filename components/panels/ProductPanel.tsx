@@ -98,7 +98,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
       const matchesSearch =
         (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.destination || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesTag = selectedTagFilter && selectedTagFilter !== 'all_tags' ? p.restrictions.includes(selectedTagFilter) : true;
+      const matchesTag = selectedTagFilter && selectedTagFilter !== 'all_tags' ? (p.restrictions || []).includes(selectedTagFilter) : true;
 
       const matchesShipment =
         shipmentFilter === 'all' ? true :
@@ -529,7 +529,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     })}
                   </div>
 
-                  {p.restrictions.length > 0 && (
+                  {(p.restrictions || []).length > 0 && (
                     <div className="flex gap-1 flex-wrap mt-auto pt-3 border-t border-border/50">
                       {p.restrictions.map((r, i) => (
                         <div key={i} className="contents">

@@ -734,7 +734,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                     if (!p) return false;
 
                     // Filter by search query
-                    if (!p.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                    if (!p.name || !p.name.toLowerCase().includes(searchQuery.toLowerCase())) {
                       return false;
                     }
 

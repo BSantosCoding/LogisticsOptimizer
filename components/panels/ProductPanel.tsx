@@ -158,7 +158,10 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   {/* Destination Parts Breakdown */}
                   {csvMapping?.groupingFields.map((field, idx) => {
-                    if (field === 'country' || field === csvMapping.country) return null;
+                    const normalizedField = field.toLowerCase();
+                    const normalizedCountryMapping = csvMapping.country.toLowerCase();
+
+                    if (normalizedField === 'country' || normalizedField === normalizedCountryMapping) return null;
                     const label = csvMapping.customFields?.[field] || field;
                     return (
                       <div key={`dest-${idx}`} className="space-y-1">

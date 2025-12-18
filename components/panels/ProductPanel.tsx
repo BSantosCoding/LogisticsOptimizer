@@ -190,12 +190,12 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
 
                   {/* Country - Always Visible */}
                   <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">{t('products.country')}</Label>
+                    <Label className="text-[10px] text-muted-foreground truncate block">{t('products.country')}</Label>
                     <Input
                       value={newProduct.country || ''}
                       onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
                       placeholder={t('products.countryPlaceholder')}
-                      className="h-8 bg-background border-input/50 focus:bg-background transition-colors text-sm"
+                      className="h-8 pl-2 bg-background border-input/50 focus:bg-background transition-colors text-sm"
                     />
                   </div>
                 </div>

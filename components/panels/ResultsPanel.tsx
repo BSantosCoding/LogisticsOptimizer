@@ -927,30 +927,33 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         < div className="flex-1 flex flex-col overflow-hidden" >
           {/* Sticky Collapse All Button */}
           {/* Sticky Header with Search and Collapse */}
-          <div className="flex-shrink-0 pb-3 flex items-center justify-between gap-4 sticky top-0 bg-background z-10 px-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
-              <Input
-                type="text"
-                placeholder={t('results.searchAssignments', 'Search containers, references, products...')}
-                value={resultSearchQuery}
-                onChange={(e) => setResultSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs bg-muted/30 focus:bg-background transition-colors"
-              />
+          {/* Sticky Header with Search and Collapse */}
+          {result && result.assignments.length > 0 && (
+            <div className="flex-shrink-0 pb-3 flex items-center justify-between gap-4 sticky top-0 bg-background z-10 px-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                <Input
+                  type="text"
+                  placeholder={t('results.searchAssignments', 'Search containers, references, products...')}
+                  value={resultSearchQuery}
+                  onChange={(e) => setResultSearchQuery(e.target.value)}
+                  className="pl-8 h-8 text-xs bg-muted/30 focus:bg-background transition-colors"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
+                    setCollapsedDestinations(new Set());
+                  } else {
+                    setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
+                  }
+                }}
+                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 whitespace-nowrap"
+              >
+                {collapsedDestinations.size === Object.keys(groupedAssignments).length ? t('results.expandAll') : t('results.collapseAll')}
+              </button>
             </div>
-            <button
-              onClick={() => {
-                if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
-                  setCollapsedDestinations(new Set());
-                } else {
-                  setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
-                }
-              }}
-              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 whitespace-nowrap"
-            >
-              {collapsedDestinations.size === Object.keys(groupedAssignments).length ? t('results.expandAll') : t('results.collapseAll')}
-            </button>
-          </div>
+          )}
 
           {/* Scrollable Assignments Area */}
           < div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" >

@@ -194,7 +194,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <Input
                       value={newProduct.country || ''}
                       onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
-                      placeholder="Country"
+                      placeholder={t('products.countryPlaceholder')}
                       className="h-8 bg-background border-input/50 focus:bg-background transition-colors text-sm"
                     />
                   </div>

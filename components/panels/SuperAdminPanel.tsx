@@ -6,12 +6,14 @@ import ErrorModal from '../modals/ErrorModal';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from 'react-i18next';
 
 interface SuperAdminPanelProps {
     onRefresh?: () => void;
 }
 
 const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
+    const { t } = useTranslation();
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -52,14 +54,14 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error('Error approving company:', error);
-            setErrorModal({ isOpen: true, message: 'Failed to approve company' });
+            setErrorModal({ isOpen: true, message: t('superAdmin.errorApprove') });
         } finally {
             setProcessingId(null);
         }
     };
 
     const handleReject = async (companyId: string) => {
-        if (!confirm('Are you sure you want to reject this company? Users will not be able to access it.')) {
+        if (!confirm(t('superAdmin.confirmReject'))) {
             return;
         }
 
@@ -75,7 +77,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
             if (onRefresh) onRefresh();
         } catch (error) {
             console.error('Error rejecting company:', error);
-            setErrorModal({ isOpen: true, message: 'Failed to reject company' });
+            setErrorModal({ isOpen: true, message: t('superAdmin.errorReject') });
         } finally {
             setProcessingId(null);
         }
@@ -96,15 +98,15 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
         <div className="h-full flex flex-col p-6">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">Super Admin Panel</h1>
-                <p className="text-muted-foreground">Manage company approvals and system settings</p>
+                <h1 className="text-3xl font-bold mb-2">{t('superAdmin.title')}</h1>
+                <p className="text-muted-foreground">{t('superAdmin.desc')}</p>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-4 gap-4 mb-6">
                 <Card className="bg-card">
                     <CardContent className="p-4">
-                        <div className="text-sm text-muted-foreground mb-1">Total Companies</div>
+                        <div className="text-sm text-muted-foreground mb-1">{t('superAdmin.totalCompanies')}</div>
                         <div className="text-2xl font-bold">{companies.length}</div>
                     </CardContent>
                 </Card>
@@ -112,7 +114,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     <CardContent className="p-4">
                         <div className="text-sm text-orange-500 mb-1 flex items-center gap-2">
                             <Clock size={14} />
-                            Pending
+                            {t('superAdmin.pendingCompanies')}
                         </div>
                         <div className="text-2xl font-bold text-orange-500">{statusCounts.pending}</div>
                     </CardContent>
@@ -121,7 +123,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     <CardContent className="p-4">
                         <div className="text-sm text-green-500 mb-1 flex items-center gap-2">
                             <Check size={14} />
-                            Approved
+                            {t('superAdmin.approvedCompanies')}
                         </div>
                         <div className="text-2xl font-bold text-green-500">{statusCounts.approved}</div>
                     </CardContent>
@@ -130,7 +132,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     <CardContent className="p-4">
                         <div className="text-sm text-destructive mb-1 flex items-center gap-2">
                             <X size={14} />
-                            Rejected
+                            {t('superAdmin.rejectedCompanies')}
                         </div>
                         <div className="text-2xl font-bold text-destructive">{statusCounts.rejected}</div>
                     </CardContent>
@@ -150,7 +152,10 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                 size="sm"
                                 className="h-8"
                             >
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                                {f === 'all' ? t('products.filterAll') :
+                                    f === 'pending' ? t('superAdmin.pendingCompanies') :
+                                        f === 'approved' ? t('superAdmin.approvedCompanies') :
+                                            t('superAdmin.rejectedCompanies')}
                             </Button>
                         ))}
                     </div>
@@ -162,7 +167,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     size="sm"
                 >
                     <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
+                    {t('superAdmin.refresh')}
                 </Button>
             </div>
 
@@ -172,12 +177,12 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                     {loading ? (
                         <div className="flex items-center justify-center h-64 text-muted-foreground">
                             <RefreshCw className="animate-spin mr-2" size={20} />
-                            Loading companies...
+                            {t('superAdmin.loading')}
                         </div>
                     ) : filteredCompanies.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
                             <AlertCircle size={48} className="mb-4 opacity-50" />
-                            <p>No companies found with status: {filter}</p>
+                            <p>{t('superAdmin.noCompanies', { status: filter })}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-border">
@@ -204,10 +209,10 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                     <h3 className="text-lg font-semibold">{company.name}</h3>
                                                     <div className="flex items-center gap-4 mt-1">
                                                         <span className="text-xs text-muted-foreground font-mono">
-                                                            ID: {company.id.substring(0, 8)}...
+                                                            {t('superAdmin.idLabel')}: {company.id.substring(0, 8)}...
                                                         </span>
                                                         <span className="text-xs text-muted-foreground">
-                                                            Created: {new Date(company.created_at).toLocaleDateString()}
+                                                            {t('superAdmin.createdLabel')}: {new Date(company.created_at).toLocaleDateString()}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -216,7 +221,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                             <div className="flex items-center gap-3">
                                                 {/* Status Badge */}
                                                 <Badge variant={isPending ? "outline" : isApproved ? "default" : "destructive"} className={`uppercase text-xs ${isPending ? 'border-amber-500 text-amber-500 bg-amber-500/10' : isApproved ? 'bg-green-600 hover:bg-green-600' : ''}`}>
-                                                    {company.approval_status}
+                                                    {isPending ? t('superAdmin.pendingCompanies') : isApproved ? t('superAdmin.approvedCompanies') : t('superAdmin.rejectedCompanies')}
                                                 </Badge>
 
                                                 {/* Action Buttons */}
@@ -229,7 +234,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                             className="h-8 bg-green-600 hover:bg-green-500 text-white"
                                                         >
                                                             <Check size={14} className="mr-1" />
-                                                            Approve
+                                                            {t('superAdmin.approve')}
                                                         </Button>
                                                         <Button
                                                             onClick={() => handleReject(company.id)}
@@ -239,7 +244,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                             className="h-8"
                                                         >
                                                             <X size={14} className="mr-1" />
-                                                            Reject
+                                                            {t('superAdmin.reject')}
                                                         </Button>
                                                     </div>
                                                 )}
@@ -253,7 +258,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                         className="h-8"
                                                     >
                                                         <X size={14} className="mr-1" />
-                                                        Revoke
+                                                        {t('superAdmin.revoke')}
                                                     </Button>
                                                 )}
 
@@ -266,7 +271,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onRefresh }) => {
                                                         className="h-8"
                                                     >
                                                         <Check size={14} className="mr-1" />
-                                                        Approve
+                                                        {t('superAdmin.approve')}
                                                     </Button>
                                                 )}
                                             </div>

@@ -15,11 +15,16 @@
         "noShipmentsDesc": "Execute uma otimização e clique em \"Guardar como Envio\" para criar um.",
         "savedShipments": "Envios Guardados",
         "loadAsBase": "Carregar como Plano Base",
+        "loadAsBaseTooltip": "Carregar estes itens + novos itens para re-otimização",
         "unpack": "Desempacotar (Libertar Itens)",
+        "unpackTooltip": "Libertar itens de volta para o inventário disponível",
         "consume": "Consumir Plano (Enviar Itens)",
         "containers": "Contentores",
         "items": "itens",
-        "units": "unidades"
+        "units": "unidades",
+        "unassigned": "Não Atribuídos",
+        "noProducts": "Sem produtos neste envio",
+        "unpackItemTooltip": "Desempacotar este item"
     },
     "header": {
         "viewAs": "Ver como",
@@ -45,13 +50,15 @@
         "update": "Atualizar",
         "allCaps": "Tudo Maiúsculas",
         "yes": "Sim",
-        "no": "Não"
+        "no": "Não",
+        "logout": "Sair"
     },
     "products": {
         "title": "Inventário de Produtos",
         "namePlaceholder": "Nome do Produto / ID do Pedido",
         "destination": "Destino",
         "country": "País",
+        "countryPlaceholder": "ex: CN",
         "formFactor": "Formato",
         "selectFormFactor": "Selecionar Formato...",
         "quantity": "Quantidade",
@@ -75,10 +82,14 @@
         "allSelectedDefault": "Todos os produtos selecionados por padrão",
         "weight": "Peso (kg)",
         "incoterms": "Incoterms",
+        "incotermsLabel": "Incoterms",
         "shipToName": "Nome de Envio",
+        "shipToNameLabel": "Nome de Envio",
         "availableBy": "Disponível Por",
+        "availByLabel": "Disponível Por",
         "availAbbr": "Disp.",
-        "na": "N/D"
+        "na": "N/D",
+        "warningsTooltip": "Mostrar apenas produtos com avisos"
     },
     "config": {
         "optimizationSettings": "Definições de Otimização",
@@ -99,8 +110,8 @@
         "csvMapping": "Configuração de Importação CSV",
         "formFactorLabel": "Nome / Formato",
         "restrictedAccessCSV": "A configuração CSV é restrita a gestores e utilizadores autorizados.",
-        "customFields": "Campos Personalizados",
         "newFieldKey": "Nova Chave de Campo (ex: regiao)",
+        "newFieldKeyPlaceholder": "Nova Chave de Campo (ex: regiao)",
         "formFactors": "Formatos",
         "addFormFactor": "Adicionar Formato",
         "noFormFactors": "Nenhum formato definido.",
@@ -126,12 +137,16 @@
         "shipmentNumberRef": "Número da Remessa / Ref",
         "coreFields": "Campos Principais (Cabeçalhos CSV)",
         "csvHeaderName": "Nome do Cabeçalho CSV",
+        "csvHeaderPlaceholder": "Nome do Cabeçalho CSV",
         "incotermsHeaders": "Cabeçalhos Incoterms",
         "addIncotermsHeader": "Adicionar Cabeçalho Incoterms",
         "restrictionHeaders": "Cabeçalhos de Restrição",
         "addRestrictionHeader": "Adicionar Cabeçalho de Restrição",
+        "customFields": "Campos Personalizados",
         "companySpecific": "Específico da Empresa",
-        "ignoreDates": "Ignorar datas"
+        "ignoreDates": "Ignorar datas",
+        "ffNamePlaceholder": "ex: OSB, IBC",
+        "optionalPlaceholder": "Opcional"
     },
     "team": {
         "overview": "Visão Geral da Equipa",
@@ -152,12 +167,18 @@
         "permContainers": "Contentores",
         "permTemplates": "Modelos",
         "permTags": "Etiquetas",
-        "permImportConfig": "Config Importação"
+        "permImportConfig": "Config Importação",
+        "roleSuperAdmin": "Super Admin",
+        "roleAdmin": "Administrador",
+        "roleManager": "Gestor",
+        "roleStandard": "Padrão"
     },
     "countries": {
         "addCountry": "Adicionar País",
         "code": "Código do País",
+        "codePlaceholder": "CN",
         "name": "Nome do País",
+        "namePlaceholder": "China",
         "configuration": "Configuração de País",
         "search": "Pesquisar países...",
         "containerCosts": "Custos de Contentores",
@@ -187,7 +208,9 @@
         "transitTimePlaceholder": "Tempo de Trânsito",
         "noFormFactors": "Nenhum Formato definido. Por favor, adicione-os no painel de Configuração.",
         "capabilities": "Capacidades",
-        "logisticsContainers": "Contentores Logísticos"
+        "logisticsContainers": "Contentores Logísticos",
+        "deleteTitle": "Eliminar Contentor",
+        "deleteConfirmation": "Tem a certeza de que pretende eliminar esta instância de contentor dos resultados?"
     },
     "modals": {
         "confirmTitle": "Confirmar Ação",
@@ -220,8 +243,11 @@
         "toDatabase": " para base de dados",
         "sessionOnly": " (apenas sessão)",
         "needAttention": "Requer Atenção",
+        "productsNeedAttention": "{{count}} item(s) requerem atenção",
         "unknownIssues": "Os seguintes produtos têm formatos DESCONHECIDOS e precisam de ser atribuídos antes da otimização:",
-        "gotIt": "Entendi"
+        "gotIt": "Entendi",
+        "csvImportError": "A importação de CSV precisa de atualização para o novo formato",
+        "simulatedPermissions": "Permissões Simuladas"
     },
     "results": {
         "title": "Resultados da Otimização",
@@ -232,11 +258,35 @@
         "breakdown": "Discriminação",
         "export": "Exportar Relatório",
         "noResults": "Nenhum resultado disponível. Execute a otimização para ver os dados.",
+        "productsSelected": "{{count}} produtos selecionados",
+        "unassignedItems": "Itens não atribuídos",
+        "moveItems": "Mover Itens",
+        "moveItemsDescription": "Quantas unidades de {{productName}} gostaria de mover?",
+        "ofAvailable": "de {{maxQty}} disponíveis",
+        "moveUnits": "Mover {{count}} unidades",
+        "saveShipment": "Guardar Envio",
+        "shipmentName": "Nome do Envio",
+        "shipmentNamePlaceholder": "Introduza o nome do envio...",
         "optimization_complete": "Otimização concluída.",
         "containers_used": "{{count}} contentores utilizados (média de {{averageUtilization}}% cheios).",
         "items_unassigned": "{{count}} itens não atribuídos.",
         "cost_saving_reasoning": "Poderia poupar €{{costDifference}} ao permitir a divisão de unidades.",
-        "utilization_saving_reasoning": "Poderia melhorar a utilização do contentor em {{utilizationDifference}}% ao permitir a divisão de unidades."
+        "utilization_saving_reasoning": "Poderia melhorar a utilização do contentor em {{utilizationDifference}}% ao permitir a divisão de unidades.",
+        "searchPlaceholder": "Pesquisar itens...",
+        "missingCapabilities": "Capacidades em falta",
+        "tooLarge": "Muito grande",
+        "addContainer": "Adicionar Contentor",
+        "utilization": "Utilização",
+        "emptyContainer": "Contentor Vazio",
+        "refLabel": "Ref",
+        "inherited": "herdado",
+        "deleteContainer": "Eliminar contentor",
+        "expandAll": "Expandir Tudo",
+        "collapseAll": "Recolher Tudo",
+        "strategyTitle": "Estratégia de Otimização",
+        "strategy": "Estratégia",
+        "dragToUnassign": "Arraste itens para aqui para libertar",
+        "unknownFF": "Desconhecido"
     },
     "userSettings": {
         "title": "Definições de Utilizador",
@@ -254,9 +304,76 @@
         "sameEmail": "O novo e-mail deve ser diferente do e-mail atual",
         "userPreferences": "Preferências do Utilizador",
         "optimalRange": "Intervalo de Utilização Ótima (%)",
-        "rangeDesc": "O seu intervalo de utilização alvo preferido para contentores."
+        "rangeDesc": "O seu intervalo de utilização alvo preferido para contentores.",
+        "sending": "A enviar...",
+        "updating": "A atualizar...",
+        "resetError": "Falha ao enviar e-mail de redefinição",
+        "emailUpdateError": "Falha ao atualizar e-mail",
+        "minPlaceholder": "Mín",
+        "maxPlaceholder": "Máx"
     },
     "auth": {
-        "forgotPassword": "Esqueceu-se da palavra-passe?"
+        "forgotPassword": "Esqueceu-se da palavra-passe?",
+        "workEmail": "E-mail de Trabalho",
+        "password": "Palavra-passe",
+        "login": "Entrar",
+        "register": "Registar",
+        "resetPassword": "Redefinir Palavra-passe",
+        "welcomeBack": "Bem-vindo de volta",
+        "createAccount": "Criar Conta",
+        "resetPasswordDesc": "Introduza o seu e-mail para receber um link de redefinição de palavra-passe",
+        "loginDesc": "Inicie sessão para aceder ao seu painel de logística",
+        "registerDesc": "Registe-se para começar a otimizar a logística",
+        "signIn": "Entrar",
+        "sending": "A enviar...",
+        "backToSignIn": "Voltar a Entrar",
+        "noAccount": "Não tem conta? Registe-se",
+        "haveAccount": "Já tem conta? Entre",
+        "invalidEmail": "Por favor, introduza um endereço de e-mail válido",
+        "resetSent": "Link de redefinição de palavra-passe enviado! Verifique o seu e-mail.",
+        "accountCreated": "Conta criada! Por favor, verifique o seu e-mail para confirmar a sua conta antes de iniciar sessão."
+    },
+    "pendingApproval": {
+        "title": "Aprovação Pendente",
+        "companyAwaiting": "Empresa a Aguardar Aprovação",
+        "accessPending": "Acesso Pendente",
+        "messageAwaiting": "A sua empresa <strong>{{companyName}}</strong> está a aguardar aprovação de um Super Administrador.",
+        "messageAwaitingSub": "Poderá aceder à plataforma assim que for aprovada.",
+        "messageSent": "O seu pedido para se juntar à <strong>{{companyName}}</strong> foi enviado. ",
+        "messageSentSub": "Um administrador deve aprovar a sua conta.",
+        "checkStatus": "Verificar Estado",
+        "logout": "Sair",
+        "switchWorkspace": "Trocar Espaço de Trabalho"
+    },
+    "optimization": {
+        "safetyMargin": "Margem de Segurança",
+        "ignoreWeight": "Ignorar Limite de Peso",
+        "ignoreVolume": "Ignorar Limite de Volume",
+        "standard": "Otimizar (Padrão)",
+        "respectCurrent": "Otimizar (Manter Atual)",
+        "ignoreConstraints": "Ignorar Restrições",
+        "weight": "Peso",
+        "volume": "Volume",
+        "plan": "Plano ({{count}})",
+        "calculatePlan": "Calcular Plano"
+    },
+    "superAdmin": {
+        "title": "Painel Super Admin",
+        "desc": "Gerir aprovações de empresas e definições do sistema",
+        "totalCompanies": "Total de Empresas",
+        "pendingCompanies": "Pendentes",
+        "approvedCompanies": "Aprovadas",
+        "rejectedCompanies": "Rejeitadas",
+        "refresh": "Atualizar",
+        "loading": "A carregar empresas...",
+        "noCompanies": "Nenhuma empresa encontrada com o estado: {{status}}",
+        "idLabel": "ID",
+        "createdLabel": "Criada",
+        "approve": "Aprovar",
+        "reject": "Rejeitar",
+        "revoke": "Revogar",
+        "errorApprove": "Falha ao aprovar empresa",
+        "errorReject": "Falha ao rejeitar empresa",
+        "confirmReject": "Tem a certeza que pretende rejeitar esta empresa? Os utilizadores não poderão aceder à mesma."
     }
 }

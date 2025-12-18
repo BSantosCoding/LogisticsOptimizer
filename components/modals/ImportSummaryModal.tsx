@@ -49,7 +49,7 @@ const ImportSummaryModal: React.FC<ImportSummaryModalProps> = ({
                         <div className="flex items-center gap-2 mb-3">
                             <AlertTriangle className="text-amber-500" size={18} />
                             <h3 className="font-semibold text-amber-500">
-                                {productsWithIssues.length} Product{productsWithIssues.length !== 1 ? 's' : ''} {t('modals.needAttention')}
+                                {t('modals.productsNeedAttention', { count: productsWithIssues.length })}
                             </h3>
                         </div>
 

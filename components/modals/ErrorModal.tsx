@@ -27,7 +27,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, title, message, onClose
                 <DialogHeader>
                     <div className="flex items-center gap-2">
                         <AlertCircle className="h-5 w-5 text-destructive" />
-                        <DialogTitle>{title}</DialogTitle>
+                        <DialogTitle>{title || t('modals.errorTitle')}</DialogTitle>
                     </div>
                     <DialogDescription className="text-destructive">
                         {message}

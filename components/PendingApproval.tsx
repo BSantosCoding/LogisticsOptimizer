@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, RefreshCw, Repeat, LogOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useTranslation, Trans } from 'react-i18next';
 
 interface PendingApprovalProps {
     companyName: string;
@@ -17,6 +18,7 @@ const PendingApproval: React.FC<PendingApprovalProps> = ({
     onLogout,
     isDataLoading
 }) => {
+    const { t } = useTranslation();
     const isPendingCompanyApproval = companyName && companyName !== 'Super Admin';
 
     return (
@@ -28,36 +30,46 @@ const PendingApproval: React.FC<PendingApprovalProps> = ({
                     </div>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">
-                    {isPendingCompanyApproval ? 'Company Awaiting Approval' : 'Access Pending'}
+                    {isPendingCompanyApproval ? t('pendingApproval.companyAwaiting') : t('pendingApproval.accessPending')}
                 </h2>
-                <p className="text-muted-foreground mb-6">
+                <div className="text-muted-foreground mb-6">
                     {isPendingCompanyApproval ? (
-                        <>
-                            Your company <strong>{companyName}</strong> is awaiting approval from a Super Admin. <br />
-                            You'll be able to access the platform once approved.
-                        </>
+                        <div className="space-y-1">
+                            <Trans
+                                i18nKey="pendingApproval.messageAwaiting"
+                                values={{ companyName }}
+                                components={{ strong: <strong /> }}
+                            />
+                            <br />
+                            {t('pendingApproval.messageAwaitingSub')}
+                        </div>
                     ) : (
-                        <>
-                            Your request to join <strong>{companyName}</strong> has been sent. <br />
-                            An administrator must approve your account.
-                        </>
+                        <div className="space-y-1">
+                            <Trans
+                                i18nKey="pendingApproval.messageSent"
+                                values={{ companyName }}
+                                components={{ strong: <strong /> }}
+                            />
+                            <br />
+                            {t('pendingApproval.messageSentSub')}
+                        </div>
                     )}
-                </p>
+                </div>
                 <div className="space-y-3">
                     <Button onClick={onCheckStatus} isLoading={isDataLoading} className="w-full">
-                        <RefreshCw size={16} className="mr-2" /> Check Status
+                        <RefreshCw size={16} className="mr-2" /> {t('pendingApproval.checkStatus')}
                     </Button>
                     <div className="flex gap-2">
                         <button onClick={onSwitchWorkspace} className="flex-1 py-2 text-muted-foreground border border-border rounded hover:bg-muted text-sm flex items-center justify-center gap-2">
-                            <Repeat size={14} /> Change Workspace
+                            <Repeat size={14} /> {t('pendingApproval.switchWorkspace')}
                         </button>
                         <button onClick={onLogout} className="flex-1 py-2 text-muted-foreground border border-border rounded hover:bg-muted text-sm flex items-center justify-center gap-2">
-                            <LogOut size={14} /> Sign Out
+                            <LogOut size={14} /> {t('pendingApproval.logout')}
                         </button>
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

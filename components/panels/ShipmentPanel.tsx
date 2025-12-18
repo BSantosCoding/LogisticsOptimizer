@@ -43,8 +43,8 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
         const groups = new Map<string, ContainerGroup>();
 
         products.forEach(p => {
-            const containerName = p.currentContainer || 'Unassigned';
-            const rawRef = p.assignmentReference || 'Unassigned';
+            const containerName = p.currentContainer || t('shipments.unassigned');
+            const rawRef = p.assignmentReference || t('shipments.unassigned');
 
             // Primary Grouping Key: Physical Container Instance ID
             // Check top-level OR inside data json (depending on how product object is structured)
@@ -137,7 +137,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                         <Button
                                             onClick={(e) => { e.stopPropagation(); onLoadAsBase(shipment.id); }}
                                             className="flex-1"
-                                            title="Load these items + new items for re-optimization"
+                                            title={t('shipments.loadAsBaseTooltip')}
                                         >
                                             <RefreshCw size={16} className="mr-2" /> {t('shipments.loadAsBase')}
                                         </Button>
@@ -145,7 +145,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                             onClick={(e) => { e.stopPropagation(); onUnpack(shipment.id); }}
                                             variant="secondary"
                                             className="flex-1"
-                                            title="Release items back to available pool"
+                                            title={t('shipments.unpackTooltip')}
                                         >
                                             <RotateCcw size={16} className="mr-2" /> {t('shipments.unpack')}
                                         </Button>
@@ -222,7 +222,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                                                         onUnpackItem(shipment.id, p.id);
                                                                     }}
                                                                     className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    title="Unpack this item"
+                                                                    title={t('shipments.unpackItemTooltip')}
                                                                 >
                                                                     <RotateCcw size={12} />
                                                                 </button>
@@ -233,7 +233,7 @@ const ShipmentPanel: React.FC<ShipmentPanelProps> = ({
                                             </div>
                                         ))}
                                         {containerGroups.length === 0 && (
-                                            <p className="text-xs text-muted-foreground italic">No products in this shipment</p>
+                                            <p className="text-xs text-muted-foreground italic">{t('shipments.noProducts')}</p>
                                         )}
                                     </div>
                                 </div>

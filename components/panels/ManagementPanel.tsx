@@ -214,7 +214,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                                                         {isMe && <Badge variant="secondary" className="text-[10px] px-1 py-0 mr-1">{t('team.you')}</Badge>}
                                                         <span className={isSuperAdmin ? 'text-indigo-500' : isAdmin ? 'text-blue-500' : isManager ? 'text-purple-500' : ''}>
-                                                            {isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : isManager ? 'Manager' : 'Standard'}
+                                                            {isSuperAdmin ? t('team.roleSuperAdmin') : isAdmin ? t('team.roleAdmin') : isManager ? t('team.roleManager') : t('team.roleStandard')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -231,10 +231,10 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="standard">Standard</SelectItem>
-                                                            <SelectItem value="manager">Manager</SelectItem>
-                                                            <SelectItem value="admin">Admin</SelectItem>
-                                                            {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
+                                                            <SelectItem value="standard">{t('team.roleStandard')}</SelectItem>
+                                                            <SelectItem value="manager">{t('team.roleManager')}</SelectItem>
+                                                            <SelectItem value="admin">{t('team.roleAdmin')}</SelectItem>
+                                                            {isSuperAdmin && <SelectItem value="super_admin">{t('team.roleSuperAdmin')}</SelectItem>}
                                                         </SelectContent>
                                                     </Select>
 
@@ -298,7 +298,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({ viewMode = 'list', co
                 onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
                 isDestructive={true}
             />
-        </div>
+        </div >
     );
 };
 

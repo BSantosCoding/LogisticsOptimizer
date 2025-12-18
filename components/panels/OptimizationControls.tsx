@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { EyeOff, Check, Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from "@/components/ui/button";
 
@@ -29,10 +29,12 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
   disabled,
   selectedCount = 0
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-card border-t border-border p-4 shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] z-20">
       <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block flex justify-between">
-        <span>Safety Margin</span>
+        <span>{t('optimization.safetyMargin')}</span>
         <span className="text-blue-400">{marginPercentage}%</span>
       </label>
       <input
@@ -44,22 +46,22 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
 
       <div className="mb-4">
         <label className="text-[10px] text-muted-foreground uppercase font-bold mb-1 block flex items-center gap-1">
-          <EyeOff size={10} /> Ignore Constraints
+          <EyeOff size={10} /> {t('optimization.ignoreConstraints')}
         </label>
         <div className="flex gap-1">
           <button
             onClick={() => setIgnoreWeight(!ignoreWeight)}
-            title="Ignore Weight Limit"
+            title={t('optimization.ignoreWeight')}
             className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreWeight ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-background border-border text-muted-foreground'}`}
           >
-            Weight
+            {t('optimization.weight')}
           </button>
           <button
             onClick={() => setIgnoreVolume(!ignoreVolume)}
-            title="Ignore Volume Limit"
+            title={t('optimization.ignoreVolume')}
             className={`flex-1 py-1.5 text-[10px] rounded border flex items-center justify-center transition-colors ${ignoreVolume ? 'bg-red-900/30 border-red-500 text-red-200' : 'bg-background border-border text-muted-foreground'}`}
           >
-            Volume
+            {t('optimization.volume')}
           </button>
         </div>
       </div>
@@ -71,7 +73,7 @@ const OptimizationControls: React.FC<OptimizationControlsProps> = ({
         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm"
       >
         <Zap size={16} />
-        {selectedCount > 0 ? `Plan (${selectedCount})` : 'Calculate Plan'}
+        {selectedCount > 0 ? t('optimization.plan', { count: selectedCount }) : t('optimization.calculatePlan')}
       </Button>
     </div>
   );

@@ -191,7 +191,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <Input
                       value={newProduct.country || ''}
                       onChange={e => setNewProduct({ ...newProduct, country: e.target.value })}
-                      placeholder="e.g. CN"
+                      placeholder={t('products.countryPlaceholder')}
                       className="h-8 bg-background border-input/50 focus:bg-background transition-colors text-sm"
                     />
                   </div>
@@ -202,7 +202,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
               <div className="grid grid-cols-2 gap-x-3 gap-y-3">
                 <div className="space-y-1">
                   <Label className="text-[10px] text-muted-foreground truncate block">
-                    {csvMapping?.customFields?.['shipToName'] || 'Ship To Name'}
+                    {csvMapping?.customFields?.['shipToName'] || t('products.shipToNameLabel')}
                   </Label>
                   <Input
                     value={newProduct.shipToName || ''}
@@ -212,7 +212,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] text-muted-foreground truncate block">
-                    {csvMapping?.shippingAvailableBy || 'Available By'}
+                    {csvMapping?.shippingAvailableBy || t('products.availByLabel')}
                   </Label>
                   <Input
                     type="date"
@@ -225,7 +225,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                 {/* Custom Fields */}
                 {csvMapping?.incoterms && csvMapping.incoterms.length > 0 && (
                   <div className="space-y-1 col-span-2">
-                    <Label className="text-[10px] text-muted-foreground">Incoterms</Label>
+                    <Label className="text-[10px] text-muted-foreground">{t('products.incotermsLabel')}</Label>
                     <Input
                       value={newProduct.extraFields?.['Incoterms'] || ''}
                       onChange={(e) => setNewProduct({
@@ -403,7 +403,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
             size="sm"
             onClick={() => setShowWarningsOnly(!showWarningsOnly)}
             className="h-9 px-3"
-            title="Show only products with warnings"
+            title={t('products.warningsTooltip')}
           >
             <AlertTriangle size={14} className={showWarningsOnly ? "mr-2" : ""} />
             {showWarningsOnly && <span className="hidden sm:inline">{t('common.warnings')}</span>}
@@ -463,7 +463,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     <div className="flex items-center gap-2 mb-1.5">
                       {p.formFactorId ? (
                         <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal bg-secondary text-secondary-foreground border-border/50">
-                          {formFactors.find(f => f.id === p.formFactorId)?.name || 'Unknown'}
+                          {formFactors.find(f => f.id === p.formFactorId)?.name || t('results.unknownFF')}
                         </Badge>
                       ) : (
                         <Badge variant="destructive" className="text-[10px] h-5 px-1.5 font-normal">
@@ -478,7 +478,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     {/* Destination & Country */}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPin size={12} className="shrink-0 opacity-70" />
-                      <span className="truncate" title={p.destination || 'N/A'}>
+                      <span className="truncate" title={p.destination || t('products.na')}>
                         {p.destination ? p.destination.split('|')[0] : <span className="opacity-50">-</span>}
                       </span>
                       {p.country && <span className="opacity-50 text-[10px] ml-auto">({p.country})</span>}
@@ -506,7 +506,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                     {/* Stats Row 2: Date & Custom Fields */}
                     {p.shippingAvailableBy && (
                       <div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
-                        <span className="opacity-50">Avail:</span> {p.shippingAvailableBy}
+                        <span className="opacity-50">{t('products.availAbbr')}:</span> {p.shippingAvailableBy}
                       </div>
                     )}
 
@@ -519,7 +519,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                         val = p.extraFields?.[fieldKey];
                       }
                       if (val === undefined || val === null || val === '') return null;
-                      const displayVal = typeof val === 'boolean' ? (val ? 'Yes' : 'No') : String(val);
+                      const displayVal = typeof val === 'boolean' ? (val ? t('common.yes') : t('common.no')) : String(val);
 
                       return (
                         <div key={fieldKey} className="text-[10px] text-muted-foreground pl-4 truncate" title={`${fieldKey}: ${displayVal}`}>

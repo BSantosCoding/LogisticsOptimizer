@@ -42,7 +42,7 @@ const Auth: React.FC = () => {
         if (!authData.user) throw new Error("No user created");
 
         if (!authData.session) {
-          setMessage("Account created! Please check your email to confirm your account before logging in.");
+          setMessage(t('auth.accountCreated'));
           setIsLogin(true);
         }
       }
@@ -55,7 +55,7 @@ const Auth: React.FC = () => {
 
   const handleForgotPassword = async () => {
     if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address');
+      setError(t('auth.invalidEmail'));
       return;
     }
 
@@ -70,7 +70,7 @@ const Auth: React.FC = () => {
 
       if (error) throw error;
 
-      setMessage('Password reset link sent! Check your email.');
+      setMessage(t('auth.resetSent'));
       setShowForgotPassword(false);
     } catch (err: any) {
       setError(err.message);
@@ -89,12 +89,12 @@ const Auth: React.FC = () => {
             </div>
           </div>
           <CardTitle className="text-2xl">
-            {showForgotPassword ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create Account'}
+            {showForgotPassword ? t('auth.resetPassword') : isLogin ? t('auth.welcomeBack') : t('auth.createAccount')}
           </CardTitle>
           <CardDescription>
             {showForgotPassword
-              ? 'Enter your email to receive a password reset link'
-              : isLogin ? 'Sign in to access your logistics dashboard' : 'Sign up to start optimizing logistics'}
+              ? t('auth.resetPasswordDesc')
+              : isLogin ? t('auth.loginDesc') : t('auth.registerDesc')}
           </CardDescription>
         </CardHeader>
 
@@ -117,7 +117,7 @@ const Auth: React.FC = () => {
                 <Mail className="absolute left-3 top-2.5 text-muted-foreground" size={18} />
                 <Input
                   type="email"
-                  placeholder="Work Email"
+                  placeholder={t('auth.workEmail')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -130,7 +130,7 @@ const Auth: React.FC = () => {
                 disabled={loading}
                 className="w-full"
               >
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading ? t('auth.sending') : t('auth.sendResetLink')}
               </Button>
 
               <div className="text-center">
@@ -138,7 +138,7 @@ const Auth: React.FC = () => {
                   onClick={() => { setShowForgotPassword(false); setError(null); setMessage(null); }}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1 w-full"
                 >
-                  Back to Sign In
+                  {t('auth.backToSignIn')}
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -149,7 +149,7 @@ const Auth: React.FC = () => {
                 <Mail className="absolute left-3 top-2.5 text-muted-foreground" size={18} />
                 <Input
                   type="email"
-                  placeholder="Work Email"
+                  placeholder={t('auth.workEmail')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -162,7 +162,7 @@ const Auth: React.FC = () => {
                   <Lock className="absolute left-3 top-2.5 text-muted-foreground" size={18} />
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder={t('auth.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
@@ -187,7 +187,7 @@ const Auth: React.FC = () => {
                 disabled={loading}
                 className="w-full"
               >
-                {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
+                {loading ? t('common.loading') : isLogin ? t('auth.signIn') : t('auth.createAccount')}
               </Button>
             </form>
           )}
@@ -198,7 +198,7 @@ const Auth: React.FC = () => {
                 onClick={() => { setIsLogin(!isLogin); setError(null); setMessage(null); }}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1 w-full"
               >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                {isLogin ? t('auth.noAccount') : t('auth.haveAccount')}
                 <ArrowRight size={14} />
               </button>
             </div>

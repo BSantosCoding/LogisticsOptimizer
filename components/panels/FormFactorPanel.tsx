@@ -83,7 +83,7 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                 <div className="flex justify-between items-center">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
                         <Box className="text-primary" size={16} />
-                        {t('config.formFactors', 'Form Factors')}
+                        {t('config.formFactors')}
                     </CardTitle>
                     <div className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {formFactors.length}
@@ -96,22 +96,22 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">{t('config.name', 'Name')}</Label>
+                                <Label className="text-xs text-muted-foreground">{t('config.name')}</Label>
                                 <Input
                                     type="text"
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
-                                    placeholder="e.g. OSB, IBC"
+                                    placeholder={t('config.ffNamePlaceholder')}
                                     className="h-8 bg-muted/30 border-input/50"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">{t('config.description', 'Description')}</Label>
+                                <Label className="text-xs text-muted-foreground">{t('config.description')}</Label>
                                 <Input
                                     type="text"
                                     value={newDesc}
                                     onChange={(e) => setNewDesc(e.target.value)}
-                                    placeholder="Optional"
+                                    placeholder={t('config.optionalPlaceholder')}
                                     className="h-8 bg-muted/30 border-input/50"
                                 />
                             </div>
@@ -142,7 +142,7 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
                         </div>
 
                         <Button type="submit" disabled={!newName} className="w-full h-8" size="sm">
-                            <Plus size={14} className="mr-1" /> {t('config.addFormFactor', 'Add Form Factor')}
+                            <Plus size={14} className="mr-1" /> {t('config.addFormFactor')}
                         </Button>
                     </form>
                 </div>
@@ -151,7 +151,7 @@ const FormFactorPanel: React.FC<FormFactorPanelProps> = ({ formFactors, onAdd, o
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {formFactors.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-sm">
-                        {t('config.noFormFactors', 'No form factors defined.')}
+                        {t('config.noFormFactors')}
                     </div>
                 ) : (
                     formFactors.map(ff => (

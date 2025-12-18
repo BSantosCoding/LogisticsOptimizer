@@ -454,13 +454,23 @@ const App: React.FC = () => {
   };
 
   const handleRemoveContainer = async (id: string) => {
-    removeContainer(id);
-    setSelectedContainerIds(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
+    setConfirmModal({
+      isOpen: true,
+      title: t('containers.deleteTitle'),
+      message: t('containers.deleteConfirmation'),
+      confirmText: t('common.delete'),
+      isDestructive: true,
+      onConfirm: async () => {
+        removeContainer(id);
+        setSelectedContainerIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        await supabase.from('containers').delete().eq('id', id);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
     });
-    await supabase.from('containers').delete().eq('id', id);
   };
 
   const handleCancelContainerEdit = () => {
@@ -1101,7 +1111,7 @@ const App: React.FC = () => {
   };
 
   const handleImportDeals = async (csvContent: string) => {
-    setErrorModal({ isOpen: true, message: 'CSV Import needs update for new format' });
+    setErrorModal({ isOpen: true, title: t('modals.errorTitle'), message: t('modals.csvImportError') });
   };
 
   const handleClearDeals = async () => {
@@ -1153,7 +1163,7 @@ const App: React.FC = () => {
   };
 
   if (loadingSession) {
-    return <div className="h-screen flex items-center justify-center bg-background text-muted-foreground">Loading...</div>;
+    return <div className="h-screen flex items-center justify-center bg-background text-muted-foreground">{t('common.loading')}</div>;
   }
 
   if (!session) {
@@ -1217,7 +1227,7 @@ const App: React.FC = () => {
           )}
           <Button variant="ghost" size="sm" onClick={() => logout()} className="w-full h-auto py-2 flex flex-col items-center gap-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
             <LogOut size={18} />
-            <span className="text-[9px] font-medium">Logout</span>
+            <span className="text-[9px] font-medium">{t('common.logout')}</span>
           </Button>
         </div>
       </div>
@@ -1283,15 +1293,15 @@ const App: React.FC = () => {
                         {role === 'standard' && viewAsRole === 'standard' && (
                           <div className="px-2 py-1.5 space-y-1">
                             <div className="text-[10px] text-muted-foreground font-bold uppercase flex items-center gap-1 px-2 py-1">
-                              <Shield size={10} /> Simulated Permissions
+                              <Shield size={10} /> {t('modals.simulatedPermissions')}
                             </div>
                             {[
-                              { key: 'can_edit_countries', label: 'Edit Countries' },
-                              { key: 'can_edit_form_factors', label: 'Edit Form Factors' },
-                              { key: 'can_edit_containers', label: 'Edit Containers' },
-                              { key: 'can_edit_templates', label: 'Edit Templates' },
-                              { key: 'can_edit_tags', label: 'Edit Tags' },
-                              { key: 'can_edit_import_config', label: 'Edit Import Config' }
+                              { key: 'can_edit_countries', label: t('team.permCountries') },
+                              { key: 'can_edit_form_factors', label: t('team.permFormFactors') },
+                              { key: 'can_edit_containers', label: t('team.permContainers') },
+                              { key: 'can_edit_templates', label: t('team.permTemplates') },
+                              { key: 'can_edit_tags', label: t('team.permTags') },
+                              { key: 'can_edit_import_config', label: t('team.permImportConfig') }
                             ].map(perm => (
                               <DropdownMenuCheckboxItem
                                 key={perm.key}

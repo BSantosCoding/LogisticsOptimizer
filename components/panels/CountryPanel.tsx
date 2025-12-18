@@ -164,7 +164,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                         <Input
                             value={newCountry.code}
                             onChange={e => setNewCountry({ ...newCountry, code: e.target.value.toUpperCase() })}
-                            placeholder="CN"
+                            placeholder={t('countries.codePlaceholder')}
                             maxLength={2}
                             className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
                         />
@@ -175,7 +175,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                         <Input
                             value={newCountry.name}
                             onChange={e => setNewCountry({ ...newCountry, name: e.target.value })}
-                            placeholder="China"
+                            placeholder={t('countries.namePlaceholder')}
                             className="bg-muted/50 border-input/50 focus:bg-background transition-colors"
                         />
                     </div>
@@ -332,7 +332,7 @@ const CountryPanel: React.FC<CountryPanelProps> = ({
                 onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
                 isDestructive={true}
             />
-        </div >
+        </div>
     );
 };
 

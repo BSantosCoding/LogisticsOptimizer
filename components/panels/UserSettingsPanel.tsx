@@ -47,7 +47,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
         } catch (error: any) {
             setResetPasswordMessage({
                 type: 'error',
-                text: error.message || 'Failed to send reset email'
+                text: error.message || t('userSettings.resetError')
             });
         } finally {
             setResetPasswordLoading(false);
@@ -92,7 +92,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
         } catch (error: any) {
             setChangeEmailMessage({
                 type: 'error',
-                text: error.message || 'Failed to update email'
+                text: error.message || t('userSettings.emailUpdateError')
             });
         } finally {
             setChangeEmailLoading(false);
@@ -162,7 +162,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
                             disabled={resetPasswordLoading}
                             className="w-full sm:w-auto"
                         >
-                            {resetPasswordLoading ? 'Sending...' : t('userSettings.sendResetLink')}
+                            {resetPasswordLoading ? t('userSettings.sending') : t('userSettings.sendResetLink')}
                         </Button>
                     </div>
 
@@ -206,7 +206,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
                                 disabled={changeEmailLoading}
                                 className="w-full sm:w-auto"
                             >
-                                {changeEmailLoading ? 'Updating...' : t('userSettings.updateEmail')}
+                                {changeEmailLoading ? t('userSettings.updating') : t('userSettings.updateEmail')}
                             </Button>
                         </div>
                     </div>
@@ -235,7 +235,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
                                 value={optimalRange.min}
                                 onChange={(e) => setOptimalRange({ ...optimalRange, min: parseInt(e.target.value) || 0 })}
                                 className="w-24 bg-muted/30 border-input/50"
-                                placeholder="Min"
+                                placeholder={t('userSettings.minPlaceholder')}
                             />
                             <span className="text-muted-foreground">-</span>
                             <Input
@@ -245,7 +245,7 @@ const UserSettingsPanel: React.FC<UserSettingsPanelProps> = ({
                                 value={optimalRange.max}
                                 onChange={(e) => setOptimalRange({ ...optimalRange, max: parseInt(e.target.value) || 100 })}
                                 className="w-24 bg-muted/30 border-input/50"
-                                placeholder="Max"
+                                placeholder={t('userSettings.maxPlaceholder')}
                             />
                             <span className="text-muted-foreground text-sm">%</span>
                         </div>

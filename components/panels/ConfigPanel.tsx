@@ -320,12 +320,12 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
         <CardHeader className="p-4 py-3 border-b border-border bg-muted/20 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Settings className="text-primary" size={16} />
-            {t('config.csvMapping', 'CSV Import Configuration')}
+            {t('config.csvMapping')}
           </CardTitle>
           {hasUnsavedChanges && (
             <Button onClick={saveMapping} size="sm" className="h-7 bg-green-600 hover:bg-green-500 text-white shadow-sm">
               <Save size={14} className="mr-1" />
-              {t('common.save', 'Save')}
+              {t('common.save')}
             </Button>
           )}
         </CardHeader>
@@ -428,8 +428,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                           setEditingMapping(prev => ({ ...prev, restrictions: newRestrictions }));
                           setHasUnsavedChanges(true);
                         }}
-                        placeholder="CSV Header Name"
-                        className="flex-1 bg-muted/30 border-input/50 h-8"
+                        placeholder={t('config.csvHeaderName')}
+                        className="flex-1 bg-muted/30 border-input/50 h-8 text-xs"
                       />
                       <Button
                         onClick={() => {
@@ -504,7 +504,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                           setHasUnsavedChanges(true);
                         }}
                         className="bg-background border-input/50 h-8 text-xs"
-                        placeholder="CSV Header Name"
+                        placeholder={t('config.csvHeaderName')}
                       />
                     </div>
                   ))}
@@ -558,7 +558,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                         htmlFor={`group-${field}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize cursor-pointer"
                       >
-                        {field.replace(/([A-Z])/g, ' $1').trim()}
+                        {field === 'country' ? t('products.country') :
+                          field === 'incoterms' ? t('products.incoterms') :
+                            field.replace(/([A-Z])/g, ' $1').trim()}
                       </label>
                     </div>
                   ))}
@@ -592,7 +594,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({
                         htmlFor={`display-${field}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize cursor-pointer"
                       >
-                        {field.replace(/([A-Z])/g, ' $1').trim()}
+                        {field === 'country' ? t('products.country') :
+                          field === 'quantity' ? t('products.quantity') :
+                            field === 'weight' ? t('products.weight') :
+                              field === 'shippingAvailableBy' ? t('config.shippingAvailableBy') :
+                                field === 'currentContainer' ? t('config.currentContainer') :
+                                  field === 'assignmentReference' ? t('config.shipmentNumberRef') :
+                                    field.replace(/([A-Z])/g, ' $1').trim()}
                       </label>
                     </div>
                   ))}

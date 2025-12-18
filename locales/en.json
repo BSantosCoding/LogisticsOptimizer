@@ -15,11 +15,16 @@
         "noShipmentsDesc": "Run an optimization and click \"Save as Shipment\" to create one.",
         "savedShipments": "Saved Shipments",
         "loadAsBase": "Load as Base Plan",
+        "loadAsBaseTooltip": "Load these items + new items for re-optimization",
         "unpack": "Unpack (Release Items)",
+        "unpackTooltip": "Release items back to available pool",
         "consume": "Consume Plan (Ship Items)",
         "containers": "Containers",
         "items": "items",
-        "units": "units"
+        "units": "units",
+        "unassigned": "Unassigned",
+        "noProducts": "No products in this shipment",
+        "unpackItemTooltip": "Unpack this item"
     },
     "header": {
         "viewAs": "View as",
@@ -45,13 +50,15 @@
         "update": "Update",
         "allCaps": "All Caps",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "logout": "Logout"
     },
     "products": {
         "title": "Product Inventory",
         "namePlaceholder": "Product Name / Request ID",
         "destination": "Destination",
         "country": "Country",
+        "countryPlaceholder": "e.g. CN",
         "formFactor": "Form Factor",
         "selectFormFactor": "Select Form Factor...",
         "quantity": "Quantity",
@@ -75,10 +82,14 @@
         "allSelectedDefault": "All products selected by default",
         "weight": "Weight (kg)",
         "incoterms": "Incoterms",
+        "incotermsLabel": "Incoterms",
         "shipToName": "Ship To Name",
+        "shipToNameLabel": "Ship To Name",
         "availableBy": "Available By",
+        "availByLabel": "Available By",
         "availAbbr": "Avail",
-        "na": "N/A"
+        "na": "N/A",
+        "warningsTooltip": "Show only products with warnings"
     },
     "config": {
         "optimizationSettings": "Optimization Settings",
@@ -100,6 +111,7 @@
         "formFactorLabel": "Name / Form Factor",
         "restrictedAccessCSV": "CSV configuration is restricted to managers and authorized users.",
         "newFieldKey": "New Field Key (e.g. region)",
+        "newFieldKeyPlaceholder": "New Field Key (e.g. region)",
         "formFactors": "Form Factors",
         "addFormFactor": "Add Form Factor",
         "noFormFactors": "No form factors defined.",
@@ -125,13 +137,16 @@
         "shipmentNumberRef": "Shipment Number / Ref",
         "coreFields": "Core Fields (CSV Header Names)",
         "csvHeaderName": "CSV Header Name",
+        "csvHeaderPlaceholder": "CSV Header Name",
         "incotermsHeaders": "Incoterms Headers",
         "addIncotermsHeader": "Add Incoterms Header",
         "restrictionHeaders": "Restriction Headers",
         "addRestrictionHeader": "Add Restriction Header",
         "customFields": "Custom Fields",
         "companySpecific": "Company-Specific",
-        "ignoreDates": "Ignore dates"
+        "ignoreDates": "Ignore dates",
+        "ffNamePlaceholder": "e.g. OSB, IBC",
+        "optionalPlaceholder": "Optional"
     },
     "team": {
         "overview": "Team Overview",
@@ -152,12 +167,18 @@
         "permContainers": "Containers",
         "permTemplates": "Templates",
         "permTags": "Tags",
-        "permImportConfig": "Import Config"
+        "permImportConfig": "Import Config",
+        "roleSuperAdmin": "Super Admin",
+        "roleAdmin": "Admin",
+        "roleManager": "Manager",
+        "roleStandard": "Standard"
     },
     "countries": {
         "addCountry": "Add Country",
         "code": "Country Code",
+        "codePlaceholder": "CN",
         "name": "Country Name",
+        "namePlaceholder": "China",
         "configuration": "Country Configuration",
         "search": "Search countries...",
         "containerCosts": "Container Costs",
@@ -187,7 +208,9 @@
         "transitTimePlaceholder": "Transit Time",
         "noFormFactors": "No Form Factors defined. Please add them in the Config panel.",
         "capabilities": "Capabilities",
-        "logisticsContainers": "Logistics Containers"
+        "logisticsContainers": "Logistics Containers",
+        "deleteTitle": "Delete Container",
+        "deleteConfirmation": "Are you sure you want to delete this container instance from the results?"
     },
     "modals": {
         "confirmTitle": "Confirm Action",
@@ -220,8 +243,11 @@
         "toDatabase": " to database",
         "sessionOnly": " (session only)",
         "needAttention": "Need Attention",
+        "productsNeedAttention": "{{count}} item(s) need attention",
         "unknownIssues": "The following products have UNKNOWN form factors and need to be assigned before optimization:",
-        "gotIt": "Got it"
+        "gotIt": "Got it",
+        "csvImportError": "CSV Import needs update for new format",
+        "simulatedPermissions": "Simulated Permissions"
     },
     "results": {
         "title": "Optimization Results",
@@ -245,7 +271,22 @@
         "containers_used": "{{count}} containers used (avg {{averageUtilization}}% full).",
         "items_unassigned": "{{count}} items unassigned.",
         "cost_saving_reasoning": "Could save €{{costDifference}} by allowing unit splitting.",
-        "utilization_saving_reasoning": "Could improve container utilization by {{utilizationDifference}}% allowing unit splitting."
+        "utilization_saving_reasoning": "Could improve container utilization by {{utilizationDifference}}% allowing unit splitting.",
+        "searchPlaceholder": "Search items...",
+        "missingCapabilities": "Missing capabilities",
+        "tooLarge": "Too large",
+        "addContainer": "Add Container",
+        "utilization": "Utilization",
+        "emptyContainer": "Empty Container",
+        "refLabel": "Ref",
+        "inherited": "inherited",
+        "deleteContainer": "Delete container",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "strategyTitle": "Optimization Strategy",
+        "strategy": "Strategy",
+        "dragToUnassign": "Drag items here to unassign",
+        "unknownFF": "Unknown"
     },
     "userSettings": {
         "title": "User Settings",
@@ -263,9 +304,76 @@
         "sameEmail": "New email must be different from current email",
         "userPreferences": "User Preferences",
         "optimalRange": "Optimal Utilization Range (%)",
-        "rangeDesc": "Your preferred target utilization range for containers."
+        "rangeDesc": "Your preferred target utilization range for containers.",
+        "sending": "Sending...",
+        "updating": "Updating...",
+        "resetError": "Failed to send reset email",
+        "emailUpdateError": "Failed to update email",
+        "minPlaceholder": "Min",
+        "maxPlaceholder": "Max"
     },
     "auth": {
-        "forgotPassword": "Forgot password?"
+        "forgotPassword": "Forgot password?",
+        "workEmail": "Work Email",
+        "password": "Password",
+        "login": "Login",
+        "register": "Register",
+        "resetPassword": "Reset Password",
+        "welcomeBack": "Welcome Back",
+        "createAccount": "Create Account",
+        "resetPasswordDesc": "Enter your email to receive a password reset link",
+        "loginDesc": "Sign in to access your logistics dashboard",
+        "registerDesc": "Sign up to start optimizing logistics",
+        "signIn": "Sign In",
+        "sending": "Sending...",
+        "backToSignIn": "Back to Sign In",
+        "noAccount": "Don't have an account? Sign up",
+        "haveAccount": "Already have an account? Sign in",
+        "invalidEmail": "Please enter a valid email address",
+        "resetSent": "Password reset link sent! Check your email.",
+        "accountCreated": "Account created! Please check your email to confirm your account before logging in."
+    },
+    "pendingApproval": {
+        "title": "Pending Approval",
+        "companyAwaiting": "Company Awaiting Approval",
+        "accessPending": "Access Pending",
+        "messageAwaiting": "Your company <strong>{{companyName}}</strong> is awaiting approval from a Super Admin.",
+        "messageAwaitingSub": "You'll be able to access the platform once approved.",
+        "messageSent": "Your request to join <strong>{{companyName}}</strong> has been sent.",
+        "messageSentSub": "An administrator must approve your account.",
+        "checkStatus": "Check Status",
+        "logout": "Sign Out",
+        "switchWorkspace": "Change Workspace"
+    },
+    "optimization": {
+        "safetyMargin": "Safety Margin",
+        "ignoreWeight": "Ignore Weight Limit",
+        "ignoreVolume": "Ignore Volume Limit",
+        "standard": "Optimize (Standard)",
+        "respectCurrent": "Optimize (Respect Current)",
+        "ignoreConstraints": "Ignore Constraints",
+        "weight": "Weight",
+        "volume": "Volume",
+        "plan": "Plan ({{count}})",
+        "calculatePlan": "Calculate Plan"
+    },
+    "superAdmin": {
+        "title": "Super Admin Panel",
+        "desc": "Manage company approvals and system settings",
+        "totalCompanies": "Total Companies",
+        "pendingCompanies": "Pending",
+        "approvedCompanies": "Approved",
+        "rejectedCompanies": "Rejected",
+        "refresh": "Refresh",
+        "loading": "Loading companies...",
+        "noCompanies": "No companies found with status: {{status}}",
+        "idLabel": "ID",
+        "createdLabel": "Created",
+        "approve": "Approve",
+        "reject": "Reject",
+        "revoke": "Revoke",
+        "errorApprove": "Failed to approve company",
+        "errorReject": "Failed to reject company",
+        "confirmReject": "Are you sure you want to reject this company? Users will not be able to access it."
     }
 }

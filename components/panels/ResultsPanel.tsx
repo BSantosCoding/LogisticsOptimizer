@@ -414,7 +414,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               }`}
           >
             {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-            {isOptimizing ? t('header.optimizing') : "Optimize (Standard)"}
+            {isOptimizing ? t('header.optimizing') : t('optimization.standard')}
           </button>
 
           <button
@@ -426,7 +426,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               }`}
           >
             {isOptimizing ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-            {t('header.respectCurrent')}
+            {t('optimization.respectCurrent')}
           </button>
         </div>
       </div >
@@ -485,7 +485,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 onClick={() => onRunOptimization(false)}
                 disabled={hasNoProducts || hasNoContainers || isOptimizing}
                 size="sm"
-                title="Standard Optimization"
+                title={t('optimization.standard')}
               >
                 {isOptimizing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} />}
                 {isOptimizing ? t('header.optimizing') : t('header.runOptimization')}
@@ -496,10 +496,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 size="sm"
                 variant="outline"
                 className="text-green-600 border-green-600/50 hover:bg-green-500/10"
-                title="Respect Current Assignments"
+                title={t('optimization.respectCurrent')}
               >
                 <Zap size={14} className="mr-1" />
-                {t('header.respectCurrent')}
+                {t('optimization.respectCurrent')}
               </Button>
             </div>
 
@@ -664,11 +664,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             <div className="relative group cursor-help">
               <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
                 <Info size={14} />
-                <span className="hidden sm:inline">Strategy</span>
+                <span className="hidden sm:inline">{t('results.strategy')}</span>
               </div>
               {/* Tooltip on hover */}
               <div className="absolute left-0 top-full mt-2 z-50 hidden group-hover:block w-80 p-3 bg-popover border border-border rounded-lg shadow-xl">
-                <div className="text-xs font-semibold text-foreground mb-1">Optimization Strategy</div>
+                <div className="text-xs font-semibold text-foreground mb-1">{t('results.strategyTitle')}</div>
                 <div className="text-xs text-muted-foreground whitespace-pre-line">{result.reasoning}</div>
               </div>
             </div>
@@ -686,13 +686,13 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             variant="secondary"
             className="flex-shrink-0 w-full"
           >
-            <Box size={14} /> Add Container
+            <Box size={14} /> {t('results.addContainer')}
           </Button>
 
           {/* Search Bar */}
           <Input
             type="text"
-            placeholder="Search items..."
+            placeholder={t('results.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-shrink-0 h-8 text-xs"
@@ -701,7 +701,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           {/* Unassigned Items Header */}
           <div className="flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
             <AlertTriangle size={14} className="text-destructive" />
-            Unassigned Items
+            {t('results.unassignedItems')}
           </div>
 
           {/* Scrollable Products List */}
@@ -725,7 +725,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             <div className="space-y-1.5">
               {result.unassignedProducts.length === 0 ? (
                 <div className="text-center text-muted-foreground py-4 italic text-[10px]">
-                  Drag items here to unassign
+                  {t('results.dragToUnassign')}
                 </div>
               ) : (
                 Object.entries(groupedUnassigned)
@@ -877,10 +877,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         </span>
                       </div>
                       {!preview.meetsRequirements && (
-                        <div className="text-muted-foreground text-[9px] mt-0.5">Missing capabilities</div>
+                        <div className="text-muted-foreground text-[9px] mt-0.5">{t('results.missingCapabilities')}</div>
                       )}
                       {preview.meetsRequirements && !preview.fits && preview.utilization > 100 && (
-                        <div className="text-red-300 text-[9px] mt-0.5">Too large</div>
+                        <div className="text-red-300 text-[9px] mt-0.5">{t('results.tooLarge')}</div>
                       )}
                     </div>
                   );
@@ -904,7 +904,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               }}
               className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
             >
-              {collapsedDestinations.size === Object.keys(groupedAssignments).length ? 'Expand All' : 'Collapse All'}
+              {collapsedDestinations.size === Object.keys(groupedAssignments).length ? t('results.expandAll') : t('results.collapseAll')}
             </button>
           </div >
 
@@ -918,7 +918,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 addContainerModal && (
                   <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
                     <div className="bg-card p-6 rounded-xl border border-border w-[500px] shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
-                      <h3 className="text-lg font-bold text-foreground mb-4">Add Container</h3>
+                      <h3 className="text-lg font-bold text-foreground mb-4">{t('results.addContainer')}</h3>
 
                       {/* Unassigned Products Summary */}
                       {result && result.unassignedProducts.length > 0 && (
@@ -968,7 +968,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                           onClick={() => setAddContainerModal(false)}
                           className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </button>
                       </div>
                     </div>
@@ -1108,7 +1108,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                 <button
                                   onClick={() => setDeleteContainerModal(loadedContainer.container.id)}
                                   className="text-destructive hover:text-destructive/80 transition-colors p-1 rounded hover:bg-destructive/10"
-                                  title="Delete container"
+                                  title={t('results.deleteContainer')}
                                 >
                                   <Trash2 size={16} />
                                 </button>
@@ -1116,7 +1116,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                   <div className={`text-2xl font-bold ${isLowUtilization ? 'text-yellow-500' : isOptimal ? 'text-green-400' : 'text-blue-400'}`}>
                                     {loadedContainer.totalUtilization.toFixed(1)}%
                                   </div>
-                                  <div className="text-xs text-muted-foreground">Utilization</div>
+                                  <div className="text-xs text-muted-foreground">{t('results.utilization')}</div>
                                 </div>
                               </div>
                             </div>
@@ -1132,7 +1132,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             {/* Products List */}
                             <div className="p-3 space-y-2">
                               {loadedContainer.assignedProducts.length === 0 ? (
-                                <div className="text-center py-4 text-muted-foreground text-sm italic">Empty Container</div>
+                                <div className="text-center py-4 text-muted-foreground text-sm italic">{t('results.emptyContainer')}</div>
                               ) : (
                                 groupedProducts.map((group, idx) => {
                                   const p = group.products[0]; // Representative product
@@ -1235,7 +1235,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                             handleUnassignProduct(p.id, loadedContainer.container.id);
                                           }}
                                           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300"
-                                          title="Unassign all units"
+                                          title={t('common.deleteAll')}
                                         >
                                           <Trash2 size={14} />
                                         </button>

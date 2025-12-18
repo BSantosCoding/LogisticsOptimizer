@@ -937,7 +937,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   placeholder={t('results.searchAssignments', 'Search containers, references, products...')}
                   value={resultSearchQuery}
                   onChange={(e) => setResultSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-xs bg-muted/30 focus:bg-background transition-colors"
+                  className="pl-8 h-8 text-xs bg-muted/30 focus:bg-background transition-colors border-none shadow-none focus-visible:ring-0"
                 />
               </div>
               <button

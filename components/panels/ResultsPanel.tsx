@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OptimizationResult, Container, Product, OptimizationPriority, LoadedContainer, CSVMapping, ProductFormFactor } from '../../types';
-import { AlertTriangle, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info } from 'lucide-react';
+import { AlertTriangle, Box, X, ChevronDown, ChevronRight, MapPin, Save, Trash2, Zap, RefreshCw, Info, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -137,8 +137,41 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   };
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [resultSearchQuery, setResultSearchQuery] = useState('');
   const [previewQuantities, setPreviewQuantities] = useState<Record<string, number>>({});
   const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(new Set());
+
+  // Filter assignments based on search query
+  const filteredAssignments = React.useMemo(() => {
+    if (!result) return [];
+    if (!resultSearchQuery.trim()) return result.assignments;
+
+    const lowerQuery = resultSearchQuery.toLowerCase();
+
+    return result.assignments.filter(assignment => {
+      // Check Container Fields
+      if (assignment.container.name.toLowerCase().includes(lowerQuery)) return true;
+      if (assignment.container.destination?.toLowerCase().includes(lowerQuery)) return true;
+      if (assignment.container.restrictions.some(r => r.toLowerCase().includes(lowerQuery))) return true;
+
+      // Check Assigned Products
+      return assignment.assignedProducts.some(p => {
+        if (p.name.toLowerCase().includes(lowerQuery)) return true;
+        if (p.assignmentReference?.toLowerCase().includes(lowerQuery)) return true;
+        if (String(p.quantity).includes(lowerQuery)) return true;
+        if (p.destination?.toLowerCase().includes(lowerQuery)) return true;
+        if (p.shipToName?.toLowerCase().includes(lowerQuery)) return true;
+        if (p.country?.toLowerCase().includes(lowerQuery)) return true;
+
+        // Check extra fields
+        if (p.extraFields) {
+          if (Object.values(p.extraFields).some(v => String(v).toLowerCase().includes(lowerQuery))) return true;
+        }
+
+        return false;
+      });
+    });
+  }, [result, resultSearchQuery]);
 
   // Handler to unassign all units of a product from a container
   const handleUnassignProduct = (productId: string, containerId: string) => {
@@ -387,15 +420,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   // Group assignments by destination
   const groupedAssignments = React.useMemo(() => {
-    if (!result) return {};
+    if (!filteredAssignments) return {};
     const groups: Record<string, LoadedContainer[]> = {};
-    result.assignments.forEach(a => {
+    filteredAssignments.forEach(a => {
       const dest = a.container.destination || 'Unspecified Destination';
       if (!groups[dest]) groups[dest] = [];
       groups[dest].push(a);
     });
     return groups;
-  }, [result]);
+  }, [filteredAssignments]);
 
 
 
@@ -893,7 +926,18 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         {/* Main Content - Containers (RIGHT, 80%) */}
         < div className="flex-1 flex flex-col overflow-hidden" >
           {/* Sticky Collapse All Button */}
-          < div className="flex-shrink-0 pb-3 flex justify-end sticky top-0 bg-background z-10" >
+          {/* Sticky Header with Search and Collapse */}
+          <div className="flex-shrink-0 pb-3 flex items-center justify-between gap-4 sticky top-0 bg-background z-10 px-1">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+              <Input
+                type="text"
+                placeholder={t('results.searchAssignments', 'Search containers, references, products...')}
+                value={resultSearchQuery}
+                onChange={(e) => setResultSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-xs bg-muted/30 focus:bg-background transition-colors"
+              />
+            </div>
             <button
               onClick={() => {
                 if (collapsedDestinations.size === Object.keys(groupedAssignments).length) {
@@ -902,11 +946,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   setCollapsedDestinations(new Set(Object.keys(groupedAssignments)));
                 }
               }}
-              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
+              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 whitespace-nowrap"
             >
               {collapsedDestinations.size === Object.keys(groupedAssignments).length ? t('results.expandAll') : t('results.collapseAll')}
             </button>
-          </div >
+          </div>
 
           {/* Scrollable Assignments Area */}
           < div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" >

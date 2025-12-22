@@ -28,6 +28,7 @@ export interface Product {
   currentContainer?: string; // Pre-assigned container from CSV (e.g. "40' Reefer")
   assignmentReference?: string; // Pre-assigned container instance ID from CSV (e.g. "Shipment Number")
   extraFields?: Record<string, string>; // user-defined key/value pairs
+  data?: Record<string, any>; // Raw JSONB data from Supabase for fallback access
 }
 
 export interface Shipment {

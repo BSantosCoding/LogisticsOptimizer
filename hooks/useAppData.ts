@@ -171,11 +171,12 @@ export const useAppData = (companyId: string | null, userId: string | undefined)
                 const mappedProducts = productsData.map((r: any) => ({
                     ...r.data,
                     id: r.id,
-                    formFactorId: r.form_factor_id || r.data.formFactorId,
-                    quantity: r.quantity || r.data.quantity || 1,
+                    formFactorId: r.form_factor_id || r.data?.formFactorId,
+                    quantity: r.quantity || r.data?.quantity || 1,
                     weight: r.weight ?? r.data?.weight,
                     shipmentId: r.shipment_id,
-                    status: r.status || 'available'
+                    status: r.status || 'available',
+                    data: r.data  // Preserve raw JSONB for fallback access
                 }));
 
                 setProducts(mappedProducts);

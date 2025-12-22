@@ -474,7 +474,7 @@ const ProductPanel: React.FC<ProductPanelProps> = ({
                         </Badge>
                       )}
                     </div>
-                    <h3 className="font-semibold text-sm leading-tight text-foreground truncate" title={p.name}>{p.name}</h3>
+                    <h3 className="font-semibold text-sm leading-tight text-foreground truncate" title={p.name || p.data?.name || '-'}>{p.name || p.data?.name || '-'}</h3>
                   </div>
 
                   <div className="space-y-1.5 mt-0 flex-1">

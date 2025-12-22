@@ -697,6 +697,31 @@ const App: React.FC = () => {
 
       addShipment(newShipment);
 
+      // Update products in local state to mark as shipped and update their data
+      const shippedProductIds = new Set(shipmentProducts.map(p => p.id));
+      setProducts(prev => prev.map(p => {
+        if (shippedProductIds.has(p.id)) {
+          const updates = updatedProductsMap.get(p.id);
+          return {
+            ...p,
+            shipmentId: shipmentData.id,
+            status: 'shipped' as const,
+            currentContainer: updates?.currentContainer || p.currentContainer,
+            assignmentReference: updates?.assignmentReference || p.assignmentReference,
+            data: {
+              ...p.data,
+              currentContainer: updates?.currentContainer || p.data?.currentContainer,
+              assignmentReference: updates?.assignmentReference || p.data?.assignmentReference
+            }
+          };
+        }
+        return p;
+      }));
+
+      // Clear results after shipment is saved
+      setResults(null);
+      setSelectedProductIds(new Set());
+
       setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', shippingAvailableBy: '', currentContainer: '', extraFields: {} });
     } catch (error) {
       console.error('Error saving shipment:', error);

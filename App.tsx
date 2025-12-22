@@ -654,6 +654,12 @@ const App: React.FC = () => {
       const { error: productsUpdateError } = await supabase.from('products').upsert(
         productUpdates.map(u => {
           const existing = existingMap.get(u.id) || {};
+          // Get the container assignment fields we need to add/update
+          const containerFields = {
+            currentContainer: u.data.currentContainer,
+            assignmentReference: u.data.assignmentReference,
+            _containerInstanceId: u.data._containerInstanceId
+          };
           return {
             ...existing,  // Preserve ALL existing columns (form_factor_id, quantity, weight, etc.)
             id: u.id,
@@ -661,7 +667,12 @@ const App: React.FC = () => {
             shipment_id: u.shipment_id,
             status: u.status,
             created_by: session.user.id,
-            data: u.data  // Only override the data field with our changes
+            // CRITICAL: Merge existing data from DB with new container fields
+            // This preserves name, quantity, weight, etc. that were in existing.data
+            data: {
+              ...(existing.data || {}),  // Preserve ALL original fields from DB
+              ...containerFields          // Add/update container assignment fields
+            }
           };
         })
       );

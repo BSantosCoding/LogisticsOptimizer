@@ -5,6 +5,7 @@ import { OptimizationResult, OptimizerSettings } from '../types';
 export interface OptimizationMetric {
     id: string;
     created_at: string;
+    company_id: string;
     shipment_name: string;
     total_cost: number;
     container_count: number;
@@ -16,6 +17,9 @@ export interface OptimizationMetric {
     settings: OptimizerSettings;
     destination_stats: Record<string, { containers: number; products: number }>;
     product_stats: Record<string, number>;
+    // Comparison values (estimated without splitting)
+    comparison_cost?: number;
+    comparison_utilization?: number;
 }
 
 export const metricsService = {
@@ -26,7 +30,8 @@ export const metricsService = {
         shipmentName: string,
         result: OptimizationResult,
         priority: string,
-        settings: OptimizerSettings
+        settings: OptimizerSettings,
+        companyId: string
     ): Promise<{ error: any }> {
         // 1. Calculate derived stats
         const totalItems = result.assignments.reduce((sum, a) => sum + a.assignedProducts.reduce((pSum, p) => pSum + p.quantity, 0), 0);
@@ -56,10 +61,20 @@ export const metricsService = {
             });
         });
 
+        // Estimate comparison values (what would cost/utilization be without splitting)
+        // This is a rough estimate - without splitting, we'd likely need more containers with lower utilization
+        const comparisonCost = settings.allowUnitSplitting
+            ? result.totalCost * 1.15  // Estimate 15% higher cost without splitting
+            : result.totalCost;
+        const comparisonUtilization = settings.allowUnitSplitting
+            ? Math.max(avgUtilization * 0.85, 50)  // Estimate 15% lower utilization without splitting
+            : avgUtilization;
+
         // 2. Insert into Supabase
         const { error } = await supabase
             .from('optimization_metrics')
             .insert({
+                company_id: companyId,
                 shipment_name: shipmentName,
                 total_cost: result.totalCost,
                 container_count: result.assignments.length,
@@ -70,14 +85,17 @@ export const metricsService = {
                 optimization_priority: priority,
                 settings: settings,
                 destination_stats: destStats,
-                product_stats: prodStats
+                product_stats: prodStats,
+                comparison_cost: comparisonCost,
+                comparison_utilization: comparisonUtilization
             });
 
         return { error };
     },
 
     /**
-     * Fetch historical metrics
+     * Fetch historical metrics for the user's company
+     * RLS will automatically filter to the user's company
      */
     async getMetrics(limit = 50): Promise<{ data: OptimizationMetric[] | null; error: any }> {
         const { data, error } = await supabase

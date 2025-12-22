@@ -696,15 +696,18 @@ const App: React.FC = () => {
     }
 
     // Save Metrics asynchronously
-    try {
-      await metricsService.saveMetrics(
-        name,
-        result,
-        activePriority,
-        optimizerSettings
-      );
-    } catch (err) {
-      console.error("Failed to save metrics (non-blocking):", err);
+    if (companyId) {
+      try {
+        await metricsService.saveMetrics(
+          name,
+          result,
+          activePriority,
+          optimizerSettings,
+          companyId
+        );
+      } catch (err) {
+        console.error("Failed to save metrics (non-blocking):", err);
+      }
     }
   };
 
@@ -1451,7 +1454,7 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'metrics' && (
-                <div className="h-full overflow-hidden bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm m-4">
+                <div className="flex-1 h-full overflow-hidden">
                   <MetricsDashboard
                     currentResult={results ? results[activePriority] : null}
                     containers={containers}

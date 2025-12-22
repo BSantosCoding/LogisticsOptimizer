@@ -26,6 +26,8 @@ import FormFactorPanel from './components/panels/FormFactorPanel';
 import ResultsPanel from './components/panels/ResultsPanel';
 import ShipmentPanel from './components/panels/ShipmentPanel';
 import SuperAdminPanel from './components/panels/SuperAdminPanel';
+import { MetricsDashboard } from './components/panels/MetricsDashboard';
+import { metricsService } from './services/metricsService';
 import ErrorModal from './components/modals/ErrorModal';
 import ImportConfirmModal from './components/modals/ImportConfirmModal';
 import ImportSummaryModal from './components/modals/ImportSummaryModal';
@@ -118,7 +120,7 @@ const App: React.FC = () => {
   } = useAppData(companyId, session?.user?.id);
 
   // --- App State ---
-  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin' | 'user_settings'>('products');
+  const [inputMode, setInputMode] = useState<'products' | 'containers' | 'config' | 'team' | 'countries' | 'shipments' | 'management' | 'super_admin' | 'user_settings' | 'metrics'>('products');
   const [viewMode, setViewMode] = useState<'data' | 'results'>('data');
   const [pendingReoptimize, setPendingReoptimize] = useState(false);
 
@@ -237,7 +239,7 @@ const App: React.FC = () => {
   });
 
   // --- Navigation Helpers ---
-  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team' | 'countries' | 'management') => {
+  const handleTabChange = (tab: 'products' | 'containers' | 'config' | 'team' | 'countries' | 'management' | 'metrics') => {
     setInputMode(tab);
     setViewMode('data');
   };
@@ -687,27 +689,22 @@ const App: React.FC = () => {
 
       addShipment(newShipment);
 
-      setProducts(prev => prev.map(p => {
-        const updates = updatedProductsMap.get(p.id);
-        if (updates) {
-          return {
-            ...p,
-            shipmentId: shipmentData.id,
-            status: 'shipped',
-            currentContainer: updates.currentContainer,
-            assignmentReference: updates.assignmentReference,
-            _containerInstanceId: updates._containerInstanceId
-          };
-        }
-        return p;
-      }));
-
-      setViewMode('data');
-      setInputMode('shipments');
-
+      setNewProduct({ name: '', formFactorId: '', quantity: 1, destination: '', restrictions: [], readyDate: '', shipDeadline: '', arrivalDeadline: '', shippingAvailableBy: '', currentContainer: '', extraFields: {} });
     } catch (error) {
       console.error('Error saving shipment:', error);
       setErrorModal({ isOpen: true, message: 'Failed to save shipment.' });
+    }
+
+    // Save Metrics asynchronously
+    try {
+      await metricsService.saveMetrics(
+        name,
+        result,
+        activePriority,
+        optimizerSettings
+      );
+    } catch (err) {
+      console.error("Failed to save metrics (non-blocking):", err);
     }
   };
 
@@ -1146,7 +1143,7 @@ const App: React.FC = () => {
           if (isResults) {
             setViewMode('results');
           } else if (mode) {
-            if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management') {
+            if (mode === 'products' || mode === 'containers' || mode === 'config' || mode === 'team' || mode === 'countries' || mode === 'management' || mode === 'metrics') {
               handleTabChange(mode as any);
             } else {
               setInputMode(mode as any);
@@ -1204,9 +1201,10 @@ const App: React.FC = () => {
           <div className="flex flex-col gap-1 items-center pb-4">
             <NavButton mode={undefined} icon={BarChart3} label={t('nav.results')} />
             <Separator className="w-10 bg-border/60 my-1" />
-            <NavButton mode="shipments" icon={Package} label={t('nav.shipments')} />
             <NavButton mode="products" icon={Box} label={t('nav.items')} />
             <NavButton mode="containers" icon={ContainerIcon} label={t('nav.containers')} />
+            <NavButton mode="shipments" icon={Package} label={t('nav.shipments')} />
+            <NavButton mode="metrics" icon={BarChart3} label={t('nav.metrics', 'Metrics')} />
             <NavButton mode="countries" icon={Globe} label={t('nav.countries')} />
             <NavButton mode="config" icon={Settings} label={t('nav.config')} />
 
@@ -1449,6 +1447,15 @@ const App: React.FC = () => {
                       userProfile={userProfile}
                     />
                   </div>
+                </div>
+              )}
+
+              {inputMode === 'metrics' && (
+                <div className="h-full overflow-hidden bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm m-4">
+                  <MetricsDashboard
+                    currentResult={results ? results[activePriority] : null}
+                    containers={containers}
+                  />
                 </div>
               )}
 

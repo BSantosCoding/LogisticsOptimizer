@@ -17,9 +17,11 @@ export interface OptimizationMetric {
     settings: OptimizerSettings;
     destination_stats: Record<string, { containers: number; products: number }>;
     product_stats: Record<string, number>;
-    // Comparison values (estimated without splitting)
+    // Comparison values (result with opposite split setting)
     comparison_cost?: number;
     comparison_utilization?: number;
+    // Container type distribution per destination
+    container_type_stats?: Record<string, Record<string, number>>;
 }
 
 export const metricsService = {
@@ -53,22 +55,30 @@ export const metricsService = {
             destStats[dest].products += a.assignedProducts.reduce((sum, p) => sum + p.quantity, 0);
         });
 
+        // Container type stats per destination (destination → container type → count)
+        const containerTypeStats: Record<string, Record<string, number>> = {};
+        result.assignments.forEach(a => {
+            const dest = a.container.destination || 'Unspecified';
+            // Get container type name (strip instance suffix)
+            const containerType = a.container.name || a.container.id.replace(/-instance-\d+$/, '');
+
+            if (!containerTypeStats[dest]) containerTypeStats[dest] = {};
+            containerTypeStats[dest][containerType] = (containerTypeStats[dest][containerType] || 0) + 1;
+        });
+
         // Product stats (Simple count by name)
         const prodStats: Record<string, number> = {};
         result.assignments.forEach(a => {
             a.assignedProducts.forEach(p => {
-                prodStats[p.name] = (prodStats[p.name] || 0) + p.quantity;
+                const name = p.name || p.data?.name || 'Unknown';
+                prodStats[name] = (prodStats[name] || 0) + p.quantity;
             });
         });
 
-        // Estimate comparison values (what would cost/utilization be without splitting)
-        // This is a rough estimate - without splitting, we'd likely need more containers with lower utilization
-        const comparisonCost = settings.allowUnitSplitting
-            ? result.totalCost * 1.15  // Estimate 15% higher cost without splitting
-            : result.totalCost;
-        const comparisonUtilization = settings.allowUnitSplitting
-            ? Math.max(avgUtilization * 0.85, 50)  // Estimate 15% lower utilization without splitting
-            : avgUtilization;
+        // Use actual comparison values from the optimizer result
+        // These represent the cost/utilization with the opposite split setting
+        const comparisonCost = result.comparisonCost ?? result.totalCost;
+        const comparisonUtilization = result.comparisonUtilization ?? avgUtilization;
 
         // 2. Insert into Supabase
         const { error } = await supabase
@@ -87,7 +97,8 @@ export const metricsService = {
                 destination_stats: destStats,
                 product_stats: prodStats,
                 comparison_cost: comparisonCost,
-                comparison_utilization: comparisonUtilization
+                comparison_utilization: comparisonUtilization,
+                container_type_stats: containerTypeStats
             });
 
         return { error };

@@ -65,6 +65,9 @@ export interface OptimizationResult {
   unassignedProducts: Product[];
   totalCost: number;
   reasoning?: string;
+  // Comparison values (result with opposite split setting)
+  comparisonCost?: number;
+  comparisonUtilization?: number;
 }
 
 export enum OptimizationPriority {

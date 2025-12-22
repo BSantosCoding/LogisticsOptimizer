@@ -168,7 +168,9 @@ export const useOptimization = (
                 assignments,
                 unassignedProducts: unassigned,
                 totalCost,
-                reasoning
+                reasoning,
+                comparisonCost: totalCostAlternative,
+                comparisonUtilization: avgUtilizationAlternative
             };
 
             const newResults: Record<OptimizationPriority, OptimizationResult> = {

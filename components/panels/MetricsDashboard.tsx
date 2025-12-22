@@ -14,6 +14,7 @@ import {
     ResponsiveContainer,
     LineChart,
     Line,
+    Cell,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, TrendingUp, Box, Package, DollarSign, MapPin, AlertCircle } from 'lucide-react';
@@ -25,6 +26,9 @@ interface MetricsDashboardProps {
     containers: Container[];
     currency?: string;
 }
+
+// Color palette for charts
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     currentResult,
@@ -57,6 +61,12 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         setIsLoading(false);
     };
 
+    // Format date for display
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
     // Get unique destinations from history for dropdown
     const availableDestinations = useMemo(() => {
         const allDests = new Set<string>();
@@ -68,13 +78,14 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         return Array.from(allDests).sort();
     }, [history]);
 
-    // Prepare data for trends with split vs non-split comparison
+    // Prepare data for time-based trends with actual comparison values
     const trendData = useMemo(() => {
-        return history.map((h, idx) => ({
-            name: h.shipment_name || `Run ${idx + 1}`,
+        return history.map((h) => ({
+            date: formatDate(h.created_at),
+            name: h.shipment_name,
             cost: Number(h.total_cost) || 0,
             utilization: Number(h.average_utilization) || 0,
-            // Comparison values (estimated without splitting)
+            // Actual comparison values from optimizer (opposite split setting)
             comparisonCost: Number(h.comparison_cost) || Number(h.total_cost) || 0,
             comparisonUtilization: Number(h.comparison_utilization) || Number(h.average_utilization) || 0,
             splitEnabled: h.settings?.allowUnitSplitting ? 'Yes' : 'No'
@@ -93,7 +104,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         };
     }, [history]);
 
-    // Products by selected destination
+    // Products by selected destination (from historical data)
     const productsByDestination = useMemo(() => {
         if (selectedDestination === 'all') {
             const allProducts: Record<string, number> = {};
@@ -107,7 +118,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             return Object.entries(allProducts)
                 .map(([name, quantity]) => ({ name, quantity }))
                 .sort((a, b) => b.quantity - a.quantity)
-                .slice(0, 8); // Reduced to 8 for better readability
+                .slice(0, 8);
         }
 
         const productMap: Record<string, number> = {};
@@ -124,16 +135,54 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             .slice(0, 8);
     }, [history, selectedDestination]);
 
-    // Prepare data for Destination Breakdown (Current Result)
-    const destinationData = useMemo(() => {
-        if (!currentResult) return [];
-        const stats: Record<string, number> = {};
-        currentResult.assignments.forEach(a => {
-            const dest = a.container.destination || 'Unspecified';
-            stats[dest] = (stats[dest] || 0) + 1;
+    // Containers by destination from historical data (aggregated)
+    const containersByDestination = useMemo(() => {
+        const destCounts: Record<string, number> = {};
+        history.forEach(h => {
+            if (h.destination_stats) {
+                Object.entries(h.destination_stats).forEach(([dest, stats]) => {
+                    destCounts[dest] = (destCounts[dest] || 0) + stats.containers;
+                });
+            }
         });
-        return Object.entries(stats).map(([name, count]) => ({ name, count }));
-    }, [currentResult]);
+        return Object.entries(destCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+    }, [history]);
+
+    // Container type distribution from historical data
+    const containerTypeData = useMemo(() => {
+        const typeCounts: Record<string, Record<string, number>> = {};
+
+        history.forEach(h => {
+            if (h.container_type_stats) {
+                Object.entries(h.container_type_stats).forEach(([dest, types]) => {
+                    if (!typeCounts[dest]) typeCounts[dest] = {};
+                    Object.entries(types).forEach(([type, count]) => {
+                        typeCounts[dest][type] = (typeCounts[dest][type] || 0) + (count as number);
+                    });
+                });
+            }
+        });
+
+        // Flatten for chart based on selected destination
+        const targetDests = selectedDestination === 'all'
+            ? Object.keys(typeCounts)
+            : [selectedDestination];
+
+        const aggregated: Record<string, number> = {};
+        targetDests.forEach(dest => {
+            if (typeCounts[dest]) {
+                Object.entries(typeCounts[dest]).forEach(([type, count]) => {
+                    aggregated[type] = (aggregated[type] || 0) + count;
+                });
+            }
+        });
+
+        return Object.entries(aggregated)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+    }, [history, selectedDestination]);
 
     // Use current result if available, otherwise show latest from history
     const displayCost = currentResult?.totalCost ?? historySummary?.totalCost ?? 0;
@@ -142,6 +191,11 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         ? (currentResult.assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / (currentResult.assignments.length || 1))
         : (historySummary?.avgUtilization ?? 0);
     const displayUnassigned = currentResult?.unassignedProducts.length ?? 0;
+
+    // Calculate savings from current result if available
+    const currentSavings = currentResult?.comparisonCost
+        ? Math.abs(currentResult.comparisonCost - currentResult.totalCost)
+        : 0;
 
     return (
         <div className="flex flex-col h-full overflow-y-auto p-6 gap-6 bg-background">
@@ -162,6 +216,9 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 {currentResult ? t('results.totalCost') : 'Last Saved Cost'}
                             </p>
                             <div className="text-2xl font-bold text-blue-600">{currency}{displayCost.toLocaleString()}</div>
+                            {currentSavings > 0 && (
+                                <p className="text-xs text-green-600">Est. savings: {currency}{currentSavings.toLocaleString()}</p>
+                            )}
                         </div>
                         <DollarSign className="text-blue-200" size={32} />
                     </CardContent>
@@ -210,11 +267,11 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             {/* Charts Section - 3 Column Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Historical Cost Trend */}
+                {/* Historical Cost Trend - Time-Based */}
                 <Card className="col-span-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">{t('metrics.costTrend', 'Cost Trend')}</CardTitle>
-                        <p className="text-xs text-muted-foreground">Solid = Actual, Dashed = Est. No Split</p>
+                        <CardTitle className="text-sm font-medium">{t('metrics.costTrend', 'Cost Trend Over Time')}</CardTitle>
+                        <p className="text-xs text-muted-foreground">Solid = Actual, Dashed = Opposite Split Setting</p>
                     </CardHeader>
                     <CardContent className="h-[280px]">
                         {trendData.length === 0 ? (
@@ -225,29 +282,30 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                    <XAxis dataKey="name" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
+                                    <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
                                     <YAxis fontSize={10} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} domain={['auto', 'auto']} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', fontSize: 12 }}
                                         formatter={(value: number, name: string) => [
                                             `${currency}${value.toLocaleString()}`,
-                                            name.includes('Comparison') ? 'Est. No Split' : 'Actual'
+                                            name === 'cost' ? 'Actual' : 'Alt. Setting'
                                         ]}
+                                        labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
                                     />
                                     <Legend wrapperStyle={{ fontSize: 10 }} />
                                     <Line type="monotone" dataKey="cost" stroke="#2563eb" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
-                                    <Line type="monotone" dataKey="comparisonCost" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" name="Est. No Split" dot={false} />
+                                    <Line type="monotone" dataKey="comparisonCost" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Utilization Trend */}
+                {/* Utilization Trend - Time-Based */}
                 <Card className="col-span-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">{t('metrics.utilizationTrend', 'Utilization Trend')}</CardTitle>
-                        <p className="text-xs text-muted-foreground">Solid = Actual, Dashed = Est. No Split</p>
+                        <CardTitle className="text-sm font-medium">{t('metrics.utilizationTrend', 'Utilization Trend Over Time')}</CardTitle>
+                        <p className="text-xs text-muted-foreground">Solid = Actual, Dashed = Opposite Split Setting</p>
                     </CardHeader>
                     <CardContent className="h-[280px]">
                         {trendData.length === 0 ? (
@@ -258,18 +316,19 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                    <XAxis dataKey="name" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
+                                    <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
                                     <YAxis domain={[0, 100]} fontSize={10} tickFormatter={(v) => `${v}%`} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', fontSize: 12 }}
                                         formatter={(value: number, name: string) => [
                                             `${value.toFixed(1)}%`,
-                                            name.includes('Comparison') ? 'Est. No Split' : 'Actual'
+                                            name === 'utilization' ? 'Actual' : 'Alt. Setting'
                                         ]}
+                                        labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
                                     />
                                     <Legend wrapperStyle={{ fontSize: 10 }} />
                                     <Line type="monotone" dataKey="utilization" stroke="#10b981" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
-                                    <Line type="monotone" dataKey="comparisonUtilization" stroke="#6ee7b7" strokeWidth={2} strokeDasharray="5 5" name="Est. No Split" dot={false} />
+                                    <Line type="monotone" dataKey="comparisonUtilization" stroke="#6ee7b7" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         )}
@@ -324,25 +383,66 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 </Card>
             </div>
 
-            {/* Current Run: Containers per Destination */}
-            {currentResult && destinationData.length > 0 && (
+            {/* Second Row - Containers by Destination & Container Types */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Containers by Destination - Historical */}
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">{t('metrics.containersPerDest', 'Current Run: Containers by Destination')}</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('metrics.containersPerDest', 'Historical: Containers by Destination')}</CardTitle>
+                        <p className="text-xs text-muted-foreground">Aggregated from all saved shipments</p>
                     </CardHeader>
                     <CardContent className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={destinationData}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="name" fontSize={11} />
-                                <YAxis allowDecimals={false} fontSize={11} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }} />
-                                <Bar dataKey="count" fill="#3b82f6" name="Containers" radius={[4, 4, 0, 0]} barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {containersByDestination.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                                No data yet
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={containersByDestination}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
+                                    <YAxis allowDecimals={false} fontSize={11} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }} />
+                                    <Bar dataKey="count" fill="#3b82f6" name="Containers" radius={[4, 4, 0, 0]} barSize={40} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
-            )}
+
+                {/* Container Type Distribution */}
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Box size={14} /> Container Type Distribution
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                            {selectedDestination === 'all' ? 'All destinations' : selectedDestination}
+                        </p>
+                    </CardHeader>
+                    <CardContent className="h-[200px]">
+                        {containerTypeData.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                                No container type data yet
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={containerTypeData}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
+                                    <YAxis allowDecimals={false} fontSize={11} />
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }} />
+                                    <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]} barSize={40}>
+                                        {containerTypeData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Empty State */}
             {history.length === 0 && !isLoading && (

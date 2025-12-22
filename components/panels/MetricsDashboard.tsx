@@ -141,7 +141,8 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         history.forEach(h => {
             if (h.destination_stats) {
                 Object.entries(h.destination_stats).forEach(([dest, stats]) => {
-                    destCounts[dest] = (destCounts[dest] || 0) + stats.containers;
+                    const typedStats = stats as { containers: number; products: number };
+                    destCounts[dest] = (destCounts[dest] || 0) + typedStats.containers;
                 });
             }
         });

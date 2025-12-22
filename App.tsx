@@ -747,10 +747,9 @@ const App: React.FC = () => {
             }
             // Else: Hard reference - preserve both ref and container
 
+            // IMPORTANT: Spread all original fields to preserve name, quantity, weight, etc.
             return {
-              id: p.id,
-              company_id: companyId,
-              created_by: p.created_by,
+              ...p,  // Preserve ALL existing columns
               shipment_id: null,
               status: 'available',
               data: newData

@@ -642,20 +642,28 @@ const App: React.FC = () => {
         containerCounter++;
       });
 
-      // Perform bulk update or individual updates
-      // Supabase helper for bulk update might not be available, so we loop or use upsert if full rows.
-      // Since we are updating specific fields in JSONB 'data' and standard cols, let's do it carefully.
-      // Actually, we can just iterate and update. Efficiency might be lower but safer for now.
+      // Fetch the current product rows from DB to preserve all columns
+      const productIds = productUpdates.map(u => u.id);
+      const { data: existingProducts } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds);
+
+      const existingMap = new Map(existingProducts?.map(p => [p.id, p]) || []);
 
       const { error: productsUpdateError } = await supabase.from('products').upsert(
-        productUpdates.map(u => ({
-          id: u.id,
-          company_id: companyId,
-          shipment_id: u.shipment_id,
-          status: u.status,
-          created_by: session.user.id, // RLS requirement
-          data: u.data
-        }))
+        productUpdates.map(u => {
+          const existing = existingMap.get(u.id) || {};
+          return {
+            ...existing,  // Preserve ALL existing columns (form_factor_id, quantity, weight, etc.)
+            id: u.id,
+            company_id: companyId,
+            shipment_id: u.shipment_id,
+            status: u.status,
+            created_by: session.user.id,
+            data: u.data  // Only override the data field with our changes
+          };
+        })
       );
 
       if (productsUpdateError) throw productsUpdateError;

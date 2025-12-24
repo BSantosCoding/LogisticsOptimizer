@@ -209,33 +209,24 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     const typesData = useMemo(() => getContainerTypeData(typesDest), [filteredHistory, typesDest]);
 
     // Display values Logic:
-    // If currentResult exists, show THAT. 
-    // If NOT, show aggregated history stats.
+    // ALWAYS show aggregated history stats as per user request.
 
     // Total Cost
-    const displayCost = currentResult
-        ? currentResult.totalCost
-        : aggregatedStats?.totalActualCost ?? 0;
+    const displayCost = aggregatedStats?.totalActualCost ?? 0;
 
     // Optimal Cost (comparison)
-    const displayOptimalCost = currentResult
-        ? (currentResult.comparisonCost ? Math.min(currentResult.totalCost, currentResult.comparisonCost) : currentResult.totalCost)
-        : aggregatedStats?.totalOptimalCost ?? 0;
+    const displayOptimalCost = aggregatedStats?.totalOptimalCost ?? 0;
 
     // Avg Utilization
-    const displayUtil = currentResult
-        ? (currentResult.assignments.reduce((sum, a) => sum + a.totalUtilization, 0) / (currentResult.assignments.length || 1))
-        : aggregatedStats?.avgActualUtil ?? 0;
+    const displayUtil = aggregatedStats?.avgActualUtil ?? 0;
 
     // Optimal Utilization
-    const displayOptimalUtil = currentResult
-        ? (currentResult.comparisonUtilization ? Math.max(displayUtil, currentResult.comparisonUtilization) : displayUtil)
-        : aggregatedStats?.avgOptimalUtil ?? 0;
+    const displayOptimalUtil = aggregatedStats?.avgOptimalUtil ?? 0;
 
     // Count
-    const displayCountLabel = currentResult ? t('results.totalContainers') : 'Total Shipments';
-    const displayCountValue = currentResult ? currentResult.assignments.length : aggregatedStats?.shipmentCount ?? 0;
-    const secondaryCountLabel = currentResult ? null : `Total Containers: ${aggregatedStats?.totalContainers ?? 0}`;
+    const displayCountLabel = 'Total Shipments';
+    const displayCountValue = aggregatedStats?.shipmentCount ?? 0;
+    const secondaryCountLabel = `Total Containers: ${aggregatedStats?.totalContainers ?? 0}`;
 
     return (
         <div className="flex flex-col h-full overflow-y-auto p-6 gap-6 bg-background">
@@ -277,7 +268,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <p className="text-xs text-muted-foreground uppercase font-semibold">
-                                    {currentResult ? t('results.totalCost') : 'Total Actual Cost'}
+                                    Total Actual Cost
                                 </p>
                                 <div className="text-3xl font-bold text-blue-600 mt-1">
                                     {currency}{displayCost.toLocaleString()}
@@ -317,7 +308,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <p className="text-xs text-muted-foreground uppercase font-semibold">
-                                    {currentResult ? 'Avg Utilization' : 'Historical Avg Util.'}
+                                    Historical Avg Util.
                                 </p>
                                 <div className="text-3xl font-bold text-emerald-600 mt-1">
                                     {displayUtil.toFixed(1)}%
@@ -378,10 +369,10 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 </Card>
             </div>
 
-            {!currentResult && filteredHistory.length > 0 && (
+            {filteredHistory.length > 0 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg">
                     <AlertCircle size={16} />
-                    Showing historical data {startDate || endDate ? `from ${startDate || 'beginning'} to ${endDate || 'now'}` : 'from last saved shipments'}.
+                    Showing historical data {startDate || endDate ? `from ${startDate || 'beginning'} to ${endDate || 'now'}` : 'from saved shipments'}.
                 </div>
             )}
 

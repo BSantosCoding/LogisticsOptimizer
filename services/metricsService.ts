@@ -15,7 +15,7 @@ export interface OptimizationMetric {
     low_utilization_count: number;
     optimization_priority: string;
     settings: OptimizerSettings;
-    destination_stats: Record<string, { containers: number; products: number }>;
+    destination_stats: Record<string, { containers: number; products: number; productBreakdown?: Record<string, number> }>;
     product_stats: Record<string, number>;
     // Comparison values (result with opposite split setting)
     comparison_cost?: number;
@@ -47,12 +47,19 @@ export const metricsService = {
         const lowUtilizationCount = result.assignments.filter(a => a.totalUtilization < 85).length;
 
         // Destination stats
-        const destStats: Record<string, { containers: number; products: number }> = {};
+        const destStats: Record<string, { containers: number; products: number; productBreakdown: Record<string, number> }> = {};
         result.assignments.forEach(a => {
             const dest = a.container.destination || 'Unspecified';
-            if (!destStats[dest]) destStats[dest] = { containers: 0, products: 0 };
+            if (!destStats[dest]) destStats[dest] = { containers: 0, products: 0, productBreakdown: {} };
             destStats[dest].containers += 1;
-            destStats[dest].products += a.assignedProducts.reduce((sum, p) => sum + p.quantity, 0);
+
+            const prodQty = a.assignedProducts.reduce((sum, p) => sum + p.quantity, 0);
+            destStats[dest].products += prodQty;
+
+            a.assignedProducts.forEach(p => {
+                const name = p.name || p.data?.name || 'Unknown';
+                destStats[dest].productBreakdown[name] = (destStats[dest].productBreakdown[name] || 0) + p.quantity;
+            });
         });
 
         // Container type stats per destination (destination → container type → count)

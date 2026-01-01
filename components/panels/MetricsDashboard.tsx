@@ -21,6 +21,34 @@ interface MetricsDashboardProps {
 // Color palette for charts
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
+const CustomTooltip = ({ active, payload, label, currency, type }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-lg shadow-xl min-w-[150px] z-50">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    {label}
+                </p>
+                <div className="flex flex-col gap-2">
+                    {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-4">
+                            <span className="text-xs font-semibold flex items-center gap-2" style={{ color: entry.color || entry.stroke }}>
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.stroke }}></div>
+                                {entry.name}
+                            </span>
+                            <span className="text-xs font-bold tabular-nums">
+                                {type === 'cost' ? `${currency}${entry.value.toLocaleString()}` :
+                                    type === 'utilization' ? `${entry.value.toFixed(1)}%` :
+                                        entry.value.toLocaleString()}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     currentResult,
     containers,
@@ -162,11 +190,26 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         filteredHistory.forEach(h => {
             const hStats = h.destination_stats || {};
             const hProdStats = h.product_stats || {};
-            const shouldInclude = targetDest === 'all' || !!hStats[targetDest];
-            if (shouldInclude) {
+
+            if (targetDest === 'all') {
                 Object.entries(hProdStats).forEach(([name, qty]) => {
                     productMap[name] = (productMap[name] || 0) + (qty as number);
                 });
+            } else {
+                const destData = hStats[targetDest];
+                if (destData) {
+                    if (destData.productBreakdown) {
+                        Object.entries(destData.productBreakdown).forEach(([name, qty]) => {
+                            productMap[name] = (productMap[name] || 0) + (qty as number);
+                        });
+                    } else {
+                        // Fallback for old data: only count if this shipment has the destination
+                        // Note: this is still imprecise for multi-destination shipments but better than nothing
+                        Object.entries(hProdStats).forEach(([name, qty]) => {
+                            productMap[name] = (productMap[name] || 0) + (qty as number);
+                        });
+                    }
+                }
             }
         });
         return Object.entries(productMap)
@@ -404,14 +447,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                                 <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
                                 <YAxis fontSize={10} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} domain={['auto', 'auto']} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', fontSize: 12 }}
-                                    formatter={(value: number, name: string) => [
-                                        `${currency}${value.toLocaleString()}`,
-                                        name // Just use the label we passed to the Line component
-                                    ]}
-                                    labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
-                                />
+                                <Tooltip content={<CustomTooltip currency={currency} type="cost" />} />
                                 <Legend wrapperStyle={{ fontSize: 10 }} />
                                 <Line type="monotone" dataKey="cost" stroke="#2563eb" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
                                 <Line type="monotone" dataKey="comparisonCost" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
@@ -432,14 +468,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                                 <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
                                 <YAxis domain={[0, 100]} fontSize={10} tickFormatter={(v) => `${v}%`} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', fontSize: 12 }}
-                                    formatter={(value: number, name: string) => [
-                                        `${value.toFixed(1)}%`,
-                                        name // Use provided label
-                                    ]}
-                                    labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
-                                />
+                                <Tooltip content={<CustomTooltip type="utilization" />} />
                                 <Legend wrapperStyle={{ fontSize: 10 }} />
                                 <Line type="monotone" dataKey="utilization" stroke="#10b981" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
                                 <Line type="monotone" dataKey="comparisonUtilization" stroke="#6ee7b7" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
@@ -482,10 +511,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                         tickFormatter={(val) => val.length > 15 ? val.slice(0, 15) + '…' : val}
                                         tick={{ fill: 'var(--foreground)' }}
                                     />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', fontSize: 11 }}
-                                        formatter={(value: number) => [value.toLocaleString(), 'Qty']}
-                                    />
+                                    <Tooltip content={<CustomTooltip />} />
                                     <Bar dataKey="quantity" fill="#3b82f6" name="Qty" radius={[0, 4, 4, 0]} barSize={14} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -519,7 +545,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                                 <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
                                 <YAxis allowDecimals={false} fontSize={11} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }} />
+                                <Tooltip content={<CustomTooltip />} />
                                 <Bar dataKey="count" fill="#3b82f6" name="Containers" radius={[4, 4, 0, 0]} barSize={40} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -551,7 +577,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                                 <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
                                 <YAxis allowDecimals={false} fontSize={11} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }} />
+                                <Tooltip content={<CustomTooltip />} />
                                 <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]} barSize={40}>
                                     {typesData.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -113,21 +113,13 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         return Array.from(allDests).sort();
     }, [filteredHistory]);
 
-    // Prepare data for time-based trends (respects BOTH filters)
+    // Prepare data for time-based trends (always use shipment totals as per request)
     const trendData = useMemo(() => {
         return filteredHistory.map((h) => {
-            let cost = Number(h.total_cost) || 0;
-            let compCost = Number(h.comparison_cost) || cost;
-            let util = Number(h.average_utilization) || 0;
-            let compUtil = Number(h.comparison_utilization) || util;
-
-            if (selectedDestination !== 'all' && h.destination_stats?.[selectedDestination]) {
-                const ds = h.destination_stats[selectedDestination];
-                cost = ds.cost || 0;
-                compCost = ds.comparisonCost || cost;
-                util = ds.avgUtilization || 0;
-                compUtil = ds.comparisonUtilization || util;
-            }
+            const cost = Number(h.total_cost) || 0;
+            const compCost = Number(h.comparison_cost) || cost;
+            const util = Number(h.average_utilization) || 0;
+            const compUtil = Number(h.comparison_utilization) || util;
 
             return {
                 date: formatDate(h.created_at),
@@ -139,7 +131,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 splitEnabled: h.settings?.allowUnitSplitting ? 'Yes' : 'No'
             };
         });
-    }, [filteredHistory, selectedDestination]);
+    }, [filteredHistory]);
 
     // --- AGGREGATED SUMMARY STATS (Respects BOTH filters) ---
     const aggregatedStats = useMemo(() => {
@@ -227,16 +219,17 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 Object.entries(hProdStats).forEach(([name, qty]) => {
                     productMap[name] = (productMap[name] || 0) + (qty as number);
                 });
-            } else {
+            } else if (hStats[targetDest]) {
                 const destData = hStats[targetDest];
-                if (destData) {
-                    if (destData.productBreakdown) {
-                        Object.entries(destData.productBreakdown).forEach(([name, qty]) => {
-                            productMap[name] = (productMap[name] || 0) + (qty as number);
-                        });
-                    } else {
-                        // Fallback for old data: only count if this shipment has the destination
-                        // Note: this is still imprecise for multi-destination shipments but better than nothing
+                if (destData.productBreakdown && Object.keys(destData.productBreakdown).length > 0) {
+                    Object.entries(destData.productBreakdown).forEach(([name, qty]) => {
+                        productMap[name] = (productMap[name] || 0) + (qty as number);
+                    });
+                } else {
+                    // Optimized fallback: only count if this shipment only had ONE destination 
+                    // or if we have to make a best guess (better than adding everything if multiple exist)
+                    const destsInShipment = Object.keys(hStats);
+                    if (destsInShipment.length === 1 && destsInShipment[0] === targetDest) {
                         Object.entries(hProdStats).forEach(([name, qty]) => {
                             productMap[name] = (productMap[name] || 0) + (qty as number);
                         });
@@ -247,7 +240,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         return Object.entries(productMap)
             .map(([name, quantity]) => ({ name, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
-            .slice(0, 8);
+            .slice(0, 10); // Show top 10 instead of 8
     };
 
     const getContainerByDestData = (targetDest: string) => {
@@ -314,302 +307,306 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     const secondaryCountLabel = `Total Containers: ${aggregatedStats?.totalContainers ?? 0}`;
 
     return (
-        <div className="flex flex-col h-full overflow-y-auto p-6 gap-6 bg-background">
+        <div className="flex flex-col h-full bg-background overflow-hidden">
+            {/* Fixed Header */}
+            <div className="flex-none bg-background/95 backdrop-blur-sm border-b px-6 py-4 z-20 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold">{t('metrics.dashboardTitle', 'Optimization Metrics')}</h2>
 
-            {/* Header with Title and Global Filters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold">{t('metrics.dashboardTitle', 'Optimization Metrics')}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Date Filter */}
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Select value={selectedDestination} onValueChange={setSelectedDestination}>
+                                <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin size={14} className="text-muted-foreground" />
+                                        <SelectValue placeholder="All Destinations" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">{t('common.all', 'All Destinations')}</SelectItem>
+                                    {availableDestinations.map(dest => (
+                                        <SelectItem key={dest} value={dest}>{dest}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Date Filter */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Select value={selectedDestination} onValueChange={setSelectedDestination}>
-                            <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                                <div className="flex items-center gap-2">
-                                    <MapPin size={14} className="text-muted-foreground" />
-                                    <SelectValue placeholder="All Destinations" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">{t('common.all', 'All Destinations')}</SelectItem>
-                                {availableDestinations.map(dest => (
-                                    <SelectItem key={dest} value={dest}>{dest}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <Calendar size={14} className="text-muted-foreground" />
-                            <Input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
-                            />
-                            <span className="text-muted-foreground">-</span>
-                            <Input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
-                            />
+                            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm">
+                                <Calendar size={14} className="text-muted-foreground" />
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
+                                />
+                                <span className="text-muted-foreground">-</span>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
+                                />
+                            </div>
                         </div>
+                        <Button variant="outline" size="sm" onClick={fetchHistory} disabled={isLoading} className="h-8">
+                            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                            {t('common.refresh', 'Refresh')}
+                        </Button>
                     </div>
-                    <Button variant="outline" size="sm" onClick={fetchHistory} disabled={isLoading} className="h-8">
-                        <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                        {t('common.refresh', 'Refresh')}
-                    </Button>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* COST CARD */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase font-semibold">
-                                    Total Actual Cost
-                                </p>
-                                <div className="text-3xl font-bold text-blue-600 mt-1">
-                                    {currency}{displayCost.toLocaleString()}
+            {/* Scrollable Content Container */}
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {/* COST CARD */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase font-semibold">
+                                        Total Actual Cost
+                                    </p>
+                                    <div className="text-3xl font-bold text-blue-600 mt-1">
+                                        {currency}{displayCost.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                    <DollarSign className="text-blue-600 dark:text-blue-400" size={24} />
                                 </div>
                             </div>
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                <DollarSign className="text-blue-600 dark:text-blue-400" size={24} />
-                            </div>
-                        </div>
 
-                        <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                                    Potential Lowest
-                                </p>
-                                <div className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
-                                    {currency}{displayOptimalCost.toLocaleString()}
-                                    {displayCost > displayOptimalCost && (
-                                        <div className="flex items-center gap-1.5 ml-1">
-                                            <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
-                                                -{((1 - displayOptimalCost / displayCost) * 100).toFixed(1)}%
+                            <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                        Potential Lowest
+                                    </p>
+                                    <div className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                                        {currency}{displayOptimalCost.toLocaleString()}
+                                        {displayCost > displayOptimalCost && (
+                                            <div className="flex items-center gap-1.5 ml-1">
+                                                <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
+                                                    -{((1 - displayOptimalCost / displayCost) * 100).toFixed(1)}%
+                                                </span>
+                                                <span className="text-[10px] whitespace-nowrap opacity-80">
+                                                    ({t('metrics.possibleSavings', 'Save')} {currency}{(displayCost - displayOptimalCost).toLocaleString()})
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {displayCost > displayOptimalCost ? (
+                                    <ArrowDownRight size={16} className="text-emerald-500" />
+                                ) : (
+                                    <Box size={16} className="text-muted-foreground opacity-20" />
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* UTILIZATION CARD */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase font-semibold">
+                                        Historical Avg Util.
+                                    </p>
+                                    <div className="text-3xl font-bold text-emerald-600 mt-1">
+                                        {displayUtil.toFixed(1)}%
+                                    </div>
+                                </div>
+                                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                                    <TrendingUp className="text-emerald-600 dark:text-emerald-400" size={24} />
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                        Potential Highest
+                                    </p>
+                                    <div className="text-sm font-semibold text-blue-600 flex items-center gap-1">
+                                        {displayOptimalUtil.toFixed(1)}%
+                                        {displayOptimalUtil > displayUtil && (
+                                            <span className="text-[10px] font-normal text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full">
+                                                +{((displayOptimalUtil - displayUtil)).toFixed(1)}%
                                             </span>
-                                            <span className="text-[10px] whitespace-nowrap opacity-80">
-                                                ({t('metrics.possibleSavings', 'Save')} {currency}{(displayCost - displayOptimalCost).toLocaleString()})
-                                            </span>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+                                </div>
+                                {displayOptimalUtil > displayUtil ? (
+                                    <ArrowUpRight size={16} className="text-blue-500" />
+                                ) : (
+                                    <Box size={16} className="text-muted-foreground opacity-20" />
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* VOLUME/COUNT CARD */}
+                    <Card>
+                        <CardContent className="pt-6 flex flex-col justify-between h-full">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase font-semibold">
+                                        {displayCountLabel}
+                                    </p>
+                                    <div className="text-3xl font-bold text-primary mt-1">
+                                        {displayCountValue}
+                                    </div>
+                                </div>
+                                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                    <Box className="text-slate-500" size={24} />
                                 </div>
                             </div>
-                            {displayCost > displayOptimalCost ? (
-                                <ArrowDownRight size={16} className="text-emerald-500" />
-                            ) : (
-                                <Box size={16} className="text-muted-foreground opacity-20" />
+                            {secondaryCountLabel && (
+                                <div className="mt-4 pt-4 border-t flex flex-col gap-1">
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        {secondaryCountLabel}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        {t('metrics.avgContainers', 'Avg Containers / Shipment')}: {aggregatedStats?.avgContainersPerShipment.toFixed(1)}
+                                    </p>
+                                </div>
                             )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* UTILIZATION CARD */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase font-semibold">
-                                    Historical Avg Util.
-                                </p>
-                                <div className="text-3xl font-bold text-emerald-600 mt-1">
-                                    {displayUtil.toFixed(1)}%
-                                </div>
-                            </div>
-                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                <TrendingUp className="text-emerald-600 dark:text-emerald-400" size={24} />
-                            </div>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                            <div>
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                                    Potential Highest
-                                </p>
-                                <div className="text-sm font-semibold text-blue-600 flex items-center gap-1">
-                                    {displayOptimalUtil.toFixed(1)}%
-                                    {displayOptimalUtil > displayUtil && (
-                                        <span className="text-[10px] font-normal text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full">
-                                            +{((displayOptimalUtil - displayUtil)).toFixed(1)}%
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            {displayOptimalUtil > displayUtil ? (
-                                <ArrowUpRight size={16} className="text-blue-500" />
-                            ) : (
-                                <Box size={16} className="text-muted-foreground opacity-20" />
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* VOLUME/COUNT CARD */}
-                <Card>
-                    <CardContent className="pt-6 flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase font-semibold">
-                                    {displayCountLabel}
-                                </p>
-                                <div className="text-3xl font-bold text-primary mt-1">
-                                    {displayCountValue}
-                                </div>
-                            </div>
-                            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                <Box className="text-slate-500" size={24} />
-                            </div>
-                        </div>
-                        {secondaryCountLabel && (
-                            <div className="mt-4 pt-4 border-t flex flex-col gap-1">
-                                <p className="text-xs text-muted-foreground font-medium">
-                                    {secondaryCountLabel}
-                                </p>
-                                <p className="text-xs text-muted-foreground font-medium">
-                                    {t('metrics.avgContainers', 'Avg Containers / Shipment')}: {aggregatedStats?.avgContainersPerShipment.toFixed(1)}
-                                </p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {filteredHistory.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg">
-                    <AlertCircle size={16} />
-                    Showing historical data {startDate || endDate ? `from ${startDate || 'beginning'} to ${endDate || 'now'}` : 'from saved shipments'}.
+                        </CardContent>
+                    </Card>
                 </div>
-            )}
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {filteredHistory.length > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-lg">
+                        <AlertCircle size={16} />
+                        Showing historical data {startDate || endDate ? `from ${startDate || 'beginning'} to ${endDate || 'now'}` : 'from saved shipments'}.
+                    </div>
+                )}
 
-                {/* Historical Cost Trend */}
-                <Card className="col-span-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">{t('metrics.costTrend', 'Cost Trend')}</CardTitle>
-                        <p className="text-xs text-muted-foreground">Actual vs. Opposite Split Setting</p>
-                    </CardHeader>
-                    <CardContent className="h-[280px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
-                                <YAxis fontSize={10} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} domain={['auto', 'auto']} />
-                                <Tooltip content={<CustomTooltip currency={currency} type="cost" />} />
-                                <Legend wrapperStyle={{ fontSize: 10 }} />
-                                <Line type="monotone" dataKey="cost" stroke="#2563eb" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
-                                <Line type="monotone" dataKey="comparisonCost" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Utilization Trend */}
-                <Card className="col-span-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">{t('metrics.utilizationTrend', 'Utilization Trend')}</CardTitle>
-                        <p className="text-xs text-muted-foreground">Actual vs. Opposite Split Setting</p>
-                    </CardHeader>
-                    <CardContent className="h-[280px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
-                                <YAxis domain={[0, 100]} fontSize={10} tickFormatter={(v) => `${v}%`} />
-                                <Tooltip content={<CustomTooltip type="utilization" />} />
-                                <Legend wrapperStyle={{ fontSize: 10 }} />
-                                <Line type="monotone" dataKey="utilization" stroke="#10b981" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
-                                <Line type="monotone" dataKey="comparisonUtilization" stroke="#6ee7b7" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                {/* Top Products */}
-                <Card className="col-span-1">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Box size={14} /> {t('metrics.topProducts', 'Top Products')}
-                            </CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="h-[280px]">
-                        {productsData.length === 0 ? (
-                            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">No data</div>
-                        ) : (
+                    {/* Historical Cost Trend */}
+                    <Card className="col-span-1">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">{t('metrics.costTrend', 'Cost Trend')}</CardTitle>
+                            <p className="text-xs text-muted-foreground">Actual vs. Opposite Split Setting</p>
+                        </CardHeader>
+                        <CardContent className="h-[280px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={productsData} layout="vertical" margin={{ left: 0, right: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} horizontal={false} />
-                                    <XAxis type="number" fontSize={9} />
-                                    <YAxis
-                                        dataKey="name"
-                                        type="category"
-                                        fontSize={9}
-                                        width={100}
-                                        tickFormatter={(val) => val.length > 15 ? val.slice(0, 15) + '…' : val}
-                                        tick={{ fill: 'var(--foreground)' }}
-                                    />
+                                <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
+                                    <YAxis fontSize={10} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} domain={['auto', 'auto']} />
+                                    <Tooltip content={<CustomTooltip currency={currency} type="cost" />} />
+                                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                                    <Line type="monotone" dataKey="cost" stroke="#2563eb" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
+                                    <Line type="monotone" dataKey="comparisonCost" stroke="#93c5fd" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Utilization Trend */}
+                    <Card className="col-span-1">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium">{t('metrics.utilizationTrend', 'Utilization Trend')}</CardTitle>
+                            <p className="text-xs text-muted-foreground">Actual vs. Opposite Split Setting</p>
+                        </CardHeader>
+                        <CardContent className="h-[280px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={trendData} margin={{ left: 10, right: 10, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="date" fontSize={10} angle={-30} textAnchor="end" height={50} interval={0} />
+                                    <YAxis domain={[0, 100]} fontSize={10} tickFormatter={(v) => `${v}%`} />
+                                    <Tooltip content={<CustomTooltip type="utilization" />} />
+                                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                                    <Line type="monotone" dataKey="utilization" stroke="#10b981" strokeWidth={2} name="Actual" dot={{ r: 4 }} />
+                                    <Line type="monotone" dataKey="comparisonUtilization" stroke="#6ee7b7" strokeWidth={2} strokeDasharray="5 5" name="Alt. Setting" dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Products */}
+                    <Card className="col-span-1">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                    <Box size={14} /> {t('metrics.topProducts', 'Top Products')}
+                                </CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="h-[280px]">
+                            {productsData.length === 0 ? (
+                                <div className="h-full flex items-center justify-center text-muted-foreground text-sm">No data</div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={productsData} layout="vertical" margin={{ left: 0, right: 10 }}>
+                                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} horizontal={false} />
+                                        <XAxis type="number" fontSize={9} />
+                                        <YAxis
+                                            dataKey="name"
+                                            type="category"
+                                            fontSize={9}
+                                            width={100}
+                                            tickFormatter={(val) => val.length > 15 ? val.slice(0, 15) + '…' : val}
+                                            tick={{ fill: 'var(--foreground)' }}
+                                        />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Bar dataKey="quantity" fill="#3b82f6" name="Qty" radius={[0, 4, 4, 0]} barSize={14} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Containers by Destination & Types */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium">Containers by Destination</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={containersData}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
+                                    <YAxis allowDecimals={false} fontSize={11} />
                                     <Tooltip content={<CustomTooltip />} />
-                                    <Bar dataKey="quantity" fill="#3b82f6" name="Qty" radius={[0, 4, 4, 0]} barSize={14} />
+                                    <Bar dataKey="count" fill="#3b82f6" name="Containers" radius={[4, 4, 0, 0]} barSize={40} />
                                 </BarChart>
                             </ResponsiveContainer>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        </CardContent>
+                    </Card>
 
-            {/* Containers by Destination & Types */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-medium">Containers by Destination</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={containersData}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
-                                <YAxis allowDecimals={false} fontSize={11} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Bar dataKey="count" fill="#3b82f6" name="Containers" radius={[4, 4, 0, 0]} barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Box size={14} /> Container Types
-                            </CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={typesData}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
-                                <YAxis allowDecimals={false} fontSize={11} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]} barSize={40}>
-                                    {typesData.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                    <Box size={14} /> Container Types
+                                </CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={typesData}>
+                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                    <XAxis dataKey="name" fontSize={10} angle={-20} textAnchor="end" height={50} />
+                                    <YAxis allowDecimals={false} fontSize={11} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Bar dataKey="count" name="Count" radius={[4, 4, 0, 0]} barSize={40}>
+                                        {typesData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

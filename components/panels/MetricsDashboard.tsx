@@ -140,6 +140,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         const avgOptimalUtil = totalOptimalUtil / count;
 
         const totalSavings = totalActualCost - totalOptimalCost;
+        const avgContainersPerShipment = count > 0 ? totalContainers / count : 0;
 
         return {
             totalActualCost,
@@ -148,6 +149,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             avgActualUtil,
             avgOptimalUtil,
             totalContainers,
+            avgContainersPerShipment,
             shipmentCount: count
         };
 
@@ -367,9 +369,12 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                             </div>
                         </div>
                         {secondaryCountLabel && (
-                            <div className="mt-4 pt-4 border-t">
+                            <div className="mt-4 pt-4 border-t flex flex-col gap-1">
                                 <p className="text-xs text-muted-foreground font-medium">
                                     {secondaryCountLabel}
+                                </p>
+                                <p className="text-xs text-muted-foreground font-medium">
+                                    {t('metrics.avgContainers', 'Avg Containers / Shipment')}: {aggregatedStats?.avgContainersPerShipment.toFixed(1)}
                                 </p>
                             </div>
                         )}

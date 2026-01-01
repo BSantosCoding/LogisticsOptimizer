@@ -379,6 +379,7 @@
     "metrics": {
         "dashboardTitle": "Optimierungskennzahlen",
         "possibleSavings": "Mögliche Einsparungen",
+        "avgContainers": "Durchschn. Container / Sendung",
         "costTrend": "Kostentrend",
         "utilizationTrend": "Auslastungstrend"
     }

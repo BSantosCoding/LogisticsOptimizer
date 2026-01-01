@@ -307,9 +307,9 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     const secondaryCountLabel = `Total Containers: ${aggregatedStats?.totalContainers ?? 0}`;
 
     return (
-        <div className="flex flex-col h-full bg-background overflow-hidden">
-            {/* Fixed Header */}
-            <div className="flex-none bg-background/95 backdrop-blur-sm border-b px-6 py-4 z-20 shadow-sm">
+        <div className="flex flex-col h-full w-full bg-background overflow-hidden relative">
+            {/* Fixed Header - using sticky as a fallback for nested scroll issues */}
+            <div className="sticky top-0 flex-none bg-background/95 backdrop-blur-sm border-b px-6 py-4 z-20 shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <h2 className="text-2xl font-bold">{t('metrics.dashboardTitle', 'Optimization Metrics')}</h2>
 
@@ -357,7 +357,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             </div>
 
             {/* Scrollable Content Container */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto min-h-0 p-6 flex flex-col gap-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {/* COST CARD */}

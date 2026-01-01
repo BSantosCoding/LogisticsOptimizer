@@ -1399,7 +1399,7 @@ const App: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden h-full">
               {inputMode === 'products' && (
                 <div className="flex-1 flex overflow-hidden">
                   <div className="w-80 shrink-0 border-r bg-muted/10 overflow-y-auto">
@@ -1497,7 +1497,7 @@ const App: React.FC = () => {
               )}
 
               {inputMode === 'metrics' && (
-                <div className="flex-1 h-full overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden h-full">
                   <MetricsDashboard
                     currentResult={results ? results[activePriority] : null}
                     containers={containers}

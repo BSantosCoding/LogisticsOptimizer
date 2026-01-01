@@ -375,5 +375,11 @@
         "errorApprove": "Falha ao aprovar empresa",
         "errorReject": "Falha ao rejeitar empresa",
         "confirmReject": "Tem a certeza que pretende rejeitar esta empresa? Os utilizadores não poderão aceder à mesma."
+    },
+    "metrics": {
+        "dashboardTitle": "Métricas de Otimização",
+        "possibleSavings": "Poupança Possível",
+        "costTrend": "Tendência de Custos",
+        "utilizationTrend": "Tendência de Utilização"
     }
 }

@@ -375,5 +375,11 @@
         "errorApprove": "Genehmigen des Unternehmens fehlgeschlagen",
         "errorReject": "Ablehnen des Unternehmens fehlgeschlagen",
         "confirmReject": "Sind Sie sicher, dass Sie dieses Unternehmen ablehnen möchten? Benutzer können dann nicht mehr darauf zugreifen."
+    },
+    "metrics": {
+        "dashboardTitle": "Optimierungskennzahlen",
+        "possibleSavings": "Mögliche Einsparungen",
+        "costTrend": "Kostentrend",
+        "utilizationTrend": "Auslastungstrend"
     }
 }

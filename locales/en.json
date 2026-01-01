@@ -375,5 +375,11 @@
         "errorApprove": "Failed to approve company",
         "errorReject": "Failed to reject company",
         "confirmReject": "Are you sure you want to reject this company? Users will not be able to access it."
+    },
+    "metrics": {
+        "dashboardTitle": "Optimization Metrics",
+        "possibleSavings": "Possible Savings",
+        "costTrend": "Cost Trend",
+        "utilizationTrend": "Utilization Trend"
     }
 }

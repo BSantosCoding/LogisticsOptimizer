@@ -139,9 +139,12 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         const avgActualUtil = totalActualUtil / count;
         const avgOptimalUtil = totalOptimalUtil / count;
 
+        const totalSavings = totalActualCost - totalOptimalCost;
+
         return {
             totalActualCost,
             totalOptimalCost,
+            totalSavings,
             avgActualUtil,
             avgOptimalUtil,
             totalContainers,
@@ -287,9 +290,14 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                                 <div className="text-sm font-semibold text-emerald-600 flex items-center gap-1">
                                     {currency}{displayOptimalCost.toLocaleString()}
                                     {displayCost > displayOptimalCost && (
-                                        <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
-                                            -{((1 - displayOptimalCost / displayCost) * 100).toFixed(1)}%
-                                        </span>
+                                        <div className="flex items-center gap-1.5 ml-1">
+                                            <span className="text-[10px] font-normal text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">
+                                                -{((1 - displayOptimalCost / displayCost) * 100).toFixed(1)}%
+                                            </span>
+                                            <span className="text-[10px] whitespace-nowrap opacity-80">
+                                                ({t('metrics.possibleSavings', 'Save')} {currency}{(displayCost - displayOptimalCost).toLocaleString()})
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
                             </div>

@@ -15,7 +15,15 @@ export interface OptimizationMetric {
     low_utilization_count: number;
     optimization_priority: string;
     settings: OptimizerSettings;
-    destination_stats: Record<string, { containers: number; products: number; productBreakdown?: Record<string, number> }>;
+    destination_stats: Record<string, {
+        containers: number;
+        products: number;
+        cost?: number;
+        comparisonCost?: number;
+        avgUtilization?: number;
+        comparisonUtilization?: number;
+        productBreakdown?: Record<string, number>
+    }>;
     product_stats: Record<string, number>;
     // Comparison values (result with opposite split setting)
     comparison_cost?: number;
@@ -47,11 +55,38 @@ export const metricsService = {
         const lowUtilizationCount = result.assignments.filter(a => a.totalUtilization < 85).length;
 
         // Destination stats
-        const destStats: Record<string, { containers: number; products: number; productBreakdown: Record<string, number> }> = {};
+        const destStats: Record<string, {
+            containers: number;
+            products: number;
+            cost: number;
+            comparisonCost: number;
+            avgUtilization: number;
+            comparisonUtilization: number;
+            productBreakdown: Record<string, number>
+        }> = {};
+
         result.assignments.forEach(a => {
             const dest = a.container.destination || 'Unspecified';
-            if (!destStats[dest]) destStats[dest] = { containers: 0, products: 0, productBreakdown: {} };
+            if (!destStats[dest]) {
+                destStats[dest] = {
+                    containers: 0,
+                    products: 0,
+                    cost: 0,
+                    comparisonCost: 0,
+                    avgUtilization: 0,
+                    comparisonUtilization: 0,
+                    productBreakdown: {}
+                };
+            }
             destStats[dest].containers += 1;
+            destStats[dest].cost += a.container.cost || 0;
+            destStats[dest].avgUtilization += a.totalUtilization || 0;
+
+            const costRatio = result.totalCost > 0 ? (result.comparisonCost || result.totalCost) / result.totalCost : 1;
+            destStats[dest].comparisonCost += (a.container.cost || 0) * costRatio;
+
+            const utilRatio = avgUtilization > 0 ? (result.comparisonUtilization || avgUtilization) / avgUtilization : 1;
+            destStats[dest].comparisonUtilization += (a.totalUtilization || 0) * utilRatio;
 
             const prodQty = a.assignedProducts.reduce((sum, p) => sum + p.quantity, 0);
             destStats[dest].products += prodQty;
@@ -60,6 +95,14 @@ export const metricsService = {
                 const name = p.name || p.data?.name || 'Unknown';
                 destStats[dest].productBreakdown[name] = (destStats[dest].productBreakdown[name] || 0) + p.quantity;
             });
+        });
+
+        // Finalize averages for destinations
+        Object.keys(destStats).forEach(dest => {
+            if (destStats[dest].containers > 0) {
+                destStats[dest].avgUtilization /= destStats[dest].containers;
+                destStats[dest].comparisonUtilization /= destStats[dest].containers;
+            }
         });
 
         // Container type stats per destination (destination → container type → count)

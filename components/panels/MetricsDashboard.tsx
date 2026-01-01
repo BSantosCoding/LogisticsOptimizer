@@ -58,14 +58,11 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     const [history, setHistory] = useState<OptimizationMetric[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Global Date Filter
+    // Global Filters
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [selectedDestination, setSelectedDestination] = useState<string>('all');
 
-    // Per-Chart Destination Filters
-    const [productsDest, setProductsDest] = useState<string>('all');
-    const [containersDest, setContainersDest] = useState<string>('all');
-    const [typesDest, setTypesDest] = useState<string>('all');
 
     // Fetch history on mount
     useEffect(() => {
@@ -116,59 +113,94 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         return Array.from(allDests).sort();
     }, [filteredHistory]);
 
-    // Prepare data for time-based trends (always use filtered history)
+    // Prepare data for time-based trends (respects BOTH filters)
     const trendData = useMemo(() => {
-        return filteredHistory.map((h) => ({
-            date: formatDate(h.created_at),
-            name: h.shipment_name,
-            cost: Number(h.total_cost) || 0,
-            utilization: Number(h.average_utilization) || 0,
-            comparisonCost: Number(h.comparison_cost) || Number(h.total_cost) || 0,
-            comparisonUtilization: Number(h.comparison_utilization) || Number(h.average_utilization) || 0,
-            splitEnabled: h.settings?.allowUnitSplitting ? 'Yes' : 'No'
-        }));
-    }, [filteredHistory]);
+        return filteredHistory.map((h) => {
+            let cost = Number(h.total_cost) || 0;
+            let compCost = Number(h.comparison_cost) || cost;
+            let util = Number(h.average_utilization) || 0;
+            let compUtil = Number(h.comparison_utilization) || util;
 
-    // --- AGGREGATED SUMMARY STATS ---
+            if (selectedDestination !== 'all' && h.destination_stats?.[selectedDestination]) {
+                const ds = h.destination_stats[selectedDestination];
+                cost = ds.cost || 0;
+                compCost = ds.comparisonCost || cost;
+                util = ds.avgUtilization || 0;
+                compUtil = ds.comparisonUtilization || util;
+            }
+
+            return {
+                date: formatDate(h.created_at),
+                name: h.shipment_name,
+                cost,
+                utilization: util,
+                comparisonCost: compCost,
+                comparisonUtilization: compUtil,
+                splitEnabled: h.settings?.allowUnitSplitting ? 'Yes' : 'No'
+            };
+        });
+    }, [filteredHistory, selectedDestination]);
+
+    // --- AGGREGATED SUMMARY STATS (Respects BOTH filters) ---
     const aggregatedStats = useMemo(() => {
         if (filteredHistory.length === 0) return null;
 
         let totalActualCost = 0;
         let totalOptimalCost = 0;
-
         let totalActualUtil = 0;
         let totalOptimalUtil = 0;
-
         let totalContainers = 0;
+        let validShipmentsCount = 0;
 
         filteredHistory.forEach(h => {
-            const actualCost = Number(h.total_cost) || 0;
-            const compCost = Number(h.comparison_cost) || actualCost; // Default to actual if missing
-            // Optimal cost is the lower of the two (assuming we want to show potential savings)
-            // Or typically "comparison" is the "Alternative". 
-            // The user asked for "lowest total cost we could have achieved".
-            const bestCost = Math.min(actualCost, compCost);
+            let actualCost = 0;
+            let bestCost = 0;
+            let actualUtil = 0;
+            let bestUtil = 0;
+            let containersSub = 0;
+            let hasData = false;
 
-            const actualUtil = Number(h.average_utilization) || 0;
-            const compUtil = Number(h.comparison_utilization) || actualUtil;
-            // "Highest utilization % avg we could have achieved"
-            const bestUtil = Math.max(actualUtil, compUtil);
+            if (selectedDestination === 'all') {
+                actualCost = Number(h.total_cost) || 0;
+                const compCost = Number(h.comparison_cost) || actualCost;
+                bestCost = Math.min(actualCost, compCost);
 
-            totalActualCost += actualCost;
-            totalOptimalCost += bestCost;
+                actualUtil = Number(h.average_utilization) || 0;
+                const compUtil = Number(h.comparison_utilization) || actualUtil;
+                bestUtil = Math.max(actualUtil, compUtil);
 
-            totalActualUtil += actualUtil;
-            totalOptimalUtil += bestUtil;
+                containersSub = (h.container_count || 0);
+                hasData = true;
+            } else if (h.destination_stats?.[selectedDestination]) {
+                const ds = h.destination_stats[selectedDestination];
+                actualCost = ds.cost || 0;
+                const compCost = ds.comparisonCost || actualCost;
+                bestCost = Math.min(actualCost, compCost);
 
-            totalContainers += (h.container_count || 0);
+                actualUtil = ds.avgUtilization || 0;
+                const compUtil = ds.comparisonUtilization || actualUtil;
+                bestUtil = Math.max(actualUtil, compUtil);
+
+                containersSub = ds.containers || 0;
+                hasData = true;
+            }
+
+            if (hasData) {
+                totalActualCost += actualCost;
+                totalOptimalCost += bestCost;
+                totalActualUtil += actualUtil;
+                totalOptimalUtil += bestUtil;
+                totalContainers += containersSub;
+                validShipmentsCount++;
+            }
         });
 
-        const count = filteredHistory.length;
-        const avgActualUtil = totalActualUtil / count;
-        const avgOptimalUtil = totalOptimalUtil / count;
+        if (validShipmentsCount === 0) return null;
 
+        const avgActualUtil = totalActualUtil / validShipmentsCount;
+        const avgOptimalUtil = totalOptimalUtil / validShipmentsCount;
         const totalSavings = totalActualCost - totalOptimalCost;
-        const avgContainersPerShipment = count > 0 ? totalContainers / count : 0;
+        const avgContainersPerShipment = totalContainers / validShipmentsCount;
 
         return {
             totalActualCost,
@@ -178,10 +210,10 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             avgOptimalUtil,
             totalContainers,
             avgContainersPerShipment,
-            shipmentCount: count
+            shipmentCount: validShipmentsCount
         };
 
-    }, [filteredHistory]);
+    }, [filteredHistory, selectedDestination]);
 
 
     // --- HELPER FOR CHARTS ---
@@ -241,7 +273,12 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 Object.entries(h.container_type_stats).forEach(([dest, types]) => {
                     if (targetDest !== 'all' && dest !== targetDest) return;
                     Object.entries(types).forEach(([type, count]) => {
-                        typeCounts[type] = (typeCounts[type] || 0) + (count as number);
+                        // Match 'type' to one of the standard container names if possible
+                        // Prefix match to ignore suffixes like (S180)
+                        const standardMatch = containers.find(c => type.toLowerCase().startsWith(c.name.toLowerCase()));
+                        const matchedName = standardMatch ? standardMatch.name : type;
+
+                        typeCounts[matchedName] = (typeCounts[matchedName] || 0) + (count as number);
                     });
                 });
             }
@@ -251,10 +288,10 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
             .sort((a, b) => b.count - a.count);
     };
 
-    // Memoize the chart data based on their specific selection
-    const productsData = useMemo(() => getProductData(productsDest), [filteredHistory, productsDest]);
-    const containersData = useMemo(() => getContainerByDestData(containersDest), [filteredHistory, containersDest]);
-    const typesData = useMemo(() => getContainerTypeData(typesDest), [filteredHistory, typesDest]);
+    // Prepare chart data based on CURRENT global filter
+    const productsData = useMemo(() => getProductData(selectedDestination), [filteredHistory, selectedDestination]);
+    const containersData = useMemo(() => getContainerByDestData(selectedDestination), [filteredHistory, selectedDestination]);
+    const typesData = useMemo(() => getContainerTypeData(selectedDestination), [filteredHistory, selectedDestination, containers]);
 
     // Display values Logic:
     // ALWAYS show aggregated history stats as per user request.
@@ -285,21 +322,38 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Date Filter */}
-                    <div className="flex items-center gap-2">
-                        <Calendar size={16} className="text-muted-foreground" />
-                        <Input
-                            type="date"
-                            className="w-36 h-8 text-xs"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                        />
-                        <span className="text-muted-foreground">-</span>
-                        <Input
-                            type="date"
-                            className="w-36 h-8 text-xs"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                        />
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Select value={selectedDestination} onValueChange={setSelectedDestination}>
+                            <SelectTrigger className="w-48 h-9 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                <div className="flex items-center gap-2">
+                                    <MapPin size={14} className="text-muted-foreground" />
+                                    <SelectValue placeholder="All Destinations" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">{t('common.all', 'All Destinations')}</SelectItem>
+                                {availableDestinations.map(dest => (
+                                    <SelectItem key={dest} value={dest}>{dest}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <Calendar size={14} className="text-muted-foreground" />
+                            <Input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
+                            />
+                            <span className="text-muted-foreground">-</span>
+                            <Input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-32 h-6 border-none text-xs focus-visible:ring-0 p-0"
+                            />
+                        </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={fetchHistory} disabled={isLoading} className="h-8">
                         <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -480,20 +534,11 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 {/* Top Products */}
                 <Card className="col-span-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <MapPin size={14} /> Top Products
-                        </CardTitle>
-                        <Select value={productsDest} onValueChange={setProductsDest}>
-                            <SelectTrigger className="w-full h-7 text-xs mt-1">
-                                <SelectValue placeholder="All Destinations" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Destinations</SelectItem>
-                                {availableDestinations.map(dest => (
-                                    <SelectItem key={dest} value={dest}>{dest}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                <Box size={14} /> {t('metrics.topProducts', 'Top Products')}
+                            </CardTitle>
+                        </div>
                     </CardHeader>
                     <CardContent className="h-[280px]">
                         {productsData.length === 0 ? (
@@ -526,17 +571,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                     <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                             <CardTitle className="text-sm font-medium">Containers by Destination</CardTitle>
-                            <Select value={containersDest} onValueChange={setContainersDest}>
-                                <SelectTrigger className="w-40 h-7 text-xs">
-                                    <SelectValue placeholder="All Destinations" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Destinations</SelectItem>
-                                    {availableDestinations.map(dest => (
-                                        <SelectItem key={dest} value={dest}>{dest}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
                     </CardHeader>
                     <CardContent className="h-[200px]">
@@ -558,17 +592,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
                                 <Box size={14} /> Container Types
                             </CardTitle>
-                            <Select value={typesDest} onValueChange={setTypesDest}>
-                                <SelectTrigger className="w-40 h-7 text-xs">
-                                    <SelectValue placeholder="All Destinations" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Destinations</SelectItem>
-                                    {availableDestinations.map(dest => (
-                                        <SelectItem key={dest} value={dest}>{dest}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
                     </CardHeader>
                     <CardContent className="h-[200px]">
